@@ -36,3 +36,20 @@ def registrar_usuario_view(request):
     
     return render(request, 'core/registrar_usuario.html', {'form': form})
     pass
+
+
+from .forms import PacienteForm
+
+@login_required
+def registrar_paciente_view(request):
+    if request.method == 'POST':
+        form = PacienteForm(request.POST)
+        if form.is_valid():
+            paciente = form.save(commit=False)
+            # ASIGNACIÓN AUTOMÁTICA: Tomamos la clínica del usuario logueado
+            paciente.clinica = request.user.clinica 
+            paciente.save()
+            return redirect('admin:index')
+    else:
+        form = PacienteForm()
+    return render(request, 'core/registrar_paciente.html', {'form': form})

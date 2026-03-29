@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from core.views import registrar_clinica_view, registrar_usuario_view # Importa la nueva vista
+from core.views import registrar_clinica_view, registrar_usuario_view, registrar_paciente_view # Importa la nueva vista para registrar pacientes
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -12,4 +12,6 @@ urlpatterns = [
     
     path('registro-clinica/', registrar_clinica_view, name='registrar_clinica'),
     path('registro-psicologo/', registrar_usuario_view, name='registrar_psicologo'),
+    path('registro-paciente/', registrar_paciente_view, name='registrar_paciente'),
 ]
+

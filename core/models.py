@@ -28,11 +28,12 @@ class Usuario(AbstractUser):
 
 # Módulo de Gestión de Pacientes (Aislado por clínica)
 class Paciente(models.Model):
-    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE) # Esto hace que sea Multi-tenant
-    nombre_completo = models.CharField(max_length=200)
-    ci = models.CharField(max_length=15)
+    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=100) # <--- Verifica que se llame 'nombre'
+    ci = models.CharField(max_length=20, unique=True)
     fecha_nacimiento = models.DateField()
-    historia_clinica_nro = models.CharField(max_length=20, unique=True)
+    telefono = models.CharField(max_length=20) # <--- Verifica que se llame 'telefono'
+    motivo_consulta = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.nombre_completo} - {self.clinica.nombre}"
+        return self.nombre
