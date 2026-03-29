@@ -123,5 +123,8 @@ STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'core.Usuario'
 
+# Esto le dice al "guardia" cuál es la dirección exacta de tu pantalla de login
+LOGIN_URL = '/login/'
+
 LOGIN_REDIRECT_URL = '/admin/' # Por ahora al admin, luego a un Dashboard
 LOGOUT_REDIRECT_URL = '/login/'
