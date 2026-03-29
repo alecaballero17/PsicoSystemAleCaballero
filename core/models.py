@@ -6,7 +6,12 @@ class Clinica(models.Model):
     nombre = models.CharField(max_length=100)
     nit = models.CharField(max_length=20, unique=True)
     direccion = models.TextField()
-    plan_suscripcion = models.CharField(max_length=50, default='Basico') # SaaS
+    PLANES = [
+        ('Basico', 'Básico'),
+        ('Profesional', 'Profesional'),
+        ('Premium', 'Premium'),
+    ]
+    plan_suscripcion = models.CharField(max_length=50, choices=PLANES, default='Basico')
 
     def __str__(self):
         return self.nombre
