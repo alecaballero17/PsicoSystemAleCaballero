@@ -1,57 +1,72 @@
-# 🧠 PsicoSystem - SaaS Multi-tenant para Centros Psicológicos
+PsicoSystem - Plataforma SaaS Multi-tenant para Gestión Psicológica
+PsicoSystem es una solución de software bajo el modelo SaaS (Software as a Service) diseñada para la transformación digital de centros psicológicos. La plataforma implementa una arquitectura desacoplada orientada a servicios para garantizar el aislamiento de datos entre instituciones y la escalabilidad del sistema.
 
-**PsicoSystem** es una plataforma integral diseñada bajo el modelo **SaaS (Software as a Service)** para la transformación digital de centros psicológicos. El sistema permite la gestión clínica, administrativa y el análisis de patrones mediante IA, garantizando la seguridad y el aislamiento de datos entre diferentes instituciones.
+Arquitectura del Sistema (T001)
+El proyecto se basa en una arquitectura de servicios distribuidos:
 
----
+Backend: API REST desarrollada en Django 6.0 utilizando Django REST Framework (DRF) para la exposición de endpoints.
 
-## 🛠️ Stack Tecnológico
+Seguridad: Autenticación stateless mediante JSON Web Tokens (JWT) para la interoperabilidad con diferentes clientes.
 
-* **Backend & Web:** [Django 6.0](https://www.djangoproject.com/) (Python)
-* **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) (Arquitectura Multi-tenant)
-* **Gestión de Base de Datos:** [pgAdmin 4](https://www.pgadmin.org/)
-* **Control de Versiones:** Git & GitHub
+Frontend Web: Single Page Application (SPA) desarrollada en React.js (en proceso de integración).
 
----
+Aplicación Móvil: Cliente multiplataforma desarrollado en Flutter (en proceso de integración).
 
-## 🚀 Estado del Proyecto (Sprint 1)
+Persistencia: Base de Datos PostgreSQL con esquema de aislamiento lógico (Multi-tenancy) mediante identificadores de Tenant.
 
-Actualmente, el proyecto cuenta con la **Infraestructura Base** desplegada:
+Stack Tecnológico (T002)
+Lenguaje: Python 3.12+
 
-* **Módulo Organizacional:** Implementación de la entidad `Clinica` (Tenant) para el soporte multi-centro.
-* **Módulo de Identidad:** Sistema de usuarios personalizado con roles (Admin, Psicólogo, Paciente).
-* **Módulo de Gestión:** Estructura inicial para el registro de historias clínicas y pacientes.
-* **Back-office:** Panel administrativo operativo para la gestión de datos maestros.
+Framework Web: Django 6.0 & Django REST Framework
 
----
+Seguridad: PyJWT / SimpleJWT
 
-## 📂 Estructura del Proyecto
+Motor de Base de Datos: PostgreSQL
 
-* `psicosystem/`: Configuración principal del proyecto (Settings, URLs, WSGI).
-* `core/`: Aplicación principal que contiene la lógica de negocio y los modelos Multi-tenant.
-* `venv/`: Entorno virtual de desarrollo (excluido en .gitignore).
+Entorno de Ejecución: Entornos virtuales (venv)
 
----
+Control de Versiones: Git con flujo de trabajo basado en ramas
 
-## 🔧 Instalación y Configuración Local
+Estado del Proyecto (Sprint 0 y Sprint 1)
+Actualmente, el sistema cuenta con la infraestructura Core validada:
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone [https://github.com/alecaballero17/PsicoSystem_SI2.git](https://github.com/alecaballero17/PsicoSystem_SI2.git)
+Módulo Organizacional (RF-29): Implementación de la entidad Clinica (Tenant) para el soporte multi-centro y aislamiento de datos.
 
-2. Crear y activar entorno virtual:
-    python -m venv venv
-source venv/Scripts/activate  # En Windows
+Módulo de Identidad (RF-01, RF-28): Sistema de usuarios personalizado con roles (Admin, Psicólogo, Paciente) y soporte para JWT.
 
-3. Instalar dependencias:
-    pip install django djangorestframework psycopg2-binary
+Capa de Persistencia (T005): Modelos de datos para Clínicas, Usuarios, Pacientes y Citas debidamente migrados.
 
-4. Configurar Base de Datos:
-    Asegurarse de tener una base de datos en PostgreSQL llamada db_psicosystem y configurar las credenciales en settings.py.
+Capa API (T008, T014): Implementación inicial de Serializers y APIViews para el consumo de datos en formato JSON.
 
-5. Ejecutar Migraciones:
-    python manage.py migrate
+Estructura del Repositorio
+psicosystem/: Configuración global del proyecto, configuración de seguridad y middleware.
 
-6. Iniciar Servidor:
-    python manage.py runserver
+core/: Lógica de negocio, modelos de datos multi-tenant y serializadores REST.
 
-Desarrollado por: Alejandro Caballero - Grupo12 SI2
+templates/: Plantillas base de administración (Back-office).
+
+venv/: Entorno virtual de dependencias.
+
+Instalación y Despliegue Local
+Clonación del repositorio:
+git clone https://github.com/alecaballero17/PsicoSystem_SI2.git
+
+Gestión del entorno virtual:
+python -m venv venv
+source venv/Scripts/activate (En Windows: venv\Scripts\activate)
+
+Instalación de dependencias críticas:
+pip install django djangorestframework djangorestframework-simplejwt psycopg2-binary python-decouple
+
+Configuración de Base de Datos:
+Crear una base de datos PostgreSQL denominada db_psicosystem y configurar las variables de entorno para las credenciales en el servidor.
+
+Aplicación de esquema de datos:
+python manage.py makemigrations
+python manage.py migrate
+
+Ejecución del servicio:
+python manage.py runserver
+
+Desarrollo: Alejandro Caballero -Brayan Ramos - Grupo 12 SI2
+Institución: Universidad Autónoma Gabriel René Moreno (UAGRM)
