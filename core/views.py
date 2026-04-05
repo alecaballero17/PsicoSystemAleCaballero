@@ -2,129 +2,87 @@
 Módulo de vistas y controladores para PsicoSystem SI2.
 Contiene tanto las vistas web MVC como los endpoints de la API REST.
 """
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import PermissionDenied
 
-from .forms import ClinicaForm, RegistroUsuarioForm, PacienteForm
 from .models import Paciente, Cita
+from .permissions import IsPsicologo, IsAdmin
 from .serializers import (
     PacienteSerializer,
     ClinicaSerializer,
     UsuarioSerializer,
+    CustomTokenObtainPairSerializer,
 )  # NUEVO: Importación necesaria para T014
 
 
-# ==============================================================================
-# MÓDULO: GESTIÓN ORGANIZACIONAL (TENANT)
-# SPRINT 0 | T001 (Arquitectura) | T005 (Modelado)
-# ==============================================================================
-@login_required  # RNF-03: Seguridad de Acceso (Autenticación Obligatoria)
-def registrar_clinica_view(request):
-    """
-    CU-25: Registrar Clínica | RF-29: Soporte Multi-tenancy
-    Propósito: Crear la entidad raíz que aislará todos los datos posteriores.
-    """
-    if request.method == "POST":
-        form = ClinicaForm(request.POST)  # T005: Interacción con formularios Django
-        if form.is_valid():
-            form.save()  # T004: Persistencia en PostgreSQL
-            return redirect("dashboard")  # T007: Navegabilidad del Prototipo UI
-    else:
-        form = ClinicaForm()
-
-    return render(request, "core/registrar_clinica.html", {"form": form})
+# Vistas removidas para cumplimiento de Arquitectura REST (API REST-only)
+# CU-25 y CU-02 se manejan via ClinicaCreateAPIView y UsuarioCreateAPIView.
 
 
-# ==============================================================================
-# MÓDULO: SEGURIDAD Y ACCESO (IDENTIDAD)
-# SPRINT 0 | T001 (Seguridad) | T003 (Estructura Base)
-# ==============================================================================
-@login_required  # RNF-03: Restricción de acceso para usuarios anónimos
-def registrar_usuario_view(request):
-    """
-    CU-02: Registrar Usuario | RF-28: Gestión de Roles y Permisos
-    Propósito: Alta de psicólogos vinculados a una clínica específica.
-    """
-    if request.method == "POST":
-        form = RegistroUsuarioForm(request.POST)
-        if form.is_valid():
-            form.save()  # T005: Registro basado en AbstractUser personalizado
-            return redirect("dashboard")
-    else:
-        form = RegistroUsuarioForm()
-
-    return render(request, "core/registrar_usuario.html", {"form": form})
-
-
-# ==============================================================================
-# MÓDULO: GESTIÓN DE PACIENTES (LOGICA DE NEGOCIO)
-# SPRINT 1 | T014 (Desarrollo Funcional) | RF-02 (Gestión Pacientes)
-# ==============================================================================
-@login_required
-def registrar_paciente_view(request):
-    """
-    CU-06: Registrar Paciente | RF-29: Aislamiento Lógico de Datos
-    Propósito: Garantizar que la data sea privada para cada clínica.
-    """
-    if request.method == "POST":
-        form = PacienteForm(request.POST)
-        if form.is_valid():
-            paciente = form.save(
-                commit=False
-            )  # T014: Preparación de objeto antes de persistir
-
-            # --- PUNTO CRÍTICO DE AUDITORÍA (RF-29) ---
-            # Se asigna la clínica del usuario actual sin intervención manual.
-            paciente.clinica = request.user.clinica
-
-            paciente.save()  # T004: Persistencia final en BD
-            return redirect("dashboard")
-    else:
-        form = PacienteForm()
-    return render(request, "core/registrar_paciente.html", {"form": form})
-
-
-# ==============================================================================
-# MÓDULO: DASHBOARD DE CONTROL (VISUALIZACIÓN)
-# SPRINT 0 | T007 (Prototipo UI) | RNF-08 (Eficiencia Operativa)
-# ==============================================================================
-@login_required
-def dashboard_view(request):
-    """
-    T007: Punto central de control para el usuario final.
-    Muestra métricas clave (KPIs) filtradas por pertenencia organizacional.
-    """
-    clinica = request.user.clinica  # RF-29: Captura del Tenant ID desde la sesión
-
-    # RNF-08: Consultas optimizadas vía ORM para KPIs en tiempo real
-    total_pacientes = (
-        Paciente.objects.filter(clinica=clinica).count() if clinica else 0  # type: ignore
-    )
-    citas_pendientes = (
-        Cita.objects.filter(
-            paciente__clinica=clinica, estado="PENDIENTE"
-        ).count()  # type: ignore
-        if clinica
-        else 0
-    )
-
-    contexto = {
-        "total_pacientes": total_pacientes,  # KPI: Cantidad de pacientes (RF-02)
-        "citas_pendientes": citas_pendientes,  # KPI: Gestión de Agenda
-        "clinica_nombre": clinica.nombre if clinica else "S/C",
-    }
-    return render(request, "core/dashboard.html", contexto)
+# RF-02 y T014 se manejan via PacienteCreateAPIView y PacienteListAPIView.
+# T007 (Dashboard) se maneja via DashboardAPIView.
 
 
 # ==============================================================================
 # CAPA API: SERVICIOS REST (DESACOPLAMIENTO)
 # SPRINT 1 | T008 (Arquitectura REST) | T011 (Autenticación JWT) | T014 (Validación)
 # ==============================================================================
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Trazabilidad: RF-01, RF-28
+    Vista JWT personalizada para retornar tokens que incluyen los roles de usuario.
+    """
+
+    serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        print(f"DEBUG: Intento de login para usuario: {request.data.get('username')}")
+        response = super().post(request, *args, **kwargs)
+        print(f"DEBUG: Resultado login: {response.status_code}")
+        return response
+
+
+class LogoutAPIView(APIView):
+    """
+    CU-04: Cierre de Sesión (API)
+    Invalida el Token de Refresco en la lista negra.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(
+                {"message": "Logout exitoso"}, status=status.HTTP_205_RESET_CONTENT
+            )
+        except Exception:
+            return Response(
+                {"error": "Token inválido"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MeAPIView(APIView):
+    """
+    RF-03: Perfil de Usuario | T011
+    Retorna los datos del usuario autenticado.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UsuarioSerializer(request.user)
+        return Response(serializer.data)
 
 
 class DashboardAPIView(APIView):
@@ -140,19 +98,20 @@ class DashboardAPIView(APIView):
         Retorna las métricas del dashboard filtradas por la clínica del usuario.
         """
         clinica = request.user.clinica  # RF-29: Multi-tenancy
-        total_pacientes = (
-            Paciente.objects.filter(clinica=clinica).count() if clinica else 0  # type: ignore
-        )
-        citas_pendientes = (
-            Cita.objects.filter(
-                paciente__clinica=clinica, estado="PENDIENTE"
-            ).count()  # type: ignore
-            if clinica
-            else 0
-        )
+
+        # SOLUCIÓN AL BUG: Si no hay clínica, lanzamos error 403 explícito
+        if not clinica:
+            raise PermissionDenied(
+                "Su usuario no tiene una clínica asignada. Contacte al administrador."
+            )
+
+        total_pacientes = Paciente.objects.filter(clinica=clinica).count()
+        citas_pendientes = Cita.objects.filter(
+            paciente__clinica=clinica, estado="PENDIENTE"
+        ).count()
 
         data = {
-            "clinica": clinica.nombre if clinica else "Sin Clínica",
+            "clinica": clinica.nombre,
             "metricas": {
                 "total_pacientes": total_pacientes,
                 "citas_pendientes": citas_pendientes,
@@ -165,22 +124,26 @@ class PacienteCreateAPIView(APIView):
     """
     T014: Desarrollo de funcionalidades de interoperabilidad.
     CU-02: Registro de Paciente vía API (Móvil/React).
-    CORRECCIÓN DE AUDITORÍA: Implementación de Serializers para validación robusta.
+    CORRECCIÓN DE AUDITORÍA: Validación de pertenencia organizacional (RF-29).
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsPsicologo]
 
     def post(self, request):
-        """
-        Crea un nuevo paciente registrado por el móvil u otros clientes.
-        """
-        # T014: Instanciamos el Serializer con los datos del JSON (Payload)
+        # --- PASO 1: VALIDACIÓN DE SEGURIDAD (RNF-03 / RF-29) ---
+        # Si el usuario no tiene clínica, lanzamos error antes de procesar nada.
+        # Esto evita que serializer.save() falle por un IntegrityError de base de datos.
+        if not request.user.clinica:
+            raise PermissionDenied(
+                "No puede registrar pacientes: Su cuenta no está vinculada a ninguna clínica."
+            )
+
+        # --- PASO 2: INSTANCIACIÓN Y VALIDACIÓN DE DATOS (RNF-08) ---
         serializer = PacienteSerializer(data=request.data)
 
-        # RNF-08: Validación automática (CI único, formatos de fecha, campos requeridos)
         if serializer.is_valid():
-            # RF-29: Inyectamos la clínica del usuario autenticado (Seguridad Multi-tenant)
-            # Esto evita que un usuario de la Clínica A registre pacientes en la Clínica B.
+            # --- PASO 3: PERSISTENCIA MULTI-TENANT (RF-29) ---
+            # Inyectamos la clínica del usuario autenticado automáticamente.
             serializer.save(clinica=request.user.clinica)
 
             return Response(
@@ -191,7 +154,7 @@ class PacienteCreateAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
 
-        # Si los datos son inválidos (ej: CI ya existe), DRF devuelve el error exacto
+        # Si los datos son inválidos (ej: CI ya existe), devolvemos el error 400.
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -207,7 +170,7 @@ class ClinicaCreateAPIView(APIView):
     """
 
     # En este caso, el registro de clínica suele ser público o de admin
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
     def post(self, request):
         """Crea una nueva clínica mediante JSON."""
@@ -243,3 +206,29 @@ class UsuarioCreateAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PacienteListAPIView(APIView):
+    """
+    T014: Endpoint para listar pacientes del Tenant actual.
+    Este es el que necesita tu Dashboard de React para llenar la tabla.
+    """
+
+    permission_classes = [IsPsicologo]
+
+    def get(self, request):
+        """
+        Obtiene la lista de pacientes registrados en la clínica del usuario autenticado.
+        """
+        # RF-29: Filtramos para que solo vea los pacientes de SU clínica
+        clinica = request.user.clinica
+        if not clinica:
+            raise PermissionDenied(
+                "No se puede listar pacientes: Usuario sin clínica asignada."
+            )
+
+        pacientes = Paciente.objects.filter(clinica=clinica)
+        serializer = PacienteSerializer(pacientes, many=True)
+
+        # Esto es lo que React va a recibir y mapear en la tabla
+        return Response(serializer.data, status=status.HTTP_200_OK)

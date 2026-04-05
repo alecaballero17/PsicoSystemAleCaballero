@@ -1,6 +1,7 @@
 """
 Configuración principal de PsicoSystem SI2.
 """
+
 from pathlib import Path
 from datetime import timedelta
 from decouple import config  # RNF-03: Seguridad de credenciales | SPRINT 0
@@ -17,22 +18,24 @@ SECRET_KEY = config("SECRET_KEY", default="django-insecure-psicosystem-2026-audi
 # T004: Configuración del entorno de desarrollo.
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
 # ==============================================================================
 INSTALLED_APPS = [
+    "corsheaders",  # <--- AGREGAR ESTA LÍNEA
     "core",  # T003: Estructura de app principal y modelos Multi-tenant.
     "rest_framework",  # T008: Conexión básica para arquitectura REST (API).
     "rest_framework_simplejwt",  # RF-01: Autenticación JWT (Sprint 1 - T011).
+    "rest_framework_simplejwt.token_blacklist",  # CU-04: Soporte para revocación de tokens.
+    "drf_spectacular",  # T009: Documentación de API (OpenAPI 3).
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "corsheaders",  # <--- AGREGAR ESTA LÍNEA
 ]
 
 MIDDLEWARE = [
@@ -47,6 +50,32 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "psicosystem.urls"
+
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = False  # Agrega esto para que el celular no sea rechazado
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+# 3. TRUCO PARA EL MOBILE: Permitimos que entren apps que no vienen de navegadores
+# Esto permite que Flutter se conecte sin comprometer la seguridad de la web.
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrf-token",
+    "x-requested-with",
+]
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
@@ -90,6 +119,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",  # RNF-03: Restricción de acceso global.
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # T009
+}
+
+# T009: Configuración de OpenAPI
+SPECTACULAR_SETTINGS = {
+    "TITLE": "PsicoSystem SI2 API",
+    "DESCRIPTION": "Arquitectura de Servicios para Gestión Clínica (UAGRM)",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # RF-01: Parámetros del ciclo de vida del Token (Seguridad Stateless).
@@ -133,5 +171,4 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
 
-# Configuración de CORS para Interoperabilidad (RNF)
-CORS_ALLOW_ALL_ORIGINS = True  # Permite que cualquier cliente (React/Mobile) se conecte
+# (Ya configurado arriba en CORS_ALLOWED_ORIGINS)

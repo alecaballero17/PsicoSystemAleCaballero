@@ -2,8 +2,10 @@
 Módulo de modelos principales del sistema (core).
 Incluye las definiciones de Clínica, Usuario, Paciente y Cita.
 """
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+
 
 # ==============================================================================
 # MÓDULO: GESTIÓN ORGANIZACIONAL (TENANT)
@@ -11,23 +13,25 @@ from django.contrib.auth.models import AbstractUser
 # ==============================================================================
 class Clinica(models.Model):
     """
-    Entidad raíz para el aislamiento de datos. 
+    Entidad raíz para el aislamiento de datos.
     Representa a cada consultorio o clínica que contrata el SaaS.
     """
+
     nombre = models.CharField(max_length=100)
     nit = models.CharField(max_length=20, unique=True)
     direccion = models.TextField()
 
     # RNF-01 (Escalabilidad): Soporte para diferentes niveles de servicio.
     PLANES = [
-        ('Basico', 'Básico'),
-        ('Profesional', 'Profesional'),
-        ('Premium', 'Premium'),
+        ("Basico", "Básico"),
+        ("Profesional", "Profesional"),
+        ("Premium", "Premium"),
     ]
-    plan_suscripcion = models.CharField(max_length=50, choices=PLANES, default='Basico')
+    plan_suscripcion = models.CharField(max_length=50, choices=PLANES, default="Basico")
 
     def __str__(self):
         return str(self.nombre)
+
 
 # ==============================================================================
 # MÓDULO: SEGURIDAD Y ACCESO (USUARIOS)
@@ -38,16 +42,25 @@ class Usuario(AbstractUser):
     Extensión del usuario base de Django para soportar Multi-tenancy y Roles.
     Vinculado a RNF-03 (Seguridad de Identidad).
     """
+
     # FK hacia Clinica: Implementa el aislamiento lógico del usuario.
-    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE, null=True, blank=True)
+    clinica = models.ForeignKey(
+        Clinica,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,  # <--- CORRECCIÓN: Obliga a elegir una clínica en el Admin
+        db_index=True,
+        help_text="Clínica obligatoria para la segregación de datos (RF-29)",
+    )
 
     # RF-28: Control de acceso basado en roles para la lógica de negocio.
     ROLES = [
-        ('ADMIN', 'Administrador'),
-        ('PSICOLOGO', 'Psicólogo'),
-        ('PACIENTE', 'Paciente')
+        ("ADMIN", "Administrador"),
+        ("PSICOLOGO", "Psicólogo"),
+        ("PACIENTE", "Paciente"),
     ]
-    rol = models.CharField(max_length=20, choices=ROLES, default='PSICOLOGO')
+    rol = models.CharField(max_length=20, choices=ROLES, default="PSICOLOGO")
+
 
 # ==============================================================================
 # MÓDULO: GESTIÓN DE PACIENTES
@@ -55,14 +68,15 @@ class Usuario(AbstractUser):
 # ==============================================================================
 class Paciente(models.Model):
     """
-    Representa a los pacientes atendidos. 
+    Representa a los pacientes atendidos.
     Los datos están segregados por clínica (RF-29).
     """
+
     # Garantiza que un psicólogo de la Clínica A no vea pacientes de la Clínica B.
-    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)
+    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE, db_index=True)
 
     nombre = models.CharField(max_length=100)
-    ci = models.CharField(max_length=20, unique=True)
+    ci = models.CharField(max_length=20, unique=True, db_index=True)
     fecha_nacimiento = models.DateField()
     telefono = models.CharField(max_length=20)
     motivo_consulta = models.TextField(null=True, blank=True)
@@ -72,28 +86,28 @@ class Paciente(models.Model):
     def __str__(self):
         return f"{self.nombre} (CI: {self.ci})"
 
+
 # ==============================================================================
 # MÓDULO: GESTIÓN DE CITAS (NUEVO)
 # TRAZABILIDAD: T005 (Diseño de BD Inicial) | SPRINT 0 (Completitud)
 # ==============================================================================
 class Cita(models.Model):
     """
-    Entidad para la programación de sesiones. 
+    Entidad para la programación de sesiones.
     Completa el esquema relacional básico solicitado en el Sprint 0.
     """
+
     # Relación uno a muchos: Un paciente puede tener múltiples citas.
     paciente = models.ForeignKey(
-        Paciente,
-        on_delete=models.CASCADE,
-        related_name='citas'
+        Paciente, on_delete=models.CASCADE, related_name="citas"
     )
 
     # Restricción de integridad: Solo usuarios con rol PSICOLOGO pueden atender citas.
     psicologo = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,
-        limit_choices_to={'rol': 'PSICOLOGO'},
-        related_name='citas_asignadas'
+        limit_choices_to={"rol": "PSICOLOGO"},
+        related_name="citas_asignadas",
     )
 
     fecha_hora = models.DateTimeField(help_text="RNF-05: Precisión temporal en citas")
@@ -101,20 +115,21 @@ class Cita(models.Model):
 
     # Estados de flujo para trazabilidad de la consulta.
     ESTADOS = [
-        ('PENDIENTE', 'Pendiente'),
-        ('COMPLETADA', 'Completada'),
-        ('CANCELADA', 'Cancelada'),
+        ("PENDIENTE", "Pendiente"),
+        ("COMPLETADA", "Completada"),
+        ("CANCELADA", "Cancelada"),
     ]
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+    estado = models.CharField(max_length=20, choices=ESTADOS, default="PENDIENTE")
 
     objects = models.Manager()
 
     class Meta:
         """Metadatos de la clase Cita."""
+
         verbose_name = "Cita"
         verbose_name_plural = "Citas"
         # Mejora: Ordenar por fecha por defecto
-        ordering = ['fecha_hora']
+        ordering = ["fecha_hora"]
 
     def __str__(self):
-        return f"Cita: {self.paciente} con {self.psicologo} - {self.fecha_hora}"
+        return f"Cita: {self.paciente} con {self.psicologo} - {self.fecha_hora}"

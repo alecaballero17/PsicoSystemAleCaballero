@@ -4,3 +4,14 @@ __pycache__/
 db.sqlite3
 .vscode/
 .env
+# React / Frontend (T010)
+frontend-web/node_modules/
+frontend-web/build/
+frontend-web/.env
+npm-debug.log*
+
+# Flutter / Mobile (T012)
+mobile-app/.dart_tool/
+mobile-app/.packages
+mobile-app/.pub-cache/
+mobile-app/build/
