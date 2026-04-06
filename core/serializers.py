@@ -14,19 +14,24 @@ from .models import Clinica, Usuario, Paciente, Cita
 
 
 class ClinicaSerializer(serializers.ModelSerializer):
-    """Serializer for Clinica model.
-
-    Maps Clinica fields to JSON representation for API consumption.
     """
-
-    """
-    Trazabilidad: CU-25 (Registrar Clínica)
+    Serializer for Clinica model. Maps Clinica fields to JSON representation.
+    Trazabilidad: CU-25 (Registrar Clínica).
     Convierte el modelo Clinica a JSON para la API de administración.
     """
 
     class Meta:
         model = Clinica
-        fields = ["id", "nombre", "nit", "direccion", "plan_suscripcion"]
+        fields = [
+            "id",
+            "nombre",
+            "nit",
+            "direccion",
+            "telefono",  # <--- CORRECCIÓN CAUSA RAÍZ #3
+            "email_contacto",  # <--- CORRECCIÓN CAUSA RAÍZ #3
+            "plan_suscripcion",
+        ]
+        read_only_fields = ["id"]
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -35,10 +40,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
     Maneja la representación de usuarios con validación de integridad organizacional.
     """
 
+    # 👇 1. AÑADIMOS EL CAMPO VIRTUAL QUE EXTRAE EL NOMBRE 👇
+    clinica_nombre = serializers.CharField(source="clinica.nombre", read_only=True)
+
     class Meta:
         model = Usuario
         # Incluimos password para creación, pero lo protegemos con write_only
-        fields = ["id", "username", "email", "password", "clinica", "rol"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "password",
+            "clinica",
+            "clinica_nombre",
+            "rol",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate_clinica(self, value):
@@ -61,11 +77,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 
 class PacienteSerializer(serializers.ModelSerializer):
-    """Serializer for Paciente model, used by mobile app to submit patient data."""
-
     """
+    Serializer for Paciente model.
     Trazabilidad: T014 (Registro API) | RF-02 (Gestión Pacientes)
-    Este es el motor de la T014. Permite que la App móvil envíe pacientes.
+    Este es el motor de la T014. Permite que la App móvil envíe pacientes al Backend.
     """
 
     class Meta:
@@ -83,11 +98,9 @@ class PacienteSerializer(serializers.ModelSerializer):
 
 
 class CitaSerializer(serializers.ModelSerializer):
-    """Serializer for Cita model, representing appointments."""
-
     """
-    Trazabilidad: T005 (Diseño BD)
-    RF-28: Control de visibilidad de datos de agenda.
+    Serializer for Cita model, representing appointments.
+    Trazabilidad: T005 (Diseño BD) | RF-28 (Control de visibilidad de datos de agenda).
     """
 
     # RNF-08: Declarar campos explícitos es más seguro que "__all__"

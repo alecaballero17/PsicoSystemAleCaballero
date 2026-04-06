@@ -1,3 +1,9 @@
+"""
+PsicoSystem SI2 - Cliente HTTP de Simulación para Flutter.
+Valida la negociación JWT y la inyección de contexto Multi-tenant
+para garantizar la interoperabilidad con clientes móviles.
+"""
+
 import requests
 import json
 import sys

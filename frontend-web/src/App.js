@@ -1,68 +1,70 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import RegistroPaciente from './components/RegistroPaciente';
-import RegistroClinica from './components/RegistroClinica';
+import { AuthProvider, useAuth } from './context/AuthContext'; // <-- Importamos useAuth también
 
-// Mejora: Protección de rutas con validación de Roles (RNF-03)
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import RegistroPaciente from './pages/RegistroPaciente';
+import RegistroClinica from './pages/RegistroClinica';
+import Navbar from './components/Navbar'; // Importa el Navbar
+
+// ==============================================================================
+// RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
+// ==============================================================================
 const PrivateRoute = ({ children, allowedRoles }) => {
-    const token = localStorage.getItem('userToken');
-    const userRole = localStorage.getItem('userRole'); // Obtenido en authService
+    const { user } = useAuth(); // 👈 El guardia ahora escucha la radio oficial
 
-    if (!token) {
+    // Si no hay usuario en la RAM, patada al Login
+    if (!user) {
         return <Navigate to="/" />;
     }
 
-    // Si la ruta requiere un rol específico y el usuario no lo tiene
-    if (allowedRoles && !allowedRoles.includes(userRole)) {
-        return <Navigate to="/dashboard" />; // Redirigir al home si no tiene permiso
+    // Si la ruta exige rol (ej. ADMIN) y el usuario no lo tiene, patada al Dashboard
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+        return <Navigate to="/dashboard" />;
     }
+    // 👇 AQUÍ ESTÁ LA MAGIA: Renderizamos el Navbar globalmente para rutas seguras
+    return (
+        <>
+            <Navbar /> 
+            {children}
+        </>
+    );
+};    
 
-    return children;
-};
 
+// ==============================================================================
+// ENRUTADOR PRINCIPAL
+// ==============================================================================
 function App() {
     return (
-        <Router>
-            <Routes>
-                {/* Ruta Pública */}
-                <Route path="/" element={<Login />} />
-                
-                {/* Dashboard: Accesible por cualquier usuario autenticado */}
-                <Route 
-                    path="/dashboard" 
-                    element={
+        <AuthProvider> 
+            <Router>
+                <Routes>
+                    <Route path="/" element={<Login />} />
+                    
+                    <Route path="/dashboard" element={
                         <PrivateRoute>
                             <Dashboard />
                         </PrivateRoute>
-                    } 
-                />
+                    } />
 
-                {/* T014: Registro de Pacientes (Psicólogos y Admin) */}
-                <Route 
-                    path="/registro-paciente" 
-                    element={
+                    <Route path="/registro-paciente" element={
                         <PrivateRoute allowedRoles={['ADMIN', 'PSICOLOGO']}>
                             <RegistroPaciente />
                         </PrivateRoute>
-                    } 
-                />
+                    } />
 
-                {/* RF-29: Registro de Clínicas (Solo Administradores/SuperAdmin) */}
-                <Route 
-                    path="/registro-clinica" 
-                    element={
+                    <Route path="/registro-clinica" element={
                         <PrivateRoute allowedRoles={['ADMIN']}>
                             <RegistroClinica />
                         </PrivateRoute>
-                    } 
-                />
+                    } />
 
-                {/* Redirección por defecto si la ruta no existe */}
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-        </Router>
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 }
 

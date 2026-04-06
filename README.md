@@ -1,72 +1,125 @@
-PsicoSystem - Plataforma SaaS Multi-tenant para Gestión Psicológica
-PsicoSystem es una solución de software bajo el modelo SaaS (Software as a Service) diseñada para la transformación digital de centros psicológicos. La plataforma implementa una arquitectura desacoplada orientada a servicios para garantizar el aislamiento de datos entre instituciones y la escalabilidad del sistema.
+# 🧠 PsicoSystem - Hub de Gestión Clínica para Psicología
 
-Arquitectura del Sistema (T001)
-El proyecto se basa en una arquitectura de servicios distribuidos:
+![PsicoSystem Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20RESTful-2ea44f)
+![Status](https://img.shields.io/badge/Status-Beta%20V1.0-blue)
+![Django](https://img.shields.io/badge/Backend-Django%20Rest%20Framework-092E20?logo=django)
+![React](https://img.shields.io/badge/Web-React.js-61DAFB?logo=react)
+![Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B?logo=flutter)
 
-Backend: API REST desarrollada en Django 6.0 utilizando Django REST Framework (DRF) para la exposición de endpoints.
+## 📌 Descripción del Proyecto (SI2)
+**PsicoSystem** es un sistema ERP en la nube (SaaS Multi-tenant) diseñado para centralizar la gestión de pacientes y agendas de múltiples clínicas psicológicas de forma aislada y segura. Cuenta con una API robusta, un portal administrativo Web, y una App Móvil para acceso de pacientes.
 
-Seguridad: Autenticación stateless mediante JSON Web Tokens (JWT) para la interoperabilidad con diferentes clientes.
+---
 
-Frontend Web: Single Page Application (SPA) desarrollada en React.js (en proceso de integración).
+## 🏗️ Arquitectura Actual vs. Nueva Propuesta Clean Module
 
-Aplicación Móvil: Cliente multiplataforma desarrollado en Flutter (en proceso de integración).
+Para la materia de **Sistemas de Información 2 (SI2)**, el sistema evolucionó de un **monolito estándar (MVC)** a una **arquitectura en capas (Clean Module)** enfocada en la segmentación atómica de responsabilidades y la alta escalabilidad.
 
-Persistencia: Base de Datos PostgreSQL con esquema de aislamiento lógico (Multi-tenancy) mediante identificadores de Tenant.
+### 🏛️ 1. Arquitectura Actual (Monolito Base)
+Este diseño nos permitió tener un despliegue MVP durante el **Sprint 0** con lógica funcional aglomerada.
+```text
+psicosystem/         <-- Configuraciones Core, URLs principales y entornos
+core/                <-- Módulo Principal (Monolito)
+ ┣ migrations/       <-- Tracking de base de datos
+ ┣ models.py         <-- Modelos (Clinica, Usuario, Paciente, Cita) todo junto
+ ┣ serializers.py    <-- Transformadores de Data Serializada
+ ┣ views.py          <-- Toda la lógica de Negocio Web y API
+ ┗ permissions.py    <-- Control centralizado de Token/Roles
+```
+*Problema*: Dificultad para mantener miles de rutas y escalar sin conflictos debido al sobre-acoplamiento de funciones de `Auth`, `Pacientes`, y `Citas` en archivos únicos (`views.py` y `models.py`).
 
-Stack Tecnológico (T002)
-Lenguaje: Python 3.12+
+### 🚀 2. Nueva Arquitectura Propuesta (Clean Architecture y Domain-Driven Design)
+Divide y vencerás. Cada archivo se ocupa de una única entidad o responsabilidad.
+```text
+psicosystem/         <-- Configuraciones (Env, Settings, URLs Globales)
+core/                <-- Despliegue Segmentado
+ ┣ admin/            <-- Registro de panel administrativo dividido
+ ┣ models/           <-- Persistencia de Base de Datos
+ ┃ ┣ __init__.py
+ ┃ ┣ clinica.py      <-- Módulo SaaS
+ ┃ ┣ usuario.py      <-- Módulo Seguridad
+ ┃ ┣ paciente.py     <-- Módulo Negocio
+ ┃ ┗ cita.py         <-- Módulo Transaccional
+ ┣ views/            <-- Endpoints y Controladores REST aislados
+ ┃ ┣ __init__.py
+ ┃ ┣ auth_views.py       <-- Login, Tokens
+ ┃ ┣ clinica_views.py    <-- Tenants
+ ┃ ┣ paciente_views.py   <-- CRUD Pacientes
+ ┃ ┗ dashboard_views.py  <-- Metadatos
+ ┣ serializers/      <-- Formateo I/O
+ ┃ ┣ __init__.py
+ ┃ ┣ auth_serializer.py
+ ┃ ┣ clinica_serializer.py
+ ┃ ┗ ...
+ ┗ security/         <-- Core Defense y RBAC
+   ┣ __init__.py
+   ┣ permissions.py  <-- Capa Roles (IsAdmin, IsPsicologo)
+   ┗ decorators.py
+```
 
-Framework Web: Django 6.0 & Django REST Framework
+### 💻 Frontend (Estructura Definida)
+El entorno React.js (**`frontend-web`**) ya funciona bajo este estándar de separación óptima:
+*   `api/`: Instancia de Axios con inyección de JWT por interceptores.
+*   `services/`: Central de llamadas por entidad (ej. `pacienteService.js`).
+*   `pages/`: Vistas estructurales (Login, Dashboard, Formulario Paciente).
+*   `components/`: Componentes minificados y atómicos (Navbar, Inputs).
+*   `context/`: Manejo de Estado Global de Autenticación.
 
-Seguridad: PyJWT / SimpleJWT
+### 📱 Mobile (Estructura Definida)
+Flutter (**`mobile-app`**) diseñado por Features/Layers:
+*   `config/`: Inicializadores y Variables de Entorno `.env`.
+*   `models/`: Mapeo de Clases fuertemente tipadas de Dart a JSON.
+*   `screens/`: Pantallas principales de interfaz al Usuario/Paciente.
+*   `services/`: Repositorio (API Calls).
+*   `widgets/`: Componentes UI reutilizables (Botones, Textfields).
 
-Motor de Base de Datos: PostgreSQL
+---
 
-Entorno de Ejecución: Entornos virtuales (venv)
+## 🎯 Trazabilidad al Marco Metodológico (Sprints 0 y 1)
 
-Control de Versiones: Git con flujo de trabajo basado en ramas
+### Sprint 0 (Infraestructura):
+*   **T001 - T004**: Entornos levantados. Bases de datos ligadas, repositorios sincronizados.
+*   **T005 - T006**: MVP Inicial definido.
+*   **T007 - T008**: Prototipos y API conectadas (CORS y PostgreSQL funcionando).
+*   **T009**: Estándar Swagger (drf-spectacular activo).
 
-Estado del Proyecto (Sprint 0 y Sprint 1)
-Actualmente, el sistema cuenta con la infraestructura Core validada:
+### Sprint 1 (Autenticación y Registros Base):
+*   **T010 - T011**: Login y Autenticación Criptográfica JWT totalmente operativo (AuthBearer en headers).
+*   **T012**: Ingreso Multiplataforma (Móvil).
+*   **T013 - T014**: Registro de pacientes interconectados por API segregando la data del usuario según su `Clínica` (SaaS tenant).
 
-Módulo Organizacional (RF-29): Implementación de la entidad Clinica (Tenant) para el soporte multi-centro y aislamiento de datos.
+### 🏆 Funcionalidades Avances
+El equipo implementó antes de lo previsto métricas administrativas reales de Dashboard multi-tenants y un componente robusto `Logout` que introduce a Tokens de tipo *Blacklist* para seguridad incrementada, cubriendo el esquema de **Seguridad de Alta Confiabilidad (RNF-03)** en etapa temprana y creación de `Clinicas`.
 
-Módulo de Identidad (RF-01, RF-28): Sistema de usuarios personalizado con roles (Admin, Psicólogo, Paciente) y soporte para JWT.
+### 🚧 Bloqueantes o En Progreso
+Restan las vistas (`views/`) e interfaces gráficas para gestionar completamente el flujo final de **Citas**. El modelo persistente existe, pero las peticiones no han sido expuestas gráficamente en todos los ecosistemas requeridos.
 
-Capa de Persistencia (T005): Modelos de datos para Clínicas, Usuarios, Pacientes y Citas debidamente migrados.
+---
 
-Capa API (T008, T014): Implementación inicial de Serializers y APIViews para el consumo de datos en formato JSON.
+## 🔐 Pilares Técnicos Implementados
+1.  **Aislamiento SaaS Multi-tenant**: Separación física y lógica de información donde los datos de una clínica local o un psicólogo jamás cruzan con los de otra institución gracias a reglas en `models.py` (ForeingKeys obligatorias) y filtros por petición instanciada (`request.user.clinica`).
+2.  **Stateless API JWT**: Tokens JSON estandarizados permiten que tanto React como Flutter llamen a Django al mismo tiempo sin colapsar las sesiones en caché.
+3.  **Roles (RBAC)**: Se valida severamente la acción del controlador dictando si pertenece al grupo de Administrador global o simple receptor/psicólogo.
 
-Estructura del Repositorio
-psicosystem/: Configuración global del proyecto, configuración de seguridad y middleware.
-
-core/: Lógica de negocio, modelos de datos multi-tenant y serializadores REST.
-
-templates/: Plantillas base de administración (Back-office).
-
-venv/: Entorno virtual de dependencias.
-
-Instalación y Despliegue Local
-Clonación del repositorio:
-git clone https://github.com/alecaballero17/PsicoSystem_SI2.git
-
-Gestión del entorno virtual:
+### 🛠️ Puesta en Marcha (DevMode)
+**Backend:**
+```bash
 python -m venv venv
-source venv/Scripts/activate (En Windows: venv\Scripts\activate)
-
-Instalación de dependencias críticas:
-pip install django djangorestframework djangorestframework-simplejwt psycopg2-binary python-decouple
-
-Configuración de Base de Datos:
-Crear una base de datos PostgreSQL denominada db_psicosystem y configurar las variables de entorno para las credenciales en el servidor.
-
-Aplicación de esquema de datos:
-python manage.py makemigrations
-python manage.py migrate
-
-Ejecución del servicio:
+.\venv\Scripts\activate
+pip install -r requirements.txt
 python manage.py runserver
+```
 
-Desarrollo: Alejandro Caballero -Brayan Ramos - Grupo 12 SI2
-Institución: Universidad Autónoma Gabriel René Moreno (UAGRM)
+**Frontend:**
+```bash
+cd frontend-web
+npm install
+npm start
+```
+
+**Mobile:**
+```bash
+cd mobile-app
+flutter pub get
+flutter run
+```

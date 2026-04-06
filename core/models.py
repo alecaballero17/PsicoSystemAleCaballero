@@ -21,6 +21,12 @@ class Clinica(models.Model):
     nit = models.CharField(max_length=20, unique=True)
     direccion = models.TextField()
 
+    # ---------------------------------------------------------
+    # CORRECCIÓN CAUSA RAÍZ #3: AGREGAMOS LOS CAMPOS FALTANTES
+    # ---------------------------------------------------------
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    email_contacto = models.EmailField(blank=True, null=True)
+
     # RNF-01 (Escalabilidad): Soporte para diferentes niveles de servicio.
     PLANES = [
         ("Basico", "Básico"),
@@ -88,7 +94,7 @@ class Paciente(models.Model):
 
 
 # ==============================================================================
-# MÓDULO: GESTIÓN DE CITAS (NUEVO)
+# MÓDULO: GESTIÓN DE CITAS
 # TRAZABILIDAD: T005 (Diseño de BD Inicial) | SPRINT 0 (Completitud)
 # ==============================================================================
 class Cita(models.Model):

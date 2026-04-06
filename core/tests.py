@@ -2,6 +2,10 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from core.models import Clinica, Usuario, Paciente
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class PsicoSystemAPITests(APITestCase):
     def setUp(self):
@@ -9,64 +13,85 @@ class PsicoSystemAPITests(APITestCase):
         self.clinica = Clinica.objects.create(
             nombre="Clínica Central",
             nit="12345678-9",
-            direccion="Av. Busch, Santa Cruz"
+            direccion="Av. Busch, Santa Cruz",
         )
         self.user = Usuario.objects.create_user(
             username="psicologo_test",
             password="password123",
             email="test@psico.com",
             clinica=self.clinica,
-            rol="PSICOLOGO"
+            rol="PSICOLOGO",
         )
-        self.login_url = reverse('api_login')
-        self.paciente_url = reverse('api_pacientes_create')
-        self.dashboard_url = reverse('api_dashboard')
+        self.login_url = reverse("api_login")
+        self.paciente_url = reverse("api_pacientes_create")
+        self.dashboard_url = reverse("api_dashboard")
+
+    def test_seguridad_rbac_crear_usuario_denegado(self):
+        """RF-28: Seguridad RBAC - Un PSICOLOGO no debe poder crear usuarios"""
+        # 1. Login como Psicólogo
+        login_response = self.client.post(
+            self.login_url, {"username": "psicologo_test", "password": "password123"}
+        )
+        token = login_response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
+
+        # 2. Intentar registrar un nuevo usuario (esto debería fallar)
+        user_data = {
+            "username": "hacker_user",
+            "password": "password123",
+            "email": "hacker@psico.com",
+            "rol": "ADMIN",
+            "clinica": self.clinica.id,
+        }
+
+        # Usamos la URL de creación de usuarios que definimos en views.py
+        url_usuarios = reverse("api_registrar_usuario")
+        response = self.client.post(url_usuarios, user_data)
+
+        # 3. VERIFICACIÓN CRÍTICA: Esperamos un 403 (Prohibido) no un 201
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        logger.info("TEST SEGURIDAD: Bloqueo de escalada de privilegios verificado ✅")
 
     def test_login_jwt(self):
         """RF-01: Autenticación JWT"""
-        data = {
-            "username": "psicologo_test",
-            "password": "password123"
-        }
+        data = {"username": "psicologo_test", "password": "password123"}
         response = self.client.post(self.login_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
-        self.assertIn('role', response.data)
-        self.assertEqual(response.data['role'], 'PSICOLOGO')
+        self.assertIn("access", response.data)
+        self.assertIn("role", response.data)
+        self.assertEqual(response.data["role"], "PSICOLOGO")
 
     def test_registrar_paciente_api(self):
         """T014: Registro de Paciente vía API"""
         # Login to get token
-        login_response = self.client.post(self.login_url, {
-            "username": "psicologo_test",
-            "password": "password123"
-        })
-        token = login_response.data['access']
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+        login_response = self.client.post(
+            self.login_url, {"username": "psicologo_test", "password": "password123"}
+        )
+        token = login_response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
 
         data = {
             "nombre": "Paciente de Prueba",
             "ci": "99887766",
             "fecha_nacimiento": "1995-10-10",
             "telefono": "77112233",
-            "motivo_consulta": "Pruebas unitarias de API"
+            "motivo_consulta": "Pruebas unitarias de API",
         }
         response = self.client.post(self.paciente_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         # RF-29: Verificar aislamiento (Multi-tenancy)
         paciente = Paciente.objects.get(ci="99887766")
         self.assertEqual(paciente.clinica, self.clinica)
 
     def test_dashboard_api(self):
         """T008: Dashboard API"""
-        login_response = self.client.post(self.login_url, {
-            "username": "psicologo_test",
-            "password": "password123"
-        })
-        token = login_response.data['access']
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+        login_response = self.client.post(
+            self.login_url, {"username": "psicologo_test", "password": "password123"}
+        )
+        token = login_response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
 
         response = self.client.get(self.dashboard_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['clinica'], "Clínica Central")
+        self.assertEqual(response.data["clinica"], "Clínica Central")

@@ -13,18 +13,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==============================================================================
 # T001: Definición de arquitectura segura.
 # Se utiliza 'decouple' para evitar el hardcodeo de llaves, cumpliendo con RNF-03.
-SECRET_KEY = config("SECRET_KEY", default="django-insecure-psicosystem-2026-audit-fix")
+SECRET_KEY = config("SECRET_KEY")
 
 # T004: Configuración del entorno de desarrollo.
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+# ==============================================================================
+# SECCIÓN: SEGURIDAD DE RED Y HOSTS (RNF-01 | RNF-03 | SPRINT 1)
+# ==============================================================================
+# Leemos la IP del .env para el día de la defensa (Hotspot/Wi-Fi)
+SERVER_IP = config("SERVER_IP", default="127.0.0.1")
+
+# T001: Solo permitimos tráfico local y la IP del servidor de demostración.
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", SERVER_IP]
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
 # ==============================================================================
 INSTALLED_APPS = [
-    "corsheaders",  # <--- AGREGAR ESTA LÍNEA
+    "corsheaders",  # <--- Requerido para la conexión con React y Flutter
     "core",  # T003: Estructura de app principal y modelos Multi-tenant.
     "rest_framework",  # T008: Conexión básica para arquitectura REST (API).
     "rest_framework_simplejwt",  # RF-01: Autenticación JWT (Sprint 1 - T011).
@@ -39,7 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # <--- DEBE IR AQUÍ (PRIMERO O SEGUNDO)
+    "corsheaders.middleware.CorsMiddleware",  # <--- DEBE IR PRIMERO O SEGUNDO
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -51,14 +58,20 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "psicosystem.urls"
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = False  # Agrega esto para que el celular no sea rechazado
+# ==============================================================================
+# CONFIGURACIÓN CORS (INTEROPERABILIDAD REACT/FLUTTER)
+# ==============================================================================
+# RNF-01: Permitir que Flutter (Android/iOS) conecte sin restricciones de origen
+# Las Apps móviles no envían el header 'Origin' como los navegadores.
+CORS_ALLOW_ALL_ORIGINS = True  # Seguro porque usamos JWT para validar peticiones
+
+# Configuración de CORS para Interoperabilidad Web (React <-> Django)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    f"http://{SERVER_IP}:3000",  # Para que React funcione desde la IP de la red local
 ]
-# 3. TRUCO PARA EL MOBILE: Permitimos que entren apps que no vienen de navegadores
-# Esto permite que Flutter se conecte sin comprometer la seguridad de la web.
+
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -102,7 +115,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "db_psicosystem",
         "USER": "postgres",
-        "PASSWORD": config("DB_PASSWORD"),  # <--- CAMBIO CLAVE: Ya no dice "1234"
+        "PASSWORD": config("DB_PASSWORD"),  # <--- Extraído de forma segura del .env
         "HOST": "127.0.0.1",
         "PORT": "5432",
     }
@@ -153,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ==============================================================================
-# SECCIÓN: LOCALIZACIÓN (ESTÁNDARES BOLIVIA - UAGRM | SPRINT 0)
+# SECCIÓN: LOCALIZACIÓN (ESTÁNDARES BOLIVIA | SPRINT 0)
 # ==============================================================================
 LANGUAGE_CODE = "es-bo"
 TIME_ZONE = "America/La_Paz"
@@ -164,11 +177,10 @@ STATIC_URL = "static/"
 
 # ==============================================================================
 # SECCIÓN: REDIRECCIONES DE FLUJO (SOLUCIÓN T007 | SPRINT 0)
+# CORRECCIÓN CAUSA RAÍZ #5: Arquitectura Pure REST
 # ==============================================================================
-# CU-01: Inicio de sesión.
-LOGIN_URL = "/login/"
-# T007: Cumplimiento del Prototipo UI (Dashboard funcional).
-LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/login/"
-
-# (Ya configurado arriba en CORS_ALLOWED_ORIGINS)
+# Se eliminan las redirecciones a vistas HTML (Arquitectura Híbrida)
+# El flujo de navegación ahora es responsabilidad exclusiva del Frontend (React/Flutter)
+LOGIN_URL = None
+LOGIN_REDIRECT_URL = None
+LOGOUT_REDIRECT_URL = None

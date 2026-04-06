@@ -1,29 +1,20 @@
-import axios from 'axios';
+import apiClient from '../api/axiosConfig';
 
-const API_URL = 'http://127.0.0.1:8000/api/pacientes/';
+const pacienteService = {
+    // T014: Listar pacientes usando el cliente centralizado (Requerido para el Dashboard)
+    getPacientes: async () => {
+        const response = await apiClient.get('/pacientes/');
+        return response.data;
+    },
 
-const registrarPaciente = async (formData) => {
-    // 1. Intentamos obtener el token
-    const token = localStorage.getItem('userToken'); 
-
-    // 2. Validación de seguridad "Client-Side"
-    // Evita enviar peticiones basura al servidor si no hay sesión
-    if (!token) {
-        throw new Error("Sesión expirada o inválida. Por favor, vuelva a ingresar.");
+    // CU-02: Registrar paciente
+    registrarPaciente: async (formData) => {
+        // Nota de Arquitectura: Ya no verificamos el token ni los headers manualmente aquí.
+        // El interceptor de apiClient (axiosConfig) se encarga de inyectar el JWT 
+        // para el aislamiento Multi-tenant (RF-29).
+        const response = await apiClient.post('/pacientes/registrar/', formData);
+        return response.data;
     }
-
-    // 3. Petición formal a la API
-    // RF-29: El backend usa este token para aplicar el aislamiento Multi-tenant
-    const response = await axios.post(`${API_URL}registrar/`, formData, {
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    return response.data;
 };
-
-const pacienteService = { registrarPaciente };
 
 export default pacienteService;

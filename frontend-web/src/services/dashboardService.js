@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-// URL base apuntando a tu backend de Django
-const API_URL = 'http://127.0.0.1:8000/api/dashboard/';
+import apiClient from '../api/axiosConfig';
 
 const dashboardService = {
     /**
@@ -9,23 +6,15 @@ const dashboardService = {
      * Obtiene el conteo de pacientes, citas y estado del sistema.
      */
     getMetrics: async () => {
-        const token = localStorage.getItem('userToken');
-        
         try {
-            const response = await axios.get(API_URL, {
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            // Retornamos los datos (total_pacientes, citas_hoy, etc.)
+            // LLAMADA LIMPIA: apiClient ya sabe a qué IP apuntar y pone el Token automáticamente
+            const response = await apiClient.get('/dashboard/');
             return response.data;
             
         } catch (error) {
-            console.error("Error en dashboardService:", error.response?.data || error.message);
+            console.error("Error en dashboardService:", error);
             
-            // Si falla, devolvemos valores por defecto para que el Front no se rompa
+            // Graceful Degradation: Si falla, devolvemos 0s para que la pantalla no se quede en blanco
             return {
                 total_pacientes: 0,
                 citas_hoy: 0,

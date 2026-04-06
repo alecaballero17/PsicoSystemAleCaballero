@@ -4,7 +4,6 @@ Configuración de URLs y enrutador principal de PsicoSystem SI2.
 
 from django.contrib import admin
 from django.urls import path
-from django.contrib.auth import views as auth_views
 
 # Componentes para Seguridad Stateless (Sprint 1)
 from rest_framework_simplejwt.views import (
@@ -36,13 +35,18 @@ urlpatterns = [
     # MÓDULO: ADMINISTRACIÓN Y AUTENTICACIÓN (SPRINT 0)
     # --------------------------------------------------------------------------
     path("admin/", admin.site.urls),
-    # RNF-03: Seguridad de Acceso (Administración interna)
-    path("login/", auth_views.LoginView.as_view(template_name="core/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    # NOTA DE INGENIERÍA: Las rutas "login/" y "logout/" de Django MVC fueron removidas
+    # para consolidar la Arquitectura Híbrida hacia una Pure REST (Causa Raíz #5).
     # T009: DOCUMENTACIÓN API (OpenAPI 3)
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/docs/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    path(
+        "api/docs/swagger/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/docs/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"
+    ),
     # --------------------------------------------------------------------------
     # MÓDULO: CAPA API REST (RESOLUCIÓN INCUMPLIMIENTO #1 Y #3)
     # --------------------------------------------------------------------------
