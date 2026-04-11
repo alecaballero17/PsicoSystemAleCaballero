@@ -1,11 +1,9 @@
+# [SPRINT 1 - T011] Serializer JWT personalizado con inyección de metadatos.
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Trazabilidad: RF-01 (JWT), RF-28 (Roles), RF-29 (Multi-tenant)
-    Inyecta metadatos del usuario en la respuesta del Login para optimizar el Frontend.
-    """
+    """[SPRINT 1 - T011] [RF-01] [RF-28] [RF-29] Inyecta rol y clínica en la respuesta JWT."""
 
     def validate(self, attrs):
         data = super().validate(attrs)

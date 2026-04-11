@@ -1,3 +1,6 @@
+# [SPRINT 1 - T011] Core de Seguridad JWT: Vistas de autenticación stateless.
+# [SPRINT 1 - T022] Blacklisting de Tokens: Logout con revocación.
+# [SPRINT 1 - T023] Logging y Auditoría: Trazas de eventos de acceso (RF-30).
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,21 +9,23 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-# ✅ IMPORTACIÓN DIRECTA PARA EVITAR IMPORT CIRCULAR
 from core.serializers.usuario_serializer import UsuarioSerializer
 from .jwt_serializers import CustomTokenObtainPairSerializer
 
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# CAPA API: AUTENTICACIÓN Y PERFIL
+# CAPA API: AUTENTICACIÓN Y PERFIL [SPRINT 1 - T011] [RF-01] [CU-01]
 # ==============================================================================
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """[SPRINT 1 - T011] [RF-01] [CU-01] Login JWT con inyección de rol y clínica."""
+
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        # [SPRINT 1 - T023] [RF-30] Registro de evento de acceso
         logger.info(f"AUTH: Intento de login - Usuario: {request.data.get('username')}")
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
@@ -31,6 +36,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class LogoutAPIView(APIView):
+    """[SPRINT 1 - T022] [CU-04] Terminación de sesión con blacklist de refresh token."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -56,6 +63,8 @@ class LogoutAPIView(APIView):
 
 
 class MeAPIView(APIView):
+    """[SPRINT 1 - T011] [RF-03] Perfil del usuario autenticado."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

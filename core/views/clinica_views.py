@@ -1,3 +1,6 @@
+# [SPRINT 1 - T024] Registro de Clínica (Tenant): Alta de nuevas clínicas.
+# [SPRINT 1 - T017] CRUD de Psicólogos: Gestión de usuarios por clínica.
+# [RF-29] Aislamiento SaaS | [RF-28] RBAC | [CU-25]
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,12 +12,14 @@ from core.security.permissions import IsAdmin
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# CAPA API: ADMINISTRACIÓN (TENANTS Y USUARIOS)
+# CAPA API: ADMINISTRACIÓN (TENANTS Y USUARIOS) [SPRINT 1 - T024] [T017]
 # ==============================================================================
 
 
 class ClinicaCreateAPIView(APIView):
-    permission_classes = [IsAdmin]
+    """[SPRINT 1 - T024] [CU-25] [RF-29] Registra un nuevo tenant (clínica)."""
+
+    permission_classes = [IsAdmin]  # [SPRINT 1 - T018] RBAC: Solo admins
 
     def post(self, request):
         serializer = ClinicaSerializer(data=request.data)
@@ -26,7 +31,9 @@ class ClinicaCreateAPIView(APIView):
 
 
 class UsuarioCreateAPIView(APIView):
-    permission_classes = [IsAdmin]
+    """[SPRINT 1 - T017] [RF-04] [RF-28] Registro de psicólogos vinculados al tenant."""
+
+    permission_classes = [IsAdmin]  # [SPRINT 1 - T018] RBAC: Solo admins
 
     def post(self, request):
         serializer = UsuarioSerializer(data=request.data)

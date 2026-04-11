@@ -49,14 +49,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # [SPRINT 0 - T008] [RNF-05] CORS habilitado para compatibilidad multiplataforma
+    "corsheaders.middleware.CorsMiddleware",  # [SPRINT 0 - T008] [RNF-05] CORS
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",  # [RNF-03] Seguridad contra ataques CSRF.
+    "django.middleware.csrf.CsrfViewMiddleware",  # [RNF-03] CSRF
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.security.audit_middleware.AuditLogMiddleware",  # [SPRINT 1 - T023] [RF-30] Auditoría
 ]
 
 ROOT_URLCONF = "psicosystem.urls"
@@ -187,3 +188,70 @@ STATIC_URL = "static/"
 LOGIN_URL = None
 LOGIN_REDIRECT_URL = None
 LOGOUT_REDIRECT_URL = None
+
+# ==============================================================================
+# SECCIÓN: LOGGING Y AUDITORÍA [SPRINT 1 - T023] [RF-30]
+# ==============================================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "audit": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "audit",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "audit.log",
+            "formatter": "audit",
+        },
+    },
+    "loggers": {
+        "audit": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "core": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
+
+# ==============================================================================
+# SECCIÓN: CORREO ELECTRÓNICO [SPRINT 1 - T020] [CU-03]
+# ==============================================================================
+# [SPRINT 1 - T020] Módulo SMTP para recuperación de contraseñas.
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL", default="noreply@psicosystem.com"
+)
+
+# ==============================================================================
+# SECCIÓN: SEGURIDAD AVANZADA [SPRINT 1 - T026] [RNF-03]
+# ==============================================================================
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True  # [T026] Protección XSS
+    SECURE_CONTENT_TYPE_NOSNIFF = True  # [T026] Prevenir MIME sniffing
+    X_FRAME_OPTIONS = "DENY"  # [T026] Prevenir clickjacking
+    SECURE_SSL_REDIRECT = True  # [T026] Forzar HTTPS
+    SESSION_COOKIE_SECURE = True  # [T026] Cookies solo via HTTPS
+    CSRF_COOKIE_SECURE = True  # [T026] CSRF cookie segura
+    SECURE_HSTS_SECONDS = 31536000  # [T026] HSTS por 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

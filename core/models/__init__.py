@@ -3,3 +3,4 @@ from .clinica import Clinica
 from .usuario import Usuario
 from .paciente import Paciente
 from .cita import Cita
+from .suscripcion import PlanSuscripcion, Suscripcion  # [SPRINT 1 - T025]

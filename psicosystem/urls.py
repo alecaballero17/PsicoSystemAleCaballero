@@ -1,11 +1,13 @@
 """
 Configuración de URLs y enrutador principal de PsicoSystem SI2.
+[SPRINT 0 - T001] [SPRINT 0 - T009] Arquitectura REST + Documentación OpenAPI.
+[SPRINT 1 - T011] [T014] [T017] [T022] [T024] Endpoints de negocio.
 """
 
 from django.contrib import admin
 from django.urls import path
 
-# Componentes para Seguridad Stateless (Sprint 1)
+# [SPRINT 1 - T011] Componentes para Seguridad Stateless
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -15,20 +17,22 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-# ✅ 1. Importación de controladores de LÓGICA DE NEGOCIO (core/views)
+# [SPRINT 0 - T008] [SPRINT 1 - T014] [T024] Importación de controladores de negocio
 from core.views import (
-    DashboardAPIView,  # T008: Arquitectura de Servicios
+    DashboardAPIView,  # [SPRINT 1] Métricas del dashboard
     PacienteCreateAPIView,
-    PacienteListAPIView,  # <--- NUEVO: Para alimentar la tabla de React
+    PacienteListAPIView,  # [SPRINT 1 - T014] Listado de pacientes para React
     ClinicaCreateAPIView,
     UsuarioCreateAPIView,
 )
 
-# ✅ 2. Importación de controladores de SEGURIDAD (core/security)
+# [SPRINT 1 - T011] [T018] [T019] [T022] Importación de controladores de seguridad
 from core.security import (
     CustomTokenObtainPairView,
     LogoutAPIView,
     MeAPIView,
+    PasswordResetRequestAPIView,  # [SPRINT 1 - T019] [T020]
+    PasswordResetConfirmAPIView,  # [SPRINT 1 - T019] [T020]
 )
 
 # ==============================================================================
@@ -54,16 +58,20 @@ urlpatterns = [
     # --------------------------------------------------------------------------
     # MÓDULO: CAPA API REST (RESOLUCIÓN INCUMPLIMIENTO #1 Y #3)
     # --------------------------------------------------------------------------
-    # RF-01 (Autenticación JWT) | T011: Seguridad stateless.
+    # [SPRINT 1 - T011] [RF-01] [CU-01] Autenticación JWT stateless.
     path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("api/auth/logout/", LogoutAPIView.as_view(), name="api_logout"),
-    path("api/auth/me/", MeAPIView.as_view(), name="api_me"),
-    # Servicios de Escritura (Registro vía JSON)
+    path("api/auth/logout/", LogoutAPIView.as_view(), name="api_logout"),  # [SPRINT 1 - T022] [CU-04]
+    path("api/auth/me/", MeAPIView.as_view(), name="api_me"),  # [SPRINT 1 - T011] [RF-03]
+    # [SPRINT 1 - T019] [T020] [CU-03] Recuperación de contraseña
+    path("api/auth/password-reset/", PasswordResetRequestAPIView.as_view(), name="api_password_reset"),
+    path("api/auth/password-reset/confirm/", PasswordResetConfirmAPIView.as_view(), name="api_password_reset_confirm"),
+    # [SPRINT 1 - T024] [CU-25] Registro de clínicas
     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
+    # [SPRINT 1 - T017] [RF-04] Registro de psicólogos
     path("api/usuarios/", UsuarioCreateAPIView.as_view(), name="api_registrar_usuario"),
     # --- SECCIÓN CRÍTICA PARA REACT ---
-    # T008: Dashboard JSON (Métricas)
+    # [SPRINT 1] Dashboard JSON (Métricas)
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
     # T014: LISTAR PACIENTES (Este es el que llama tu tabla de React con axios.get)
     path("api/pacientes/", PacienteListAPIView.as_view(), name="api_pacientes_list"),

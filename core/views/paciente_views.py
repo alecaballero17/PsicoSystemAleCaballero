@@ -1,3 +1,5 @@
+# [SPRINT 1 - T014] Endpoints de Registro: Persistencia y serialización de pacientes.
+# [RF-02] Registro de Pacientes | [RF-29] Aislamiento SaaS | [CU-02]
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
