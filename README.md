@@ -1,125 +1,82 @@
-# 🧠 PsicoSystem - Hub de Gestión Clínica para Psicología
+# 🧠 PsicoSystem - Arquitectura Modular y SaaS Multi-tenant
 
-![PsicoSystem Architecture](https://img.shields.io/badge/Architecture-Clean%20%7C%20RESTful-2ea44f)
-![Status](https://img.shields.io/badge/Status-Beta%20V1.0-blue)
-![Django](https://img.shields.io/badge/Backend-Django%20Rest%20Framework-092E20?logo=django)
-![React](https://img.shields.io/badge/Web-React.js-61DAFB?logo=react)
-![Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B?logo=flutter)
+Bienvenido al repositorio oficial del proyecto **PsicoSystem**, un sistema de gestión clínica psiquiátrica y psicológica estructurado con los más estrictos estándares de ingeniería de software (SI2). 
 
-## 📌 Descripción del Proyecto (SI2)
-**PsicoSystem** es un sistema ERP en la nube (SaaS Multi-tenant) diseñado para centralizar la gestión de pacientes y agendas de múltiples clínicas psicológicas de forma aislada y segura. Cuenta con una API robusta, un portal administrativo Web, y una App Móvil para acceso de pacientes.
+Este documento ha sido generado para la Defensa Técnica y detalla las decisiones arquitectónicas implementadas para garantizar la **separación de responsabilidades**, **escalabilidad**, y **trazabilidad estricta**.
 
 ---
 
-## 🏗️ Arquitectura Actual vs. Nueva Propuesta Clean Module
+## 🏗 Evolución de la Arquitectura
 
-Para la materia de **Sistemas de Información 2 (SI2)**, el sistema evolucionó de un **monolito estándar (MVC)** a una **arquitectura en capas (Clean Module)** enfocada en la segmentación atómica de responsabilidades y la alta escalabilidad.
+### 🛑 Estado Anterior (Monolito Acoplado)
+Inicialmente, el proyecto contaba con estructuras genéricas que dificultaban la mantenibilidad y promovían el código espagueti:
+- **Backend**: Todo centralizado en una capeta general `core/` donde los modelos, vistas, serializers y lógica compartían espacio sin un límite claro.
+- **Frontend**: Componentes y vistas aglomerados en `src/` sin distinción entre UI, reglas de negocio o llamadas HTTP.
+- **Mobile**: Lógica de red y de UI fuertemente acoplada en un solo conjunto principal.
 
-### 🏛️ 1. Arquitectura Actual (Monolito Base)
-Este diseño nos permitió tener un despliegue MVP durante el **Sprint 0** con lógica funcional aglomerada.
+### ✅ Estado Actual (Modularización Extrema y Domain-Driven)
+Para resolver la deuda técnica e implementar un verdadero ecosistema **SaaS Multi-tenant**, la aplicación ha sido reestructurada basándose en principios de **Clean Architecture**:
+
+#### 1. Backend (Django + PostgreSQL)
+Dividido por responsabilidad funcional y seguridad:
 ```text
-psicosystem/         <-- Configuraciones Core, URLs principales y entornos
-core/                <-- Módulo Principal (Monolito)
- ┣ migrations/       <-- Tracking de base de datos
- ┣ models.py         <-- Modelos (Clinica, Usuario, Paciente, Cita) todo junto
- ┣ serializers.py    <-- Transformadores de Data Serializada
- ┣ views.py          <-- Toda la lógica de Negocio Web y API
- ┗ permissions.py    <-- Control centralizado de Token/Roles
+core/
+├── admin/          # Configuración del panel de control de Django
+├── models/         # (Data Object Layer) - Entidades separadas: usuario.py, clinica.py...
+├── serializers/    # (DTO Layer) - Transformación de datos y validaciones
+├── views/          # (Controller Layer) - Endpoints API REST agnósticos al UI
+└── security/       # (Security Layer) - RBAC, Permisos y Autenticación JWT Centralizada
 ```
-*Problema*: Dificultad para mantener miles de rutas y escalar sin conflictos debido al sobre-acoplamiento de funciones de `Auth`, `Pacientes`, y `Citas` en archivos únicos (`views.py` y `models.py`).
 
-### 🚀 2. Nueva Arquitectura Propuesta (Clean Architecture y Domain-Driven Design)
-Divide y vencerás. Cada archivo se ocupa de una única entidad o responsabilidad.
+#### 2. Frontend Web (React)
+Diseño Atómico y Separation of Concerns:
 ```text
-psicosystem/         <-- Configuraciones (Env, Settings, URLs Globales)
-core/                <-- Despliegue Segmentado
- ┣ admin/            <-- Registro de panel administrativo dividido
- ┣ models/           <-- Persistencia de Base de Datos
- ┃ ┣ __init__.py
- ┃ ┣ clinica.py      <-- Módulo SaaS
- ┃ ┣ usuario.py      <-- Módulo Seguridad
- ┃ ┣ paciente.py     <-- Módulo Negocio
- ┃ ┗ cita.py         <-- Módulo Transaccional
- ┣ views/            <-- Endpoints y Controladores REST aislados
- ┃ ┣ __init__.py
- ┃ ┣ auth_views.py       <-- Login, Tokens
- ┃ ┣ clinica_views.py    <-- Tenants
- ┃ ┣ paciente_views.py   <-- CRUD Pacientes
- ┃ ┗ dashboard_views.py  <-- Metadatos
- ┣ serializers/      <-- Formateo I/O
- ┃ ┣ __init__.py
- ┃ ┣ auth_serializer.py
- ┃ ┣ clinica_serializer.py
- ┃ ┗ ...
- ┗ security/         <-- Core Defense y RBAC
-   ┣ __init__.py
-   ┣ permissions.py  <-- Capa Roles (IsAdmin, IsPsicologo)
-   ┗ decorators.py
+src/
+├── api/            # Configuración base de Axios (Tokens, Interceptors)
+├── components/     # UI Reutilizable (Botones, inputs genéricos)
+├── pages/          # Vistas de presentación completas (Dashboard, Login)
+├── services/       # Reglas de negocio y fetching (pacienteService.js, etc.)
+└── context/        # Estado global e inyección de dependencias (AuthContext.js)
 ```
 
-### 💻 Frontend (Estructura Definida)
-El entorno React.js (**`frontend-web`**) ya funciona bajo este estándar de separación óptima:
-*   `api/`: Instancia de Axios con inyección de JWT por interceptores.
-*   `services/`: Central de llamadas por entidad (ej. `pacienteService.js`).
-*   `pages/`: Vistas estructurales (Login, Dashboard, Formulario Paciente).
-*   `components/`: Componentes minificados y atómicos (Navbar, Inputs).
-*   `context/`: Manejo de Estado Global de Autenticación.
-
-### 📱 Mobile (Estructura Definida)
-Flutter (**`mobile-app`**) diseñado por Features/Layers:
-*   `config/`: Inicializadores y Variables de Entorno `.env`.
-*   `models/`: Mapeo de Clases fuertemente tipadas de Dart a JSON.
-*   `screens/`: Pantallas principales de interfaz al Usuario/Paciente.
-*   `services/`: Repositorio (API Calls).
-*   `widgets/`: Componentes UI reutilizables (Botones, Textfields).
+#### 3. Mobile App (Flutter)
+Estructura MVVM / Modular State:
+```text
+lib/
+├── config/         # Variables de entorno e IPs (api_config.dart)
+├── models/         # Serialización JSON (Data classes)
+├── screens/        # Vistas y flujos de pantalla
+├── services/       # Conexiones API asíncronas
+└── widgets/        # Componentes UI reutilizables
+```
 
 ---
 
-## 🎯 Trazabilidad al Marco Metodológico (Sprints 0 y 1)
+## 🔐 Matriz de Requerimientos y Seguridad
 
-### Sprint 0 (Infraestructura):
-*   **T001 - T004**: Entornos levantados. Bases de datos ligadas, repositorios sincronizados.
-*   **T005 - T006**: MVP Inicial definido.
-*   **T007 - T008**: Prototipos y API conectadas (CORS y PostgreSQL funcionando).
-*   **T009**: Estándar Swagger (drf-spectacular activo).
-
-### Sprint 1 (Autenticación y Registros Base):
-*   **T010 - T011**: Login y Autenticación Criptográfica JWT totalmente operativo (AuthBearer en headers).
-*   **T012**: Ingreso Multiplataforma (Móvil).
-*   **T013 - T014**: Registro de pacientes interconectados por API segregando la data del usuario según su `Clínica` (SaaS tenant).
-
-### 🏆 Funcionalidades Avances
-El equipo implementó antes de lo previsto métricas administrativas reales de Dashboard multi-tenants y un componente robusto `Logout` que introduce a Tokens de tipo *Blacklist* para seguridad incrementada, cubriendo el esquema de **Seguridad de Alta Confiabilidad (RNF-03)** en etapa temprana y creación de `Clinicas`.
-
-### 🚧 Bloqueantes o En Progreso
-Restan las vistas (`views/`) e interfaces gráficas para gestionar completamente el flujo final de **Citas**. El modelo persistente existe, pero las peticiones no han sido expuestas gráficamente en todos los ecosistemas requeridos.
+El sistema está alineado con un enfoque **SaaS Multi-tenant**. 
+- **RF-01 (Autenticación JWT)**: Control de acceso sin estado (SimpleJWT + Cookies/LocalStorage).
+- **RF-28 (RBAC)**: Manejo de jerarquías (`ADMIN`, `PSICOLOGO`, `PACIENTE`).
+- **RF-29 (Data Isolation)**: Cada modelo de negocio tiene un `ForeignKey` obligatorio hacia la entidad `Clinica`. Un tenant no puede acceder a los datos de otro.
 
 ---
 
-## 🔐 Pilares Técnicos Implementados
-1.  **Aislamiento SaaS Multi-tenant**: Separación física y lógica de información donde los datos de una clínica local o un psicólogo jamás cruzan con los de otra institución gracias a reglas en `models.py` (ForeingKeys obligatorias) y filtros por petición instanciada (`request.user.clinica`).
-2.  **Stateless API JWT**: Tokens JSON estandarizados permiten que tanto React como Flutter llamen a Django al mismo tiempo sin colapsar las sesiones en caché.
-3.  **Roles (RBAC)**: Se valida severamente la acción del controlador dictando si pertenece al grupo de Administrador global o simple receptor/psicólogo.
+## 🚀 Flujo de Despliegue para Evaluación (SI2)
 
-### 🛠️ Puesta en Marcha (DevMode)
-**Backend:**
-```bash
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-python manage.py runserver
-```
+### Backend
+1. Activar entorno virtual: `source venv/bin/activate` (Linux/Mac) o `venv\Scripts\activate` (Windows).
+2. Instalar dependencias: `pip install -r requirements.txt`.
+3. Iniciar servidor API: `python manage.py runserver`.
 
-**Frontend:**
-```bash
-cd frontend-web
-npm install
-npm start
-```
+### Frontend Web
+1. Ir a `frontend-web/`.
+2. Instalar módulos: `npm install`.
+3. Levantar React: `npm start`.
 
-**Mobile:**
-```bash
-cd mobile-app
-flutter pub get
-flutter run
-```
+### Mobile
+1. Ir a `mobile-app/`.
+2. Habilitar la lectura de `.env` en `pubspec.yaml` e instalar variables: `flutter pub get`.
+3. Levantar app: `flutter run`.
+
+---
+*Documentación generada y auditada rigurosamente para el aseguramiento de calidad del Ciclo 1 (SI2).*

@@ -15,13 +15,17 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-# Importación de controladores de lógica de negocio y API
+# ✅ 1. Importación de controladores de LÓGICA DE NEGOCIO (core/views)
 from core.views import (
     DashboardAPIView,  # T008: Arquitectura de Servicios
     PacienteCreateAPIView,
     PacienteListAPIView,  # <--- NUEVO: Para alimentar la tabla de React
     ClinicaCreateAPIView,
     UsuarioCreateAPIView,
+)
+
+# ✅ 2. Importación de controladores de SEGURIDAD (core/security)
+from core.security import (
     CustomTokenObtainPairView,
     LogoutAPIView,
     MeAPIView,

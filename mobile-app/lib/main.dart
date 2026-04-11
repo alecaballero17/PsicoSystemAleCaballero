@@ -1,5 +1,7 @@
+// [SPRINT 0 - T002] Stack Tecnológico: Flutter como framework móvil.
+// [SPRINT 0 - T001] Arquitectura desacoplada: App móvil independiente del Backend.
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // [SPRINT 0 - T004] [RNF-03] Variables de entorno
 import 'screens/login_screen.dart'; // Importamos la primera pantalla
 
 Future<void> main() async {

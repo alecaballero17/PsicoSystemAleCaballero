@@ -1,7 +1,9 @@
+# [SPRINT 0 - T002] Validación del Stack Tecnológico: Dependencias Backend
+# [RNF-08] Mantenibilidad: Versiones fijadas para reproducibilidad.
 Django==6.0.3
-django-cors-headers==4.9.0
-djangorestframework==3.17.1
-djangorestframework_simplejwt==5.5.1
-drf-spectacular==0.29.0
-psycopg2-binary==2.9.11
-python-decouple==3.8
+django-cors-headers==4.9.0          # [SPRINT 0 - T008] [RNF-05] Compatibilidad CORS
+djangorestframework==3.17.1         # [SPRINT 0 - T002] Stack DRF
+djangorestframework_simplejwt==5.5.1 # [RNF-03] Autenticación JWT
+drf-spectacular==0.29.0             # [SPRINT 0 - T009] Documentación OpenAPI
+psycopg2-binary==2.9.11             # [SPRINT 0 - T002] Driver PostgreSQL
+python-decouple==3.8                # [RNF-03] Variables de entorno seguras

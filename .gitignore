@@ -1,9 +1,9 @@
-# Entornos Virtuales (Seguridad T004)
+# [SPRINT 0 - T003] [SPRINT 0 - T004] Gestión de Versiones y Entornos Virtuales
 venv/
 venvpython/
 core/venv/
 
-# Credenciales y Configuración (RNF-03)
+# [SPRINT 0 - T003] [RNF-03] Credenciales y Configuración excluidas del repositorio
 .env
 .vscode/
 *.log
@@ -13,7 +13,7 @@ __pycache__/
 *.pyc
 db.sqlite3
 
-# Acceso rápido a subproyectos (T010, T012)
+# [SPRINT 0 - T003] Acceso rápido a subproyectos (dependencias excluidas del versionamiento)
 **/node_modules/
 **/build/
 **/.env
