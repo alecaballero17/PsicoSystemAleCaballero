@@ -1,3 +1,8 @@
+"""
+[SPRINT 1 - T024] Registro de Clínica (Tenant): Serialización del modelo organizacional.
+[RF-29] Aislamiento SaaS: Expone los campos necesarios para el alta de un nuevo Tenant.
+[CU-25] Registro de Nuevas Clínicas: Motor de validación del formulario de alta.
+"""
 from rest_framework import serializers
 from core.models import Clinica
 
@@ -18,6 +23,7 @@ class ClinicaSerializer(serializers.ModelSerializer):
             "direccion",
             "telefono",
             "email_contacto",
+            "logo_url",
             "plan_suscripcion",
         ]
         read_only_fields = ["id"]

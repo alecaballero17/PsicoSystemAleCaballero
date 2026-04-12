@@ -1,4 +1,4 @@
-# [SPRINT 0 - T001] Definición de la arquitectura: Módulo 'core' como app principal.
+"""[SPRINT 0 - T001] Definición de la arquitectura: Módulo 'core' como app principal."""
 from django.apps import AppConfig
 
 

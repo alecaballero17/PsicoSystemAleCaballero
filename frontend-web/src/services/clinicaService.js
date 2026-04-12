@@ -6,7 +6,7 @@ const clinicaService = {
     registrarClinica: async (clinicaData) => {
         try {
             // apiClient inyecta automáticamente el token JWT
-            const response = await apiClient.post('/clinicas/', clinicaData);
+            const response = await apiClient.post('clinicas/', clinicaData);
             return response.data;
         } catch (error) {
             // Capturamos el error en la capa de servicio antes de mandarlo a la UI

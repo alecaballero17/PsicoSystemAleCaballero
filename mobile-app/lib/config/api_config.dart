@@ -13,4 +13,9 @@ class ApiConfig {
   static String get pacientesRegistrar => '$baseUrl/pacientes/registrar/';
   static String get dashboard => '$baseUrl/dashboard/';
   static String get me => '$baseUrl/auth/me/';
+  
+  // [SPRINT 1 - T015] Endpoints Públicos de Autogestión
+  static String get clinicas => '$baseUrl/clinicas/';
+  static String get pacientesRegistroPublico => '$baseUrl/pacientes/registro-publico/';
+  static String get associateClinic => '$baseUrl/pacientes/me/associate_clinic/';
 }

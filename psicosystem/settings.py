@@ -7,7 +7,14 @@ del servidor Backend (Django REST), separado del Frontend (React) y Móvil (Flut
 
 from pathlib import Path
 from datetime import timedelta
-from decouple import config  # [SPRINT 0 - T001] [RNF-03] Seguridad de credenciales vía variables de entorno
+import os
+
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+# [SPRINT 0 - T001] [RNF-03] Seguridad de credenciales vía variables de entorno
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,10 +32,11 @@ DEBUG = config("DEBUG", default=True, cast=bool)  # [SPRINT 0 - T004] Control po
 # SECCIÓN: SEGURIDAD DE RED Y HOSTS (RNF-01 | RNF-03 | SPRINT 1)
 # ==============================================================================
 # Leemos la IP del .env para el día de la defensa (Hotspot/Wi-Fi)
-SERVER_IP = config("SERVER_IP", default="127.0.0.1")  # [SPRINT 0 - T004] [RNF-03] IP configurable por entorno
+# [SPRINT 0 - T004] [RNF-03] IP configurable por entorno
+SERVER_IP = config("SERVER_IP", default="127.0.0.1")
 
-# [SPRINT 0 - T001] [RNF-03] Solo permitimos tráfico local y la IP del servidor de demostración.
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", SERVER_IP]
+# [SPRINT 0 - T001] [RNF-03] Soporte Servidores Cloud y Desarrollo
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=f"localhost,127.0.0.1,{SERVER_IP}").split(',')
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
@@ -51,6 +59,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # [SPRINT 0 - T008] [RNF-05] CORS
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # [RENDER] Servir estáticos
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # [RNF-03] CSRF
@@ -116,7 +125,8 @@ WSGI_APPLICATION = "psicosystem.wsgi.application"
 # ==============================================================================
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",  # [SPRINT 0 - T002] Stack: PostgreSQL seleccionado
+        # [SPRINT 0 - T002] Stack: PostgreSQL seleccionado
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "db_psicosystem",
         "USER": "postgres",
         "PASSWORD": config("DB_PASSWORD"),  # [RNF-03] Extraído de forma segura del .env
@@ -124,6 +134,14 @@ DATABASES = {
         "PORT": "5432",
     }
 }
+
+# [RENDER NUBE] Captación nativa de base de datos desde URL si existe
+if dj_database_url and config("DATABASE_URL", default=""):
+    DATABASES["default"] = dj_database_url.config(
+        default=config("DATABASE_URL"),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 # ==============================================================================
 # SECCIÓN: CONFIGURACIÓN API REST Y JWT (RF-01 | T011 | T008 | SPRINT 1)
@@ -136,7 +154,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",  # RNF-03: Restricción de acceso global.
     ),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # [SPRINT 0 - T009] Documentación de API
+    # [SPRINT 0 - T009] Documentación de API
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # T009: Configuración de OpenAPI
@@ -178,7 +197,11 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# [RENDER] Archivos persistentes gestionados por WhiteNoise
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ==============================================================================
 # SECCIÓN: REDIRECCIONES DE FLUJO (SOLUCIÓN T007 | SPRINT 0)
 # CORRECCIÓN CAUSA RAÍZ #5: Arquitectura Pure REST

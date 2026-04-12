@@ -1,8 +1,6 @@
-# [SPRINT 1 - T025] Gestión de Suscripciones SaaS.
-# [CU-24] Gestión de Planes y Suscripciones SaaS.
 """
-Modelo de Suscripción para el sistema Multi-tenant.
-Define los planes disponibles (Basic, Pro, Premium) y los límites de uso por clínica.
+Modelo de Suscripción para el sistema Multi-tenant de PsicoSystem SI2.
+[SPRINT 1 - T025] Gestión de Planes y Suscripciones SaaS (CU-24).
 """
 
 from django.db import models
@@ -36,12 +34,20 @@ class PlanSuscripcion(models.Model):
     )
     activo = models.BooleanField(default=True)
 
-    class Meta:
+    objects = models.Manager()
+
+    class Meta:  # pylint: disable=too-few-public-methods
+        """Metadatos de PlanSuscripcion."""
+
         verbose_name = "Plan de Suscripción"
         verbose_name_plural = "Planes de Suscripción"
 
     def __str__(self):
-        return f"{self.get_nombre_display()} - ${self.precio_mensual}/mes"
+        # get_nombre_display() es generado dinámicamente por Django para campos con choices
+        return (
+            f"{self.get_nombre_display()} - "  # pylint: disable=no-member
+            f"${self.precio_mensual}/mes"
+        )
 
 
 class Suscripcion(models.Model):
@@ -73,12 +79,20 @@ class Suscripcion(models.Model):
         help_text="Fecha de expiración de la suscripción.",
     )
 
-    class Meta:
+    objects = models.Manager()
+
+    class Meta:  # pylint: disable=too-few-public-methods
+        """Metadatos de Suscripcion."""
+
         verbose_name = "Suscripción"
         verbose_name_plural = "Suscripciones"
 
     def __str__(self):
-        return f"{self.clinica.nombre} → {self.plan.nombre} ({self.estado})"
+        # .nombre es accesible en runtime vía el descriptor de Django
+        return (
+            f"{self.clinica.nombre} → "  # pylint: disable=no-member
+            f"{self.plan.nombre} ({self.estado})"  # pylint: disable=no-member
+        )
 
     def esta_activa(self):
         """Verifica si la suscripción está vigente."""

@@ -1,3 +1,8 @@
+"""
+Módulo de modelos para la gestión de citas en PsicoSystem SI2.
+[SPRINT 0 - T005] Diseño de BD Inicial.
+"""
+
 from django.db import models
 from .paciente import Paciente  # <-- IMPORTACIÓN CLAVE
 from .usuario import Usuario  # <-- IMPORTACIÓN CLAVE

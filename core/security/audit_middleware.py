@@ -37,10 +37,13 @@ class AuditLogMiddleware:
             ip = self._get_client_ip(request)
 
             logger.info(
-                f"AUDIT | {request.method} {request.path} | "
-                f"User: {user} | IP: {ip} | "
-                f"Status: {response.status_code} | "
-                f"Duration: {duration:.3f}s"
+                "AUDIT | %s %s | User: %s | IP: %s | Status: %s | Duration: %.3fs",
+                request.method,
+                request.path,
+                user,
+                ip,
+                response.status_code,
+                duration,
             )
 
         return response

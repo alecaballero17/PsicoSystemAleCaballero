@@ -9,12 +9,13 @@ PsicoSystem SI2 — Suite de Pruebas Automatizadas.
 Cobertura objetivo: ≥ 70% en módulos Auth y Tenants.
 """
 
+import logging
+
 from django.urls import reverse
 from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.test import APITestCase
 from core.models import Clinica, Usuario, Paciente, Cita
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class ModelUnitTests(APITestCase):
     """Valida la integridad del esquema ER y las restricciones de campo."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Test Modelos",
             nit="MODEL-001",
             direccion="Av. Test 100",
@@ -114,7 +115,7 @@ class AuthJWTTests(APITestCase):
     """Valida el flujo completo de autenticación stateless (RF-01, CU-01)."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Auth",
             nit="AUTH-001",
             direccion="Av. Seguridad 200",
@@ -178,7 +179,7 @@ class LogoutBlacklistTests(APITestCase):
     """Valida la revocación de tokens JWT (CU-04, T022)."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Logout",
             nit="LOGOUT-001",
             direccion="Av. Blacklist 300",
@@ -237,7 +238,7 @@ class RBACTests(APITestCase):
     """Valida el control de acceso basado en roles (RF-28, T018)."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica RBAC",
             nit="RBAC-001",
             direccion="Av. Permisos 400",
@@ -323,7 +324,7 @@ class PacienteRegistroTests(APITestCase):
     """Valida los endpoints de registro y listado de pacientes (RF-02, CU-02)."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Pacientes",
             nit="PAC-001",
             direccion="Av. Pacientes 500",
@@ -414,10 +415,10 @@ class MultiTenantIsolationTests(APITestCase):
 
     def setUp(self):
         # Crear dos clínicas independientes
-        self.clinica_a = Clinica.objects.create(
+        self.clinica_a = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Alpha", nit="ALPHA-001", direccion="Zona Norte"
         )
-        self.clinica_b = Clinica.objects.create(
+        self.clinica_b = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Beta", nit="BETA-001", direccion="Zona Sur"
         )
         # Psicólogos en cada clínica
@@ -489,7 +490,7 @@ class ClinicaRegistroTests(APITestCase):
     """Valida el registro de nuevas clínicas/tenants (CU-25)."""
 
     def setUp(self):
-        self.clinica = Clinica.objects.create(
+        self.clinica = Clinica.objects.create(  # pylint: disable=no-member
             nombre="Clínica Admin",
             nit="ADMIN-001",
             direccion="Av. Admin 600",
@@ -518,7 +519,9 @@ class ClinicaRegistroTests(APITestCase):
         url = reverse("api_registrar_clinica")
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Clinica.objects.count(), 2)
+        self.assertEqual(
+            Clinica.objects.count(), 2  # pylint: disable=no-member
+        )
 
     def test_registrar_clinica_nit_duplicado(self):
         """[SPRINT 1 - T024] NIT duplicado es rechazado por la BD."""
@@ -528,7 +531,11 @@ class ClinicaRegistroTests(APITestCase):
         )
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + resp.data["access"])
 
-        data = {"nombre": "Otra Clínica", "nit": "ADMIN-001", "direccion": "Duplicada"}
+        data = {
+            "nombre": "Otra Clínica",
+            "nit": "ADMIN-001",
+            "direccion": "Duplicada",
+        }
         url = reverse("api_registrar_clinica")
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

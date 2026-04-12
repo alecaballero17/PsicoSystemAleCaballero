@@ -3,7 +3,7 @@ import apiClient from '../api/axiosConfig';
 const pacienteService = {
     // T014: Listar pacientes usando el cliente centralizado (Requerido para el Dashboard)
     getPacientes: async () => {
-        const response = await apiClient.get('/pacientes/');
+        const response = await apiClient.get('pacientes/');
         return response.data;
     },
 
@@ -12,7 +12,7 @@ const pacienteService = {
         // Nota de Arquitectura: Ya no verificamos el token ni los headers manualmente aquí.
         // El interceptor de apiClient (axiosConfig) se encarga de inyectar el JWT 
         // para el aislamiento Multi-tenant (RF-29).
-        const response = await apiClient.post('/pacientes/registrar/', formData);
+        const response = await apiClient.post('pacientes/registrar/', formData);
         return response.data;
     }
 };

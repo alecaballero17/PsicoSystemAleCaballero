@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// [CIERRE SPRINT 1] Flujo SaaS integrado: Login aislado.
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { loginStyles as styles } from '../styles/loginStyles'; 
@@ -10,7 +11,14 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     
     const navigate = useNavigate();
-    const { login } = useAuth(); // 2. SACAMOS LA FUNCIÓN PARA TRANSMITIR
+    const { login, user } = useAuth(); // 2. SACAMOS LA FUNCIÓN PARA TRANSMITIR
+
+    // Redirección si ya está autenticado (RBAC T018)
+    useEffect(() => {
+        if (user) {
+            navigate('/dashboard');
+        }
+    }, [user, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -24,7 +32,8 @@ const Login = () => {
             login({
                 token: localStorage.getItem('userToken'),
                 role: localStorage.getItem('userRole'),
-                name: localStorage.getItem('userName')
+                name: localStorage.getItem('userName'),
+                clinica_id: localStorage.getItem('clinica_id')
             });
 
             // 5. Redirigimos al sistema
@@ -75,6 +84,26 @@ const Login = () => {
                     >
                         {loading ? 'Verificando...' : 'Entrar al Sistema'}
                     </button>
+                    {/* [SPRINT 1 - T019] [CU-03] Enlace al flujo de recuperación de credenciales */}
+                    <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/recuperar')}
+                            style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </button>
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/')}
+                            style={{ background: 'none', border: 'none', color: '#475569', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
+                        >
+                            ← Volver al Portal Princial
+                        </button>
+                    </div>
                 </form>
                 <p style={styles.footerText}>UAGRM - Sistemas II</p>
             </div>

@@ -1,11 +1,13 @@
-# [SPRINT 1 - T018] Middleware RBAC: Control de acceso basado en roles.
-# [RF-28] Restricción de acceso a módulos por rol asignado.
+"""
+[SPRINT 1 - T018] Middleware RBAC: Control de acceso basado en roles.
+[RF-28] Restricción de acceso a módulos por rol asignado.
+"""
+
 from rest_framework.permissions import BasePermission
 
 
 class IsAdmin(BasePermission):
     """[SPRINT 1 - T018] [RF-28] Solo usuarios con rol ADMIN."""
-
 
     def has_permission(self, request, view):
         return bool(
@@ -17,7 +19,6 @@ class IsAdmin(BasePermission):
 
 class IsPsicologo(BasePermission):
     """[SPRINT 1 - T018] [RF-28] Acceso para PSICOLOGO y ADMIN."""
-
 
     def has_permission(self, request, view):
         return bool(

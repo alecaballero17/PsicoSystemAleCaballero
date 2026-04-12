@@ -1,3 +1,8 @@
+"""
+Módulo de modelo para la entidad Clínica (Tenant) en PsicoSystem SI2.
+[SPRINT 0 - T005] Persistencia organizacional.
+"""
+
 from django.db import models
 
 
@@ -12,15 +17,20 @@ class Clinica(models.Model):
     Representa a cada consultorio o clínica que contrata el SaaS.
     """
 
-    nombre = models.CharField(max_length=100)  # [SPRINT 0 - T005] Campo base del tenant
-    nit = models.CharField(max_length=20, unique=True)  # [SPRINT 0 - T005] Identificador único fiscal
-    direccion = models.TextField()  # [SPRINT 0 - T005] Ubicación física de la clínica
+    # [SPRINT 0 - T005] Campo base del tenant
+    nombre = models.CharField(max_length=100)
+    # [SPRINT 0 - T005] Identificador único fiscal
+    nit = models.CharField(max_length=20, unique=True)
+    # [SPRINT 0 - T005] Ubicación física de la clínica
+    direccion = models.TextField()
 
     # ---------------------------------------------------------
     # CORRECCIÓN CAUSA RAÍZ #3: AGREGAMOS LOS CAMPOS FALTANTES
     # ---------------------------------------------------------
     telefono = models.CharField(max_length=20, blank=True, null=True)
     email_contacto = models.EmailField(blank=True, null=True)
+    # [SPRINT 1 - RF-29] URL del Logotipo de la Institución
+    logo_url = models.URLField(max_length=500, blank=True, null=True, help_text="Logo Institucional (Tenant)")
 
     # RNF-01 (Escalabilidad): Soporte para diferentes niveles de servicio.
     PLANES = [
@@ -29,6 +39,8 @@ class Clinica(models.Model):
         ("Premium", "Premium"),
     ]
     plan_suscripcion = models.CharField(max_length=50, choices=PLANES, default="Basico")
+
+    objects = models.Manager()
 
     def __str__(self):
         return str(self.nombre)

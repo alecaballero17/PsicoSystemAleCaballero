@@ -3,7 +3,7 @@ import apiClient from '../api/axiosConfig'; // <-- IMPORTAMOS EL CLIENTE CENTRAL
 const login = async (username, password) => {
     try {
         // T011: Petición POST usando la base URL de apiClient
-        const response = await apiClient.post('/auth/login/', {
+        const response = await apiClient.post('auth/login/', {
             username: username,
             password: password,
         });
@@ -20,6 +20,13 @@ const login = async (username, password) => {
             // Asignamos el rol (RF-28)
             const role = response.data.role || 'ADMIN'; 
             localStorage.setItem('userRole', role);
+
+            // [ALINEACIÓN SPRINT 1 - RF-29] Bypass Global: Persistir Tenant ID localmente
+            if (response.data.clinica_id) {
+                localStorage.setItem('clinica_id', response.data.clinica_id);
+            } else {
+                localStorage.removeItem('clinica_id');
+            }
         }
 
         return response.data;
@@ -38,7 +45,7 @@ const logout = async () => {
         try {
             // Nota de Arquitectura: Ya no pasamos headers manuales. 
             // apiClient inyecta el 'Bearer token' automáticamente.
-            await apiClient.post('/auth/logout/', { refresh: refreshToken });
+            await apiClient.post('auth/logout/', { refresh: refreshToken });
         } catch (error) {
             console.error("Error en logout API:", error);
         }
@@ -59,7 +66,7 @@ const getCurrentUser = async () => {
     try {
         // T009: Validación de sesión persistente (Anti-huérfano)
         // Llama al endpoint /api/auth/me/ para verificar que el token es válido
-        const response = await apiClient.get('/auth/me/');
+        const response = await apiClient.get('auth/me/');
         return response.data; 
     } catch (error) {
         return null; // Si el token expiró o es inválido, devuelve null
@@ -69,7 +76,8 @@ const getCurrentUser = async () => {
 const authService = {
     login,
     logout,
-    getCurrentUser // <-- NO OLVIDES AGREGARLO AL EXPORT AQUÍ
+    getCurrentUser,
+    apiClient // <-- Exportamos el cliente para peticiones contextuales
 };
 
 export default authService;

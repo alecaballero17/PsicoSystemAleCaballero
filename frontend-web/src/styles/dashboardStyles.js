@@ -239,6 +239,20 @@ export const dashboardStyles = {
         color: '#475569', 
         cursor: 'pointer' 
     },
+    btnDeleteBase: {
+        padding: '8px',
+        backgroundColor: '#fef2f2',
+        color: '#ef4444',
+        border: '1px solid #fee2e2',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s',
+        marginLeft: 'auto'
+    },
     technicalNote: { 
         marginTop: '24px', 
         fontSize: '12px', 

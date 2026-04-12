@@ -8,7 +8,7 @@ const dashboardService = {
     getMetrics: async () => {
         try {
             // LLAMADA LIMPIA: apiClient ya sabe a qué IP apuntar y pone el Token automáticamente
-            const response = await apiClient.get('/dashboard/');
+            const response = await apiClient.get('dashboard/');
             return response.data;
             
         } catch (error) {

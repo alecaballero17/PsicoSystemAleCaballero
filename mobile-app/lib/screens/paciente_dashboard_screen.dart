@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+// [SPRINT 1 - T015] [CU-02] Flujo de Onboarding: Registro de Paciente
+import 'registro_paciente_screen.dart';
 
-// 🔥 IMPORTAMOS TU MODELO FUERTE
+// [SPRINT 1 - T012] Modelo tipado del usuario autenticado
 import '../models/user_model.dart';
 
 class PacienteDashboard extends StatefulWidget {

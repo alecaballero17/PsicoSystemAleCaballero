@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 // 1. IMPORTAMOS NUESTRO SERVICIO
 import '../services/auth_service.dart'; 
 import 'package:psicosystem_mobile/screens/paciente_dashboard_screen.dart';
+import 'package:psicosystem_mobile/screens/registro_paciente_screen.dart'; 
+import 'package:psicosystem_mobile/screens/seleccion_clinica_screen.dart'; // [RF-29]
 
 // 🔥 2. IMPORTAMOS TUS NUEVOS WIDGETS
 import '../widgets/custom_button.dart';
@@ -31,22 +33,37 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text
       );
 
-      // 🔥 TIPADO FUERTE: Accedemos a las propiedades con "punto", no con corchetes
+      // 🔥 TIPADO FUERTE: Accedemos a las propiedades con "punto"
       final role = response.role;
       final token = response.access;
+      final clinicaId = response.clinicaId; // [RF-29]
 
       // Validación de Seguridad Estricta (Solo Pacientes)
       if (role == 'PACIENTE') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PacienteDashboard(
-              token: token,
-              role: role,
-              username: _usernameController.text,
+        
+        // [ALINEACIÓN SPRINT 1 - RF-29] Lógica de Usuario Huérfano
+        if (clinicaId == null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SeleccionClinicaScreen(
+                token: token,
+                username: _usernameController.text,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PacienteDashboard(
+                token: token,
+                role: role,
+                username: _usernameController.text,
+              ),
+            ),
+          );
+        }
       } else {
         _showError('Acceso Denegado: Aplicación exclusiva para pacientes.');
       }
@@ -127,6 +144,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: const Color(0xFF2563eb),
                           onPressed: _login,
                         ),
+                    const SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegistroPacienteScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        '¿Eres nuevo? Regístrate aquí',
+                        style: TextStyle(
+                          color: Color(0xFF16a34a),
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -1,0 +1,42 @@
+# ==============================================================================
+# INFRAESTRUCTURA COMO CÓDIGO (IaC) - RENDER BLUEPRINT
+# [SPRINT FINAL] Configuración unificada BBDD + Backend + Frontend
+# ==============================================================================
+
+databases:
+  # Base de datos Serverless (PostgreSQL)
+  - name: psicosystem-db
+    databaseName: psicosystem_prod
+    user: admin
+
+services:
+  # Servidor Back-End Django
+  - type: web
+    name: psicosystem-api
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn psicosystem.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: psicosystem-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+
+  # Servidor Front-End React
+  - type: web
+    name: psicosystem-dashboard
+    env: static
+    buildCommand: "cd frontend-web && npm install && npm run build"
+    staticPublishPath: "./frontend-web/build"
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: psicosystem-api
+          envVarKey: RENDER_EXTERNAL_URL

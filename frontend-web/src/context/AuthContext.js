@@ -11,11 +11,14 @@ export const AuthProvider = ({ children }) => {
             return {
                 token,
                 role: localStorage.getItem('userRole'),
-                name: localStorage.getItem('userName')
+                name: localStorage.getItem('userName'),
+                clinica_id: localStorage.getItem('clinica_id')
             };
         }
         return null;
     });
+
+    const [tenant, setTenant] = useState({ nombre: 'PsicoSystem', logo: '' });
 
     useEffect(() => {
         const verifySession = async () => {
@@ -24,9 +27,19 @@ export const AuthProvider = ({ children }) => {
                 const validUser = await authService.getCurrentUser();
                 
                 if (!validUser) {
-                    // ¡Peligro! Token falso o expirado en el backend
                     await authService.logout(); 
                     setUser(null);
+                } else {
+                    // [ALINEACIÓN RF-29] Carga inicial de metadatos del Tenant
+                    try {
+                        const response = await authService.apiClient.get('clinica/me/');
+                        setTenant({
+                            nombre: response.data.nombre,
+                            logo: response.data.logo_url
+                        });
+                    } catch (e) {
+                        console.error("Error cargando identidad del Tenant:", e);
+                    }
                 }
             }
         };
@@ -34,6 +47,13 @@ export const AuthProvider = ({ children }) => {
         verifySession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const updateTenant = (newInfo) => {
+        setTenant({
+            nombre: newInfo.nombre,
+            logo: newInfo.logo_url || newInfo.logo
+        });
+    };
 
     const login = (userData) => {
         setUser(userData); 
@@ -45,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, tenant, updateTenant, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

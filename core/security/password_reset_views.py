@@ -7,6 +7,8 @@ Utiliza el sistema de tokens de Django para generar enlaces seguros de un solo u
 """
 
 import logging
+import smtplib
+
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -28,6 +30,7 @@ class PasswordResetRequestAPIView(APIView):
     permission_classes = [AllowAny]  # Endpoint público (el usuario no está logueado)
 
     def post(self, request):
+        """Procesa la solicitud de restablecimiento enviando un email con token seguro."""
         email = request.data.get("email")
         if not email:
             return Response(
@@ -36,12 +39,17 @@ class PasswordResetRequestAPIView(APIView):
             )
 
         try:
-            user = Usuario.objects.get(email=email)
-        except Usuario.DoesNotExist:
+            user = Usuario.objects.get(email=email)  # pylint: disable=no-member
+        except Usuario.DoesNotExist:  # pylint: disable=no-member
             # [T026] Seguridad: No revelar si el email existe o no
-            logger.warning(f"SECURITY: Intento de reset para email inexistente: {email}")
+            logger.warning(
+                "SECURITY: Intento de reset para email inexistente: %s",
+                email,
+            )
             return Response(
-                {"message": "Si el correo existe, recibirás un enlace de recuperación."},
+                {
+                    "message": "Si el correo existe, recibirás un enlace de recuperación."
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -54,18 +62,20 @@ class PasswordResetRequestAPIView(APIView):
         try:
             send_mail(
                 subject="PsicoSystem - Recuperación de Contraseña",
-                message=f"Hola {user.username},\n\n"
-                f"Has solicitado restablecer tu contraseña.\n"
-                f"Usa este enlace: {reset_url}\n\n"
-                f"Si no solicitaste esto, ignora este correo.\n"
-                f"Este enlace expira en 24 horas.",
+                message=(
+                    f"Hola {user.username},\n\n"
+                    f"Has solicitado restablecer tu contraseña.\n"
+                    f"Usa este enlace: {reset_url}\n\n"
+                    f"Si no solicitaste esto, ignora este correo.\n"
+                    f"Este enlace expira en 24 horas."
+                ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 fail_silently=False,
             )
-            logger.info(f"AUTH: Email de recuperación enviado a {email}")
-        except Exception as e:
-            logger.error(f"SMTP: Error al enviar correo a {email}: {str(e)}")
+            logger.info("AUTH: Email de recuperación enviado a %s", email)
+        except (smtplib.SMTPException, OSError) as exc:
+            logger.error("SMTP: Error al enviar correo a %s: %s", email, exc)
 
         return Response(
             {"message": "Si el correo existe, recibirás un enlace de recuperación."},
@@ -79,6 +89,7 @@ class PasswordResetConfirmAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Valida uid/token y establece la nueva contraseña."""
         uid = request.data.get("uid")
         token = request.data.get("token")
         new_password = request.data.get("new_password")
@@ -91,8 +102,8 @@ class PasswordResetConfirmAPIView(APIView):
 
         try:
             user_id = force_str(urlsafe_base64_decode(uid))
-            user = Usuario.objects.get(pk=user_id)
-        except (TypeError, ValueError, Usuario.DoesNotExist):
+            user = Usuario.objects.get(pk=user_id)  # pylint: disable=no-member
+        except (TypeError, ValueError, Usuario.DoesNotExist):  # pylint: disable=no-member
             return Response(
                 {"error": "Enlace de recuperación inválido."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -113,7 +124,10 @@ class PasswordResetConfirmAPIView(APIView):
 
         user.set_password(new_password)
         user.save()
-        logger.info(f"AUTH: Contraseña restablecida exitosamente para {user.username}")
+        logger.info(
+            "AUTH: Contraseña restablecida exitosamente para %s",
+            user.username,
+        )
 
         return Response(
             {"message": "Contraseña restablecida exitosamente."},
