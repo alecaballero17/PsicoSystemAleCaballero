@@ -36,7 +36,7 @@ DEBUG = config("DEBUG", default=True, cast=bool)  # [SPRINT 0 - T004] Control po
 SERVER_IP = config("SERVER_IP", default="127.0.0.1")
 
 # [SPRINT 0 - T001] [RNF-03] Soporte Servidores Cloud y Desarrollo
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=f"localhost,127.0.0.1,{SERVER_IP}").split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=f"localhost,127.0.0.1,{SERVER_IP},.onrender.com").split(',')
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
