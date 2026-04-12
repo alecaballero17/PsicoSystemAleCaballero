@@ -129,7 +129,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "db_psicosystem",
         "USER": "postgres",
-        "PASSWORD": config("DB_PASSWORD"),  # [RNF-03] Extraído de forma segura del .env
+        "PASSWORD": config("DB_PASSWORD", default=""),  # [RNF-03] Extraído de forma segura del .env
         "HOST": "127.0.0.1",  # [SPRINT 0 - T004] Entorno de desarrollo local
         "PORT": "5432",
     }
