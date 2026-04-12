@@ -4,6 +4,9 @@ set -o errexit
 
 echo "🔥 [RENDER NUBE] Iniciando compilación de Servidor Django PsicoSystem"
 
+# Crear directorio de logs dinámico para que FileHandler de Django no rompa
+mkdir -p logs
+
 # Instalar dependencias
 pip install -r requirements.txt
 
