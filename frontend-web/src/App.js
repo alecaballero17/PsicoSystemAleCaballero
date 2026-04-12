@@ -84,7 +84,7 @@ function App() {
                     } />
 
                     <Route path="/registro-paciente" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO']}>
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
                             <RegistroPaciente />
                         </PrivateRoute>
                     } />

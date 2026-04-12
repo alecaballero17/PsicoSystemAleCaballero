@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69470368703",
+    "project_id": "psicosystem-uagrm",
+    "storage_bucket": "psicosystem-uagrm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69470368703:android:0f88c3fccf9d782576e70a",
+        "android_client_info": {
+          "package_name": "com.example.psicosystem_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIaVU_YSZ_SWTBxIJvdf0bmr3tNhn0re0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
