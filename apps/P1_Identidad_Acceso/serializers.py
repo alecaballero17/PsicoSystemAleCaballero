@@ -24,6 +24,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["role"] = self.user.rol
         data["clinica_id"] = self.user.clinica_id
         data["username"] = self.user.username
+
+        # Disparar señal de Django para la bitácora P4 (React/Flutter login)
+        from django.contrib.auth.signals import user_logged_in
+        user_logged_in.send(sender=self.user.__class__, request=self.context.get('request'), user=self.user)
+
         return data
 
 

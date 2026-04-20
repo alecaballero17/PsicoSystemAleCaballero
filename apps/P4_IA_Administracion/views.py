@@ -5,29 +5,30 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
-from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada
+from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador
 from apps.P2_Gestion_Clinica.models import Paciente
 from apps.P3_Logistica_Citas.models import Cita
 from .models import LogAuditoria
 
-@login_required
-def dashboard_view(request):
-    clinica = request.user.clinica
+class LogAuditoriaAPIView(APIView):
+    """
+    Endpoint de bitácora exclusivo para el Administrador de la clínica.
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
 
-    total_pacientes = Paciente.objects.filter(clinica=clinica).count() if clinica else 0
-    citas_pendientes = Cita.objects.filter(
-        paciente__clinica=clinica, estado="PENDIENTE"
-    ).count() if clinica else 0
-    
-    ultimos_logs = LogAuditoria.objects.filter(usuario__clinica=clinica)[:5] if clinica else LogAuditoria.objects.none()
-
-    contexto = {
-        "total_pacientes": total_pacientes,
-        "citas_pendientes": citas_pendientes,
-        "clinica_nombre": clinica.nombre if clinica else "S/C",
-        "ultimos_logs": ultimos_logs,
-    }
-    return render(request, "P4_IA_Administracion/dashboard.html", contexto)
+    def get(self, request):
+        clinica = request.user.clinica
+        logs = LogAuditoria.objects.filter(usuario__clinica=clinica).order_by('-fecha')[:50]
+        
+        data = [
+            {
+                "fecha": log.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+                "usuario": getattr(log.usuario, "username", "Desconocido") if log.usuario else "Desconocido",
+                "accion": log.accion
+            }
+            for log in logs
+        ]
+        return Response(data, status=status.HTTP_200_OK)
 
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated, HasClinicaAsignada]
