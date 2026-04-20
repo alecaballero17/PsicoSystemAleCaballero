@@ -1,16 +1,19 @@
-# [SPRINT 0 - T002] Validación del Stack Tecnológico: Dependencias Backend
-# [RNF-08] Mantenibilidad: Versiones fijadas para reproducibilidad.
+# Núcleo de Django
 Django==6.0.3
-django-cors-headers==4.9.0          # [SPRINT 0 - T008] [RNF-05] Compatibilidad CORS
-djangorestframework==3.17.1         # [SPRINT 0 - T002] Stack DRF
-djangorestframework_simplejwt==5.5.1 # [RNF-03] Autenticación JWT
-drf-spectacular==0.29.0             # [SPRINT 0 - T009] Documentación OpenAPI
-psycopg2-binary==2.9.11             # [SPRINT 0 - T002] Driver PostgreSQL
-python-decouple==3.8                # [RNF-03] Variables de entorno seguras
 
-# ==============================================================================
-# [SOPORTE SERVIDOR NUBE (RENDER)]
-# ==============================================================================
-gunicorn==21.2.0                    # Servidor WSGI para producción
-whitenoise==6.6.0                   # Servidor de archivos estáticos ultrarrápido
-dj-database-url==2.1.0              # Captación dinámica de DB desde URL Nube
+# Base de Datos
+psycopg2==2.9.10
+dj-database-url==2.3.0
+
+# API REST y Seguridad
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
+python-decouple==3.8
+
+# Servidores Externos (Nube)
+gunicorn==23.0.0
+whitenoise==6.9.0
+
+# Complementos
+django-cors-headers==4.7.0
+django-extensions==3.2.3
