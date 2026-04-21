@@ -41,7 +41,10 @@ class ClinicaSerializer(serializers.ModelSerializer):
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ["id", "username", "email", "first_name", "last_name", "clinica", "rol"]
+        fields = [
+            "id", "username", "email", "first_name", "last_name", 
+            "clinica", "rol", "especialidad", "telefono"
+        ]
 
 
 class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
@@ -55,6 +58,8 @@ class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "especialidad",
+            "telefono",
             "password",
             "password_confirm",
         ]
@@ -190,7 +195,10 @@ class OnboardingSaaSSerializer(serializers.Serializer):
 class UsuarioAdminUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ["first_name", "last_name", "email", "rol", "is_active"]
+        fields = [
+            "first_name", "last_name", "email", "rol", "is_active", 
+            "especialidad", "telefono"
+        ]
 
     def validate_rol(self, value):
         roles_validos = {r[0] for r in Usuario.ROLES}
