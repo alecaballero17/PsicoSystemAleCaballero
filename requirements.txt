@@ -1,19 +1,20 @@
-# Núcleo de Django
+# Core Django & Framework
 Django==6.0.3
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
 
-# Base de Datos
+# Database Connectivity
 psycopg2==2.9.10
 dj-database-url==2.3.0
 
-# API REST y Seguridad
-djangorestframework==3.15.2
-djangorestframework-simplejwt==5.4.0
+# Environment & Configuration
 python-decouple==3.8
 
-# Servidores Externos (Nube)
+# Production & Middleware
 gunicorn==23.0.0
 whitenoise==6.9.0
-
-# Complementos
 django-cors-headers==4.7.0
+
+# Development Helpers
 django-extensions==3.2.3
+

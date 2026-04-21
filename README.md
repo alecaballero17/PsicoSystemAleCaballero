@@ -1,82 +1,127 @@
-# 🧠 PsicoSystem - Arquitectura Modular y SaaS Multi-tenant
+# 🧠 PsicoSystem SI2 - Gestión Clínica Profesional
 
-Bienvenido al repositorio oficial del proyecto **PsicoSystem**, un sistema de gestión clínica psiquiátrica y psicológica estructurado con los más estrictos estándares de ingeniería de software (SI2). 
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-6.0-green.svg)](https://www.djangoproject.com/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-cyan.svg)](https://flutter.dev/)
 
-Este documento ha sido generado para la Defensa Técnica y detalla las decisiones arquitectónicas implementadas para garantizar la **separación de responsabilidades**, **escalabilidad**, y **trazabilidad estricta**.
-
----
-
-## 🏗 Evolución de la Arquitectura
-
-### 🛑 Estado Anterior (Monolito Acoplado)
-Inicialmente, el proyecto contaba con estructuras genéricas que dificultaban la mantenibilidad y promovían el código espagueti:
-- **Backend**: Todo centralizado en una capeta general `core/` donde los modelos, vistas, serializers y lógica compartían espacio sin un límite claro.
-- **Frontend**: Componentes y vistas aglomerados en `src/` sin distinción entre UI, reglas de negocio o llamadas HTTP.
-- **Mobile**: Lógica de red y de UI fuertemente acoplada en un solo conjunto principal.
-
-### ✅ Estado Actual (Modularización Extrema y Domain-Driven)
-Para resolver la deuda técnica e implementar un verdadero ecosistema **SaaS Multi-tenant**, la aplicación ha sido reestructurada basándose en principios de **Clean Architecture**:
-
-#### 1. Backend (Django + PostgreSQL)
-Dividido por responsabilidad funcional y seguridad:
-```text
-core/
-├── admin/          # Configuración del panel de control de Django
-├── models/         # (Data Object Layer) - Entidades separadas: usuario.py, clinica.py...
-├── serializers/    # (DTO Layer) - Transformación de datos y validaciones
-├── views/          # (Controller Layer) - Endpoints API REST agnósticos al UI
-└── security/       # (Security Layer) - RBAC, Permisos y Autenticación JWT Centralizada
-```
-
-#### 2. Frontend Web (React)
-Diseño Atómico y Separation of Concerns:
-```text
-src/
-├── api/            # Configuración base de Axios (Tokens, Interceptors)
-├── components/     # UI Reutilizable (Botones, inputs genéricos)
-├── pages/          # Vistas de presentación completas (Dashboard, Login)
-├── services/       # Reglas de negocio y fetching (pacienteService.js, etc.)
-└── context/        # Estado global e inyección de dependencias (AuthContext.js)
-```
-
-#### 3. Mobile App (Flutter)
-Estructura MVVM / Modular State:
-```text
-lib/
-├── config/         # Variables de entorno e IPs (api_config.dart)
-├── models/         # Serialización JSON (Data classes)
-├── screens/        # Vistas y flujos de pantalla
-├── services/       # Conexiones API asíncronas
-└── widgets/        # Componentes UI reutilizables
-```
+**PsicoSystem** es una plataforma integral de gestión para clínicas psiquiátricas y psicológicas, diseñada bajo una arquitectura **SaaS Multi-tenant**. Este proyecto implementa estándares rigurosos de ingeniería de software (SI2) para garantizar escalabilidad, seguridad stateless (JWT) y una clara separación de responsabilidades.
 
 ---
 
-## 🔐 Matriz de Requerimientos y Seguridad
+## 🏗️ Arquitectura del Sistema
 
-El sistema está alineado con un enfoque **SaaS Multi-tenant**. 
-- **RF-01 (Autenticación JWT)**: Control de acceso sin estado (SimpleJWT + Cookies/LocalStorage).
-- **RF-28 (RBAC)**: Manejo de jerarquías (`ADMIN`, `PSICOLOGO`, `PACIENTE`).
-- **RF-29 (Data Isolation)**: Cada modelo de negocio tiene un `ForeignKey` obligatorio hacia la entidad `Clinica`. Un tenant no puede acceder a los datos de otro.
+El ecosistema se divide en tres capas principales que interactúan mediante una API REST protegida:
+
+1.  **Backend (Core API)**: Django + PostgreSQL. Implementa **Clean Architecture** y **RBAC** (Role-Based Access Control).
+2.  **Frontend Web (Panel Administrativo)**: React. Enfocado en la gestión de expedientes, reportes y configuración de la clínica.
+3.  **Mobile App (Gestión Rápida)**: Flutter. Orientado a psicólogos y pacientes para consultas de citas y seguimiento.
 
 ---
 
-## 🚀 Flujo de Despliegue para Evaluación (SI2)
+## 📋 Requisitos Previos
 
-### Backend
-1. Activar entorno virtual: `source venv/bin/activate` (Linux/Mac) o `venv\Scripts\activate` (Windows).
-2. Instalar dependencias: `pip install -r requirements.txt`.
-3. Iniciar servidor API: `python manage.py runserver`.
+Asegúrese de tener instaladas las siguientes herramientas en su entorno:
+
+- **Python 3.11+**
+- **Node.js 18+** y npm
+- **Flutter SDK** (para la app móvil)
+- **PostgreSQL 15+**
+
+---
+
+## 🚀 Guía de Instalación Rápida
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/brayanjoelrv/PsicoSystemSI2.git
+cd PsicoSystemSI2
+```
+
+### 2. Configuración del Backend (Django)
+```bash
+# Crear y activar entorno virtual
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+# IMPORTANTE: Edite el archivo .env con sus credenciales de Postgres
+```
+
+### 3. Configuración de la Base de Datos
+Asegúrese de que PostgreSQL esté corriendo y ejecute:
+```bash
+# Opcional: Resetear DB si es necesario
+python reset_db.py
+
+# Aplicar migraciones
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 4. Configuración del Frontend Web
+```bash
+cd frontend-web
+npm install
+```
+
+### 5. Configuración de Mobile App
+```bash
+cd mobile-app
+flutter pub get
+```
+
+---
+
+## 💻 Ejecución del Proyecto
+
+### Backend API
+Desde la raíz del proyecto:
+```bash
+python manage.py runserver
+```
 
 ### Frontend Web
-1. Ir a `frontend-web/`.
-2. Instalar módulos: `npm install`.
-3. Levantar React: `npm start`.
+Desde `frontend-web/`:
+```bash
+npm start
+```
 
-### Mobile
-1. Ir a `mobile-app/`.
-2. Habilitar la lectura de `.env` en `pubspec.yaml` e instalar variables: `flutter pub get`.
-3. Levantar app: `flutter run`.
+### Mobile App
+Desde `mobile-app/`:
+```bash
+flutter run
+```
 
 ---
-*Documentación generada y auditada rigurosamente para el aseguramiento de calidad del Ciclo 1 (SI2).*
+
+## 🔐 Seguridad y Auditoría
+
+- **Autenticación**: Basada en **JWT (SimpleJWT)** con rotación de tokens.
+- **Autorización**: Roles estrictos (`ADMIN`, `PSICOLOGO`, `PACIENTE`).
+- **Aislamiento de Datos**: Arquitectura Multi-tenant que asegura que una clínica no pueda acceder a datos de otra.
+- **Trazabilidad**: Sistema de logs y auditoría integrado en el backend.
+
+---
+
+## 🛠️ Solución de Problemas
+
+- **Error de conexión a DB**: Verifique que los valores en `.env` (DB_PASSWORD) coincidan con su instalación de Postgres.
+- **IP del Servidor**: Si prueba la App Móvil en un dispositivo físico, asegúrese de cambiar `SERVER_IP` en el `.env` y en la configuración de Flutter por la IP local de su PC.
+- **CORS Errors**: Verifique que `CORS_ALLOWED_ORIGINS` incluya el host de su frontend web.
+
+---
+
+## 🤝 Créditos
+Desarrollado y Auditado por **Brayan Joel RamosV**. 
+Proyecto para la materia **Sistemas de Información II (SI2) - UAGRM**.
+
+---
+*Documentación generada profesionalmente para asegurar la calidad y transparencia en el despliegue.*
