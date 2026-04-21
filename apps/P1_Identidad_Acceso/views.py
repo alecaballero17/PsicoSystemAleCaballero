@@ -22,6 +22,7 @@ from .serializers import (
     PsicologoSerializer,
     PsicologoCreateSerializer,
     PsicologoUpdateSerializer,
+    OnboardingSaaSSerializer,
 )
 from .permissions import HasClinicaAsignada, EsPsicologoOAdministrador, EsAdministrador
 
@@ -133,6 +134,40 @@ class RegistroPsicologoAPIView(APIView):
                 },
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class PlanesListAPIView(APIView):
+    """GET público: devuelve el catálogo de planes configurados en el modelo Clínica."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        planes = [
+            {"id": p[0], "nombre": p[1]} 
+            for p in Clinica.PLANES
+        ]
+        return Response(planes, status=status.HTTP_200_OK)
+
+
+class OnboardingSaaSAPIView(APIView):
+    """POST público: alta atómica de Clínica + Administrador con selección de Plan."""
+    permission_classes = [AllowAny]
+    throttle_scope = "registro"
+    throttle_classes = [ScopedRateThrottle]
+
+    def post(self, request):
+        serializer = OnboardingSaaSSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        result = serializer.save()
+        return Response(
+            {
+                "message": "Entorno SaaS configurado correctamente.",
+                "clinica_id": result["clinica"].id,
+                "admin_username": result["admin"].username
+            },
+            status=status.HTTP_201_CREATED
         )
 
 

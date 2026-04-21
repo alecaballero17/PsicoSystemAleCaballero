@@ -132,6 +132,59 @@ class RegistroPsicologoAPISerializer(serializers.Serializer):
 
 
 # --------------------------------------------------------------------------
+# ONBOARDING SAAS: Registro unificado de Clínica + Admin (React atomic flow)
+# --------------------------------------------------------------------------
+class ClinicaOnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clinica
+        fields = ["nombre", "nit", "direccion"]
+
+class AdminOnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ["username", "email", "password"]
+        extra_kwargs = {'password': {'write_only': True}}
+
+class OnboardingSaaSSerializer(serializers.Serializer):
+    clinica = ClinicaOnboardingSerializer()
+    admin = AdminOnboardingSerializer()
+    plan_id = serializers.ChoiceField(choices=Clinica.PLANES)
+
+    def validate_clinica(self, value):
+        if Clinica.objects.filter(nit=value.get('nit')).exists():
+            raise serializers.ValidationError("Ya existe una clínica con este NIT.")
+        return value
+
+    def validate_admin(self, value):
+        if Usuario.objects.filter(username=value.get('username')).exists():
+            raise serializers.ValidationError("Este nombre de usuario ya está en uso.")
+        return value
+
+    def create(self, validated_data):
+        clinica_data = validated_data.pop('clinica')
+        admin_data = validated_data.pop('admin')
+        plan_id = validated_data.pop('plan_id')
+
+        # 1. Crear Clínica con el plan seleccionado
+        clinica = Clinica.objects.create(
+            **clinica_data,
+            plan_suscripcion=plan_id
+        )
+
+        # 2. Crear SuperAdmin del Tenant
+        password = admin_data.pop('password')
+        user = Usuario(
+            **admin_data,
+            clinica=clinica,
+            rol="ADMIN"
+        )
+        user.set_password(password)
+        user.save()
+
+        return {"clinica": clinica, "admin": user}
+
+
+# --------------------------------------------------------------------------
 # Admin: serializer para actualizar rol / estado de usuarios
 # --------------------------------------------------------------------------
 class UsuarioAdminUpdateSerializer(serializers.ModelSerializer):

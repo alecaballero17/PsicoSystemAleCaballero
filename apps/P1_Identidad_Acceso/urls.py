@@ -12,6 +12,8 @@ from .views import (
     UsuarioAdminRetrieveUpdateDestroyAPIView,
     PsicologoListCreateAPIView,
     PsicologoRetrieveUpdateDestroyAPIView,
+    PlanesListAPIView,
+    OnboardingSaaSAPIView,
 )
 
 urlpatterns = [
@@ -29,6 +31,8 @@ urlpatterns = [
         RegistroPsicologoAPIView.as_view(),
         name="api_registro_psicologo",
     ),
+    path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
+    path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
     path("api/clinicas/mi/", MiClinicaRetrieveAPIView.as_view(), name="api_mi_clinica"),
     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
     path(
