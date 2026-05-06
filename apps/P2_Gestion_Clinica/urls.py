@@ -1,9 +1,15 @@
-from django.urls import path
-
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     PacienteListCreateAPIView,
     PacienteRetrieveUpdateAPIView,
+    HistoriaClinicaViewSet,
+    EvolucionClinicaViewSet
 )
+
+router = DefaultRouter()
+router.register(r'historias', HistoriaClinicaViewSet, basename='historia')
+router.register(r'evoluciones', EvolucionClinicaViewSet, basename='evolucion')
 
 urlpatterns = [
     path("api/pacientes/", PacienteListCreateAPIView.as_view(), name="api_pacientes"),
@@ -12,4 +18,5 @@ urlpatterns = [
         PacienteRetrieveUpdateAPIView.as_view(),
         name="api_pacientes_detalle",
     ),
+    path("api/", include(router.urls)),
 ]

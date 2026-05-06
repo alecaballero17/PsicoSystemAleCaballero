@@ -1,12 +1,17 @@
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from .forms import PacienteForm
-from .serializers import PacienteSerializer
-from .models import Paciente
+from .serializers import (
+    PacienteSerializer, 
+    HistoriaClinicaSerializer, 
+    EvolucionClinicaSerializer
+)
+from .models import Paciente, HistoriaClinica, EvolucionClinica
 from apps.P4_IA_Administracion.models import LogAuditoria
 from apps.P1_Identidad_Acceso.permissions import (
     HasClinicaAsignada,
@@ -75,10 +80,21 @@ class PacienteListCreateAPIView(generics.ListCreateAPIView):
     ]
 
     def get_queryset(self):
-        return Paciente.objects.filter(clinica=self.request.user.clinica).order_by("nombre")
+        queryset = Paciente.objects.filter(clinica=self.request.user.clinica).order_by("nombre")
+        
+        # T027: Búsqueda y Filtrado
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(nombre__icontains=search) | Q(ci__icontains=search)
+            )
+        return queryset
 
     def perform_create(self, serializer):
         paciente = serializer.save(clinica=self.request.user.clinica)
+        # Crear automáticamente la Historia Clínica (Expediente)
+        HistoriaClinica.objects.get_or_create(paciente=paciente)
+        
         LogAuditoria.objects.create(
             usuario=self.request.user,
             accion=f"Registró un nuevo paciente (API): {paciente.nombre}",
@@ -101,4 +117,27 @@ class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         LogAuditoria.objects.create(
             usuario=self.request.user,
             accion=f"Actualizó paciente (API): {paciente.nombre}",
+        )
+
+# --- Vistas para Historia Clínica y Evolución ---
+
+class HistoriaClinicaViewSet(viewsets.ModelViewSet):
+    serializer_class = HistoriaClinicaSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return HistoriaClinica.objects.filter(paciente__clinica=self.request.user.clinica)
+
+class EvolucionClinicaViewSet(viewsets.ModelViewSet):
+    serializer_class = EvolucionClinicaSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return EvolucionClinica.objects.filter(historia__paciente__clinica=self.request.user.clinica)
+
+    def perform_create(self, serializer):
+        evolucion = serializer.save(psicologo=self.request.user)
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Añadió nota de evolución para: {evolucion.historia.paciente.nombre}",
         )

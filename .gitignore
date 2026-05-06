@@ -17,3 +17,11 @@ db.sqlite3
 **/node_modules/
 **/build/
 **/.env
+# Archivos temporales de la IA (Antigravity)
+*.resolved
+*.metadata.json
+task.md
+walkthrough.md
+implementation_plan.md
+fix_settings.py
+*.img

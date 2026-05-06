@@ -1,3 +1,5 @@
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -15,6 +17,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["rol"] = user.rol
         token["clinica_id"] = user.clinica_id
         token["username"] = user.username
+        
+        # Verificar si la contraseña expiró (90 días)
+        expiracion = user.ultimo_cambio_password + timedelta(days=90)
+        token["must_change_password"] = user.debe_cambiar_password or (timezone.now() > expiracion)
+        
         return token
 
     def validate(self, attrs):
@@ -24,6 +31,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["role"] = self.user.rol
         data["clinica_id"] = self.user.clinica_id
         data["username"] = self.user.username
+        
+        # Verificar expiración para respuesta JSON inmediata
+        expiracion = self.user.ultimo_cambio_password + timedelta(days=90)
+        data["must_change_password"] = self.user.debe_cambiar_password or (timezone.now() > expiracion)
 
         # Disparar señal de Django para la bitácora P4 (React/Flutter login)
         from django.contrib.auth.signals import user_logged_in

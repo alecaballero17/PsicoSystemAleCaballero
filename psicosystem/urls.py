@@ -6,6 +6,7 @@ from django.urls import path, include
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 
 @api_view(["GET"])
@@ -23,4 +24,9 @@ urlpatterns = [
     path("", include("apps.P2_Gestion_Clinica.urls")),
     path("", include("apps.P3_Logistica_Citas.urls")),
     path("", include("apps.P4_IA_Administracion.urls")),
+
+    # Documentación de la API
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/docs/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]

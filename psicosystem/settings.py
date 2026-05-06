@@ -90,7 +90,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",  # <--- AGREGAR ESTA LÍNEA
-    "django_extensions"
+    "django_extensions",
+    "drf_spectacular",
     
 ]
 
@@ -149,6 +150,7 @@ if not os.environ.get("DATABASE_URL"):
 # SECCIÓN: CONFIGURACIÓN API REST Y JWT (RF-01 | T011 | T008 | SPRINT 1)
 # ==============================================================================
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",  # RF-01: Seguridad JWT.
         "rest_framework.authentication.SessionAuthentication",  # T007: Visualización en navegador.
@@ -241,3 +243,11 @@ DEFAULT_FROM_EMAIL = config(
     "DEFAULT_FROM_EMAIL",
     default=EMAIL_HOST_USER or "noreply@psicosystem.local",
 )
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'PsicoSystem API',
+    'DESCRIPTION': 'Documentacion de la API para el sistema PsicoSystem.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
