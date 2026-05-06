@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador Frontend Completo - PsicoSystem</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #1e1e2f; color: #fff; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { text-align: center; color: #4facfe; }
+        .card { background: #2a2a40; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border-left: 4px solid #4facfe; }
+        h2 { margin-top: 0; color: #00f2fe; border-bottom: 1px solid #3b3b55; padding-bottom: 10px; }
+        input, button, select, textarea { margin: 5px 0; padding: 12px; border-radius: 4px; border: none; width: calc(100% - 24px); box-sizing: border-box; font-family: inherit; }
+        input, select, textarea { background: #3b3b55; color: white; }
+        button { background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); color: white; font-weight: bold; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        pre { background: #1e1e2f; padding: 15px; border-radius: 4px; overflow-x: auto; color: #00f2fe; border: 1px solid #3b3b55; white-space: pre-wrap; font-size: 0.9em; max-height: 200px; overflow-y: auto;}
+        .error { color: #ff4b4b; font-weight: bold; }
+        .success { color: #00e676; font-weight: bold; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; }
+        .badge { background: #4facfe; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Simulador de Flujos Frontend (Sprint 2)</h1>
+        <p style="text-align: center; color: #aaa;">Sigue los pasos secuencialmente para probar todo el flujo del sistema.</p>
+
+        <!-- 1. LOGIN -->
+        <div class="card" id="step1">
+            <h2>Paso 1: Autenticación</h2>
+            <div class="row">
+                <input type="text" id="username" placeholder="Usuario (ej. admin)" value="admin">
+                <input type="password" id="password" placeholder="Contraseña" value="admin">
+                <button onclick="login()">Iniciar Sesión</button>
+            </div>
+            <p id="login-status"></p>
+        </div>
+
+        <!-- 2. PACIENTES -->
+        <div class="card" id="step2">
+            <h2>Paso 2: Buscar Paciente <span class="badge">T027</span></h2>
+            <div class="row">
+                <input type="text" id="search-paciente" placeholder="Buscar por Nombre o CI...">
+                <button onclick="buscarPacientes()">🔍 Buscar</button>
+            </div>
+            <pre id="pacientes-result">Resultados de pacientes...</pre>
+        </div>
+
+        <!-- 3. CITAS -->
+        <div class="card" id="step3">
+            <h2>Paso 3: Programar Cita <span class="badge">T030 (Colisiones)</span></h2>
+            <div class="row">
+                <input type="number" id="cita-paciente" placeholder="ID Paciente">
+                <input type="number" id="cita-psicologo" placeholder="ID Psicólogo (tuyo)">
+                <input type="datetime-local" id="cita-fecha">
+            </div>
+            <input type="text" id="cita-motivo" placeholder="Motivo de la cita...">
+            <button onclick="crearCita()">📅 Agendar Cita (Intenta crear dos a la misma hora)</button>
+            <p id="cita-status"></p>
+        </div>
+
+        <!-- 4. EVOLUCION -->
+        <div class="card" id="step4">
+            <h2>Paso 4: Crear Nota de Evolución <span class="badge">T026</span></h2>
+            <input type="number" id="evo-historia" placeholder="ID del Expediente Clínico (Viene en la búsqueda del paciente)">
+            <textarea id="evo-nota" rows="3" placeholder="Escribe las notas de la sesión del paciente aquí..."></textarea>
+            <button onclick="crearEvolucion()">📝 Guardar Nota de Sesión</button>
+            <p id="evo-status"></p>
+        </div>
+
+        <!-- 5. IA -->
+        <div class="card" id="step5">
+            <h2>Paso 5: Análisis de Inteligencia Artificial <span class="badge">IA-01</span></h2>
+            <input type="number" id="ia-evo-id" placeholder="ID de la Evolución creada en el Paso 4">
+            <button onclick="probarIA()">🧠 Ejecutar Gemini sobre la Nota</button>
+            <pre id="ia-result">Aquí aparecerá el diagnóstico y resumen emocional de la IA...</pre>
+        </div>
+
+        <!-- 6. FINANZAS -->
+        <div class="card" id="step6">
+            <h2>Paso 6: Finanzas y Comprobantes <span class="badge">T058 / T059</span></h2>
+            <div class="row">
+                <input type="number" id="fin-paciente" placeholder="ID del Paciente">
+                <button onclick="consultarSaldo()">💰 Consultar Deuda</button>
+            </div>
+            <pre id="saldo-result">Deuda del paciente...</pre>
+            
+            <div class="row" style="margin-top: 15px;">
+                <input type="number" id="fin-transaccion" placeholder="ID de una Transacción (Pago)">
+                <button onclick="descargarPDF()">📄 Generar PDF del Recibo</button>
+            </div>
+            <p id="pdf-status"></p>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000/api';
+        let token = '';
+
+        const headers = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        });
+
+        // 1. LOGIN
+        async function login() {
+            const status = document.getElementById('login-status');
+            try {
+                const res = await fetch(`${BASE_URL}/auth/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username: document.getElementById('username').value, 
+                        password: document.getElementById('password').value 
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    token = data.access;
+                    status.innerHTML = `<span class="success">✅ Conectado. Token JWT listo.</span>`;
+                    if (data.must_change_password) status.innerHTML += ` <span class="error">⚠️ (Contraseña Expirada)</span>`;
+                } else {
+                    status.innerHTML = `<span class="error">❌ ${JSON.stringify(data)}</span>`;
+                }
+            } catch (e) { status.innerHTML = `<span class="error">❌ Error de conexión</span>`; }
+        }
+
+        // 2. BUSCAR PACIENTES
+        async function buscarPacientes() {
+            if(!token) return alert("Inicia sesión primero");
+            const q = document.getElementById('search-paciente').value;
+            const resBox = document.getElementById('pacientes-result');
+            try {
+                const res = await fetch(`${BASE_URL}/pacientes/?search=${q}`, { headers: headers() });
+                const data = await res.json();
+                resBox.innerText = JSON.stringify(data, null, 2);
+            } catch (e) { resBox.innerText = e; }
+        }
+
+        // 3. CREAR CITA (Colisiones)
+        async function crearCita() {
+            if(!token) return alert("Inicia sesión primero");
+            const status = document.getElementById('cita-status');
+            try {
+                const payload = {
+                    paciente: document.getElementById('cita-paciente').value,
+                    psicologo: document.getElementById('cita-psicologo').value,
+                    fecha_hora: document.getElementById('cita-fecha').value,
+                    motivo: document.getElementById('cita-motivo').value
+                };
+                const res = await fetch(`${BASE_URL}/citas/`, { method: 'POST', headers: headers(), body: JSON.stringify(payload) });
+                const data = await res.json();
+                if(res.ok) status.innerHTML = `<span class="success">✅ Cita Agendada: ID ${data.id}</span>`;
+                else status.innerHTML = `<span class="error">❌ Error: ${JSON.stringify(data)}</span>`;
+            } catch (e) { status.innerHTML = e; }
+        }
+
+        // 4. CREAR NOTA DE EVOLUCION
+        async function crearEvolucion() {
+            if(!token) return alert("Inicia sesión primero");
+            const status = document.getElementById('evo-status');
+            try {
+                const payload = {
+                    historia: document.getElementById('evo-historia').value,
+                    notas_sesion: document.getElementById('evo-nota').value
+                };
+                const res = await fetch(`${BASE_URL}/evoluciones/`, { method: 'POST', headers: headers(), body: JSON.stringify(payload) });
+                const data = await res.json();
+                if(res.ok) {
+                    status.innerHTML = `<span class="success">✅ Nota Guardada. El ID de esta Evolución es: ${data.id} (Úsalo en el paso 5)</span>`;
+                    document.getElementById('ia-evo-id').value = data.id;
+                } else status.innerHTML = `<span class="error">❌ Error: ${JSON.stringify(data)}</span>`;
+            } catch (e) { status.innerHTML = e; }
+        }
+
+        // 5. INTELIGENCIA ARTIFICIAL
+        async function probarIA() {
+            if(!token) return alert("Inicia sesión primero");
+            const resBox = document.getElementById('ia-result');
+            resBox.innerText = "⏳ Procesando con Gemini... por favor espera.";
+            try {
+                const id = document.getElementById('ia-evo-id').value;
+                const res = await fetch(`${BASE_URL}/ia/analizar/${id}/`, { method: 'POST', headers: headers() });
+                const data = await res.json();
+                resBox.innerText = JSON.stringify(data, null, 2);
+            } catch (e) { resBox.innerText = e; }
+        }
+
+        // 6. FINANZAS
+        async function consultarSaldo() {
+            if(!token) return alert("Inicia sesión primero");
+            const resBox = document.getElementById('saldo-result');
+            try {
+                const id = document.getElementById('fin-paciente').value;
+                const res = await fetch(`${BASE_URL}/finanzas/saldo/${id}/`, { headers: headers() });
+                const data = await res.json();
+                resBox.innerText = JSON.stringify(data, null, 2);
+            } catch (e) { resBox.innerText = e; }
+        }
+
+        async function descargarPDF() {
+            if(!token) return alert("Inicia sesión primero");
+            const status = document.getElementById('pdf-status');
+            status.innerText = "Generando PDF...";
+            try {
+                const id = document.getElementById('fin-transaccion').value;
+                const res = await fetch(`${BASE_URL}/finanzas/comprobante/${id}/pdf/`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) return status.innerHTML = `<span class="error">❌ Transacción no encontrada o error.</span>`;
+                
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `comprobante_${id}.pdf`;
+                a.click(); window.URL.revokeObjectURL(url);
+                status.innerHTML = `<span class="success">✅ PDF descargado.</span>`;
+            } catch (e) { status.innerHTML = `<span class="error">❌ Error: ${e}</span>`; }
+        }
+    </script>
+</body>
+</html>
