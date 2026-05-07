@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import (
     PacienteListCreateAPIView,
     PacienteRetrieveUpdateAPIView,
@@ -7,7 +7,7 @@ from .views import (
     EvolucionClinicaViewSet
 )
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'historias', HistoriaClinicaViewSet, basename='historia')
 router.register(r'evoluciones', EvolucionClinicaViewSet, basename='evolucion')
 

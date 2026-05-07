@@ -92,6 +92,29 @@
             </div>
             <p id="pdf-status"></p>
         </div>
+
+        <!-- 7. REPORTES Y AUDIO -->
+        <div class="card" id="step7">
+            <h2>Paso 7: Reportes Dinámicos y de Audio <span class="badge">NUEVO</span></h2>
+            <div class="row">
+                <div>
+                    <label style="font-size: 0.8em; color: #aaa;">Fecha Inicio:</label>
+                    <input type="date" id="rep-fecha-inicio" value="2026-05-01">
+                </div>
+                <div>
+                    <label style="font-size: 0.8em; color: #aaa;">Fecha Fin:</label>
+                    <input type="date" id="rep-fecha-fin" value="2026-05-31">
+                </div>
+            </div>
+            <div style="margin: 10px 0;">
+                <label style="cursor: pointer;">
+                    <input type="checkbox" id="rep-generar-audio" checked style="width: auto;"> Generar MP3 (Audio)
+                </label>
+            </div>
+            <button onclick="generarReporte()">🎙️ Generar Reporte</button>
+            <pre id="reporte-result">El texto del reporte aparecerá aquí...</pre>
+            <div id="audio-container" style="margin-top: 10px;"></div>
+        </div>
     </div>
 
     <script>
