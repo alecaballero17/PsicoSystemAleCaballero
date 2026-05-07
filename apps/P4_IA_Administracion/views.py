@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador
+import requests
+from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
 from .models import LogAuditoria, Transaccion, Comprobante
@@ -58,7 +59,7 @@ class DashboardAPIView(APIView):
 
 class TransaccionViewSet(viewsets.ModelViewSet):
     serializer_class = TransaccionSerializer
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloContabilidad]
 
     def get_queryset(self):
         return Transaccion.objects.filter(paciente__clinica=self.request.user.clinica)
@@ -74,7 +75,7 @@ class SaldoPacienteView(APIView):
     """
     Calcula el saldo actual (deuda) de un paciente.
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloContabilidad]
 
     def get(self, request, paciente_id):
         paciente = get_object_or_404(Paciente, id=paciente_id, clinica=request.user.clinica)
@@ -96,7 +97,7 @@ class GenerarComprobantePDFView(APIView):
     """
     Genera un PDF de comprobante para una transacción de pago.
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloContabilidad]
 
     def get(self, request, transaccion_id):
         transaccion = get_object_or_404(
@@ -130,9 +131,9 @@ class GenerarComprobantePDFView(APIView):
 
 class AnalisisIAView(APIView):
     """
-    Endpoint para disparar el análisis de IA sobre una nota de evolución.
+    Endpoint para disparar el análisis de IA llamando al Microservicio FastAPI.
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloIA]
 
     def post(self, request, evolucion_id):
         evolucion = get_object_or_404(
@@ -147,13 +148,26 @@ class AnalisisIAView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        resultado = AIService.analizar_nota_clinica(evolucion.notas_sesion)
-        evolucion.analisis_ia = resultado
-        evolucion.save()
+        # Llamada al Microservicio Externo
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8001/api/v1/analyze",
+                json={"notas": evolucion.notas_sesion},
+                timeout=5
+            )
+            response.raise_for_status()
+            resultado = response.json()
+            evolucion.analisis_ia = str(resultado)
+            evolucion.save()
+        except Exception as e:
+            return Response(
+                {"error": f"Error del Microservicio de IA: {str(e)}"}, 
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         LogAuditoria.objects.create(
             usuario=request.user,
-            accion=f"Ejecutó análisis de IA para la sesión de: {evolucion.historia.paciente.nombre}"
+            accion=f"Ejecutó análisis de IA (Vía Microservicio) para la sesión de: {evolucion.historia.paciente.nombre}"
         )
 
         return Response({"analisis_ia": resultado}, status=status.HTTP_200_OK)
