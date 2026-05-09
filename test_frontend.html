@@ -206,14 +206,14 @@
             try {
                 const id = document.getElementById('mod-cita-id').value;
                 const estado = document.getElementById('mod-cita-estado').value;
-                const res = await fetch(${BASE_URL}/citas//, { 
+                const res = await fetch(`${BASE_URL}/citas/${id}/`, { 
                     method: 'PATCH', 
                     headers: headers(), 
                     body: JSON.stringify({ estado: estado }) 
                 });
                 const data = await res.json();
-                if(res.ok) status.innerHTML = <span class="success">✅ Cita editada. Nuevo estado: </span>;
-                else status.innerHTML = <span class="error">❌ Error: </span>;
+                if(res.ok) status.innerHTML = `<span class="success">✅ Cita editada. Nuevo estado: ${data.estado}</span>`;
+                else status.innerHTML = `<span class="error">❌ Error: ${JSON.stringify(data)}</span>`;
             } catch (e) { status.innerHTML = e; }
         }
 
@@ -222,12 +222,12 @@
             const status = document.getElementById('mod-cita-status');
             try {
                 const id = document.getElementById('mod-cita-id').value;
-                const res = await fetch(${BASE_URL}/citas//, { 
+                const res = await fetch(`${BASE_URL}/citas/${id}/`, { 
                     method: 'DELETE', 
                     headers: headers()
                 });
-                if(res.ok) status.innerHTML = <span class="success">✅ Cita eliminada correctamente (Soft-Delete).</span>;
-                else status.innerHTML = <span class="error">❌ Error al eliminar.</span>;
+                if(res.ok) status.innerHTML = `<span class="success">✅ Cita eliminada correctamente (Soft-Delete).</span>`;
+                else status.innerHTML = `<span class="error">❌ Error al eliminar.</span>`;
             } catch (e) { status.innerHTML = e; }
         }
 
