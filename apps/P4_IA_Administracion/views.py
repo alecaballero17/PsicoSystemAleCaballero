@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 import requests
+from apps.P1_Identidad_Acceso.models import DispositivoMovil
 from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
@@ -337,9 +338,41 @@ class PasarelaPagoMobileAPIView(APIView):
             accion=f"Pago móvil registrado ({monto_decimal} BOB) para el paciente {paciente.nombre}"
         )
 
+        # 4. Enviar Notificación Push (Simulada para la Defensa)
+        dispositivos = DispositivoMovil.objects.filter(usuario=request.user)
+        for dispositivo in dispositivos:
+            # Aquí iría la lógica real de firebase-admin. Ej: messaging.send(...)
+            print(f"\n[FIREBASE PUSH SIMULATOR] Enviando notificación de Pago Exitoso al token: {dispositivo.fcm_token}")
+            print(f"[FIREBASE PUSH SIMULATOR] Titulo: Pago Aprobado")
+            print(f"[FIREBASE PUSH SIMULATOR] Cuerpo: Su pago de {monto_decimal} BOB ha sido procesado con éxito.\n")
+
         return Response({
             "mensaje": "Pago procesado exitosamente por la pasarela virtual.",
             "transaccion_id": transaccion.id,
             "comprobante": nro_comp,
             "monto_pagado": monto_decimal
         }, status=status.HTTP_201_CREATED)
+
+
+class RegistroTokenFCMAPIView(APIView):
+    """
+    Registra el token de dispositivo (Firebase Cloud Messaging) para enviar notificaciones Push.
+    """
+    permission_classes = [IsAuthenticated, EsPaciente]
+
+    def post(self, request):
+        fcm_token = request.data.get('fcm_token')
+
+        if not fcm_token:
+            return Response({"error": "Debe proveer fcm_token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Actualizar o crear el dispositivo para este usuario
+        dispositivo, created = DispositivoMovil.objects.update_or_create(
+            usuario=request.user,
+            defaults={'fcm_token': fcm_token}
+        )
+
+        return Response({
+            "mensaje": "Token registrado exitosamente para notificaciones Push.",
+            "fcm_token": dispositivo.fcm_token
+        }, status=status.HTTP_200_OK)
