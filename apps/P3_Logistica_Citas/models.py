@@ -26,6 +26,7 @@ class Cita(models.Model):
         ('PENDIENTE', 'Pendiente'),
         ('COMPLETADA', 'Completada'),
         ('CANCELADA', 'Cancelada'),
+        ('NO_ASISTIO', 'No Asistió'),  # T032: Control de Asistencia
     ]
     estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
 
