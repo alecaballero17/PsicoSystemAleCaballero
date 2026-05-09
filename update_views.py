@@ -1,92 +1,99 @@
 ﻿import sys
 
-file_path = r'C:\Users\personal\.gemini\antigravity\brain\a5bc1c34-45ae-44f8-b7e3-bf2b4c2dcf19\apps\P4_IA_Administracion\views.py'
-
+file_path = r'C:\Users\personal\.gemini\antigravity\brain\a5bc1c34-45ae-44f8-b7e3-bf2b4c2dcf19\apps\P3_Logistica_Citas\views.py'
 with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 1. Update imports
-content = content.replace(
-    'from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador',
-    'import requests\nfrom apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA'
-)
+# Imports needed
+if 'from rest_framework import generics, viewsets, status' not in content:
+    content = content.replace('from rest_framework import generics', 'from rest_framework import generics, viewsets, status\nfrom rest_framework.response import Response')
 
-# 2. Update Contabilidad Permissions
-content = content.replace(
-    'permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]',
-    'permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloContabilidad]'
-)
+if 'from .models import Cita, ListaEspera' not in content:
+    content = content.replace('from .models import Cita', 'from .models import Cita, ListaEspera')
 
-# Fix the specific permission for AnalisisIAView to use RequiresModuloIA instead
-content = content.replace(
-    'class AnalisisIAView(APIView):\n    """\n    Endpoint para disparar el análisis de IA sobre una nota de evolución.\n    """\n    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloContabilidad]',
-    'class AnalisisIAView(APIView):\n    """\n    Endpoint para disparar el análisis de IA llamando al Microservicio FastAPI.\n    """\n    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador, RequiresModuloIA]'
-)
+if 'from .serializers import CitaSerializer, ListaEsperaSerializer' not in content:
+    content = content.replace('from .serializers import CitaSerializer', 'from .serializers import CitaSerializer, ListaEsperaSerializer')
 
-# Fix logic for AnalisisIAView to call microservice
-old_ia_post = '''    def post(self, request, evolucion_id):
-        evolucion = get_object_or_404(
-            EvolucionClinica, 
-            id=evolucion_id, 
-            historia__paciente__clinica=request.user.clinica
-        )
+
+# GAP-B4: Modify CitaListCreateAPIView to add date filters
+old_get_queryset = '''    def get_queryset(self):
+        return (
+            Cita.objects.filter(paciente__clinica=self.request.user.clinica)
+            .select_related("paciente", "psicologo")
+            .order_by("fecha_hora")
+        )'''
+
+new_get_queryset = '''    def get_queryset(self):
+        queryset = Cita.objects.filter(paciente__clinica=self.request.user.clinica).select_related("paciente", "psicologo")
         
-        if not evolucion.notas_sesion:
-            return Response(
-                {"error": "La nota de sesión está vacía."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        resultado = AIService.analizar_nota_clinica(evolucion.notas_sesion)
-        evolucion.analisis_ia = resultado
-        evolucion.save()
-
-        LogAuditoria.objects.create(
-            usuario=request.user,
-            accion=f"Ejecutó análisis de IA para la sesión de: {evolucion.historia.paciente.nombre}"
-        )
-
-        return Response({"analisis_ia": resultado}, status=status.HTTP_200_OK)'''
-
-new_ia_post = '''    def post(self, request, evolucion_id):
-        evolucion = get_object_or_404(
-            EvolucionClinica, 
-            id=evolucion_id, 
-            historia__paciente__clinica=request.user.clinica
-        )
+        # GAP-B4: Filtros de Calendario
+        fecha_inicio = self.request.query_params.get('fecha_inicio')
+        fecha_fin = self.request.query_params.get('fecha_fin')
+        psicologo_id = self.request.query_params.get('psicologo_id')
         
-        if not evolucion.notas_sesion:
-            return Response(
-                {"error": "La nota de sesión está vacía."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_hora__date__gte=fecha_inicio)
+        if fecha_fin:
+            queryset = queryset.filter(fecha_hora__date__lte=fecha_fin)
+        if psicologo_id:
+            queryset = queryset.filter(psicologo_id=psicologo_id)
+            
+        return queryset.order_by("fecha_hora")'''
 
-        # Llamada al Microservicio Externo
-        try:
-            response = requests.post(
-                "http://127.0.0.1:8001/api/v1/analyze",
-                json={"notas": evolucion.notas_sesion},
-                timeout=5
-            )
-            response.raise_for_status()
-            resultado = response.json()
-            evolucion.analisis_ia = str(resultado)
-            evolucion.save()
-        except Exception as e:
-            return Response(
-                {"error": f"Error del Microservicio de IA: {str(e)}"}, 
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
+if 'fecha_inicio = self.request.query_params.get' not in content:
+    content = content.replace(old_get_queryset, new_get_queryset)
 
+# GAP-B3: Change CitaRetrieveUpdateAPIView to RetrieveUpdateDestroyAPIView and add soft delete
+content = content.replace('class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):', 'class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):')
+
+soft_delete_logic = '''
+    def perform_destroy(self, instance):
+        # GAP-B3: Soft Delete para Citas
+        instance.estado = 'CANCELADA'
+        instance.save()
         LogAuditoria.objects.create(
-            usuario=request.user,
-            accion=f"Ejecutó análisis de IA (Vía Microservicio) para la sesión de: {evolucion.historia.paciente.nombre}"
+            usuario=self.request.user,
+            accion=f"Canceló cita (API): id={instance.pk}"
         )
+'''
+if 'def perform_destroy' not in content:
+    content += soft_delete_logic
 
-        return Response({"analisis_ia": resultado}, status=status.HTTP_200_OK)'''
+# GAP-B2: Add ListaEsperaViewSet
+lista_espera_viewset = '''
+class ListaEsperaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para la Lista de Espera.
+    """
+    serializer_class = ListaEsperaSerializer
+    permission_classes = [
+        IsAuthenticated,
+        EsPsicologoOAdministrador,
+        HasClinicaAsignada,
+    ]
 
-content = content.replace(old_ia_post, new_ia_post)
+    def get_queryset(self):
+        return ListaEspera.objects.filter(
+            paciente__clinica=self.request.user.clinica
+        ).order_by('prioridad', 'fecha_registro')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
+
+    def perform_create(self, serializer):
+        espera = serializer.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Añadió a lista de espera: {espera.paciente.nombre}"
+        )
+'''
+
+if 'class ListaEsperaViewSet' not in content:
+    content += '\n' + lista_espera_viewset
 
 with open(file_path, 'w', encoding='utf-8') as f:
     f.write(content)
-print('Success updating views.py')
+
+print("Updated views.py")

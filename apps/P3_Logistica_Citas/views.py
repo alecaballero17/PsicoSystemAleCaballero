@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from rest_framework import generics
+from rest_framework import generics, viewsets, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from apps.P1_Identidad_Acceso.permissions import (
@@ -11,8 +12,8 @@ from apps.P1_Identidad_Acceso.permissions import (
 from apps.P4_IA_Administracion.models import LogAuditoria
 
 from .forms import CitaForm
-from .models import Cita
-from .serializers import CitaSerializer
+from .models import Cita, ListaEspera
+from .serializers import CitaSerializer, ListaEsperaSerializer
 
 
 @login_required
@@ -79,11 +80,21 @@ class CitaListCreateAPIView(generics.ListCreateAPIView):
     ]
 
     def get_queryset(self):
-        return (
-            Cita.objects.filter(paciente__clinica=self.request.user.clinica)
-            .select_related("paciente", "psicologo")
-            .order_by("fecha_hora")
-        )
+        queryset = Cita.objects.filter(paciente__clinica=self.request.user.clinica).select_related("paciente", "psicologo")
+        
+        # GAP-B4: Filtros de Calendario
+        fecha_inicio = self.request.query_params.get('fecha_inicio')
+        fecha_fin = self.request.query_params.get('fecha_fin')
+        psicologo_id = self.request.query_params.get('psicologo_id')
+        
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_hora__date__gte=fecha_inicio)
+        if fecha_fin:
+            queryset = queryset.filter(fecha_hora__date__lte=fecha_fin)
+        if psicologo_id:
+            queryset = queryset.filter(psicologo_id=psicologo_id)
+            
+        return queryset.order_by("fecha_hora")
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -98,7 +109,7 @@ class CitaListCreateAPIView(generics.ListCreateAPIView):
         )
 
 
-class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CitaSerializer
     permission_classes = [
         IsAuthenticated,
@@ -121,4 +132,42 @@ class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         LogAuditoria.objects.create(
             usuario=self.request.user,
             accion=f"Actualizó cita (API): id={cita.pk}",
+        )
+
+    def perform_destroy(self, instance):
+        # GAP-B3: Soft Delete para Citas
+        instance.estado = 'CANCELADA'
+        instance.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Canceló cita (API): id={instance.pk}"
+        )
+
+
+class ListaEsperaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para la Lista de Espera.
+    """
+    serializer_class = ListaEsperaSerializer
+    permission_classes = [
+        IsAuthenticated,
+        EsPsicologoOAdministrador,
+        HasClinicaAsignada,
+    ]
+
+    def get_queryset(self):
+        return ListaEspera.objects.filter(
+            paciente__clinica=self.request.user.clinica
+        ).order_by('prioridad', 'fecha_registro')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
+
+    def perform_create(self, serializer):
+        espera = serializer.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Añadió a lista de espera: {espera.paciente.nombre}"
         )
