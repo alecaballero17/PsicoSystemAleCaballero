@@ -48,25 +48,40 @@ const AgendaCitas = () => {
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentView, setCurrentView] = useState('week');
+    const [error, setError] = useState(null);
 
     const fetchCitas = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
             const data = await citaService.getCitas();
-            const eventos = data.map(cita => ({
-                id: cita.id,
-                title: `${cita.paciente_nombre || 'Paciente'} — ${cita.psicologo_nombre || 'Dr.'}`,
-                start: new Date(cita.fecha_hora),
-                end: new Date(new Date(cita.fecha_hora).getTime() + 60 * 60 * 1000), // +1 hora
-                estado: cita.estado,
-                paciente: cita.paciente_nombre,
-                psicologo: cita.psicologo_nombre,
-                motivo: cita.motivo,
-                resource: cita,
-            }));
+            const eventos = (Array.isArray(data) ? data : [])
+                .filter(cita => cita.fecha_hora) // Ignorar citas sin fecha
+                .map(cita => {
+                    const start = new Date(cita.fecha_hora);
+                    if (isNaN(start.getTime())) return null; // Ignorar fechas inválidas
+
+                    return {
+                        id: cita.id,
+                        title: `${cita.paciente_nombre || 'Paciente'} — ${cita.psicologo_nombre || 'Dr.'}`,
+                        start: start,
+                        end: new Date(start.getTime() + 60 * 60 * 1000), // +1 hora
+                        estado: cita.estado,
+                        paciente: cita.paciente_nombre,
+                        psicologo: cita.psicologo_nombre,
+                        motivo: cita.motivo,
+                        resource: cita,
+                    };
+                })
+                .filter(e => e !== null);
             setCitas(eventos);
         } catch (err) {
-            showToast('Error cargando la agenda', 'error');
+            console.error("Error en Agenda:", err);
+            const msg = err.code === 'ECONNABORTED' 
+                ? 'El servidor tardó demasiado en responder (Timeout).' 
+                : 'Error al conectar con el servidor. Verifique que el backend esté corriendo.';
+            setError(msg);
+            showToast(msg, 'error');
         } finally {
             setLoading(false);
         }
@@ -94,19 +109,7 @@ const AgendaCitas = () => {
     };
 
     const handleSelectEvent = (event) => {
-        const cita = event.resource;
-        const accion = window.confirm(
-            `📋 DETALLE DE CITA\n\n` +
-            `Paciente: ${event.paciente}\n` +
-            `Psicólogo: ${event.psicologo}\n` +
-            `Fecha: ${moment(event.start).format('DD/MM/YYYY HH:mm')}\n` +
-            `Estado: ${event.estado}\n` +
-            `Motivo: ${event.motivo || 'Sin especificar'}\n\n` +
-            `¿Deseas gestionar esta cita?`
-        );
-        if (accion) {
-            navigate('/gestion-citas');
-        }
+        navigate('/gestion-citas', { state: { citaId: event.id } });
     };
 
     const handleSelectSlot = (slotInfo) => {
@@ -116,42 +119,27 @@ const AgendaCitas = () => {
     };
 
     return (
-        <div className="agenda-container" style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
+        <div className="agenda-container" style={{ padding: '20px', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
             <ToastContainer />
 
             {/* Header */}
-            <div className="agenda-header">
+            <div className="agenda-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
                 <div>
                     <h1 style={styles.pageTitle}>📅 Agenda Profesional</h1>
                     <p style={styles.pageSubtitle}>
-                        RF-08 — Calendario interactivo sincronizado en tiempo real
+                        Gestión de horarios y citas sincronizada
                     </p>
                 </div>
-                <div className="agenda-actions">
+                <div className="agenda-actions" style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={fetchCitas} style={styles.btnSecondary} disabled={loading}>
+                        🔄 {loading ? 'Cargando...' : 'Actualizar'}
+                    </button>
                     <button
                         onClick={() => navigate('/gestion-citas')}
                         style={styles.btnPrimary}
                     >
                         + Nueva Cita
                     </button>
-                    <button onClick={fetchCitas} style={styles.btnSecondary}>
-                        🔄 Actualizar
-                    </button>
-                </div>
-            </div>
-
-            {/* Leyenda de Estados */}
-            <div className="agenda-legend">
-                {Object.entries(ESTADO_COLORS).map(([estado, colors]) => (
-                    <div key={estado} style={styles.legendItem}>
-                        <div style={{ ...styles.legendDot, backgroundColor: colors.bg }} />
-                        <span style={styles.legendText}>{estado}</span>
-                    </div>
-                ))}
-                <div style={styles.legendItem}>
-                    <span style={styles.legendInfo}>
-                        Total: <strong>{citas.length}</strong> citas
-                    </span>
                 </div>
             </div>
 
@@ -161,6 +149,14 @@ const AgendaCitas = () => {
                     <div style={styles.loadingState}>
                         <div style={styles.spinner} />
                         <p>Sincronizando agenda con el servidor...</p>
+                    </div>
+                ) : error ? (
+                    <div style={{ textAlign: 'center', padding: '60px' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '20px' }}>❌</div>
+                        <h2 style={{ color: '#0f172a' }}>{error}</h2>
+                        <button onClick={fetchCitas} style={{ ...styles.btnPrimary, marginTop: '20px' }}>
+                            Reintentar Conexión
+                        </button>
                     </div>
                 ) : (
                     <Calendar

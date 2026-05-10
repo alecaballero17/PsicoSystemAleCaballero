@@ -10,6 +10,7 @@ const API_BASE = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
 
 const apiClient = axios.create({
     baseURL: API_BASE,
+    timeout: 10000, // 10 segundos de espera máxima
     headers: {
         'Content-Type': 'application/json',
     }

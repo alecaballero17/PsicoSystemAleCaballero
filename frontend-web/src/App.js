@@ -33,12 +33,12 @@ import EscanerQR from './pages/EscanerQR';
 // ==============================================================================
 const PrivateRoute = ({ children, allowedRoles }) => {
     const { user } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
 
     if (!user) {
         return <Navigate to="/" />;
     }
 
-    // [RF-29] Bypass Global: Admin sin clínica solo puede registrar clínica
     if (user && (!user.clinica_id || user.clinica_id === "null" || user.clinica_id === "undefined") && user.role !== 'PACIENTE') {
         return <Navigate to="/registro-clinica" />;
     }
@@ -48,10 +48,16 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     }
 
     return (
-        <div className="app-layout">
-            <Navbar />
-            <div className="app-content-wrapper">
-                {children}
+        <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+            <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+                <GlobalSidebar 
+                    isOpen={isSidebarOpen} 
+                    onClose={() => setIsSidebarOpen(false)} 
+                />
+                <div className={`app-content-wrapper ${isSidebarOpen ? 'with-sidebar' : ''}`}>
+                    {children}
+                </div>
             </div>
         </div>
     );

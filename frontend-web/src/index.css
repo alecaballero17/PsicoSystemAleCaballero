@@ -225,11 +225,14 @@ code {
 
 /* En Desktop, si existe un nav global (el usuario está logueado), se puede usar este margen en el contenedor principal */
 .app-content-wrapper {
-  margin-left: 280px;
   min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+.app-content-wrapper.with-sidebar {
+  margin-left: 280px;
 }
 @media (max-width: 768px) {
-  .app-content-wrapper {
+  .app-content-wrapper.with-sidebar {
     margin-left: 0;
   }
 }
