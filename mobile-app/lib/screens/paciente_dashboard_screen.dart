@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 // [SPRINT 1 - T015] [CU-02] Flujo de Onboarding: Registro de Paciente
 import 'registro_paciente_screen.dart';
+import 'agendar_cita_stepper_screen.dart';
 
 // [SPRINT 1 - T012] Modelo tipado del usuario autenticado
 import '../models/user_model.dart';
@@ -140,6 +141,24 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (_user != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AgendarCitaStepperScreen(
+                  user: _user!,
+                  token: widget.token,
+                ),
+              ),
+            );
+          }
+        },
+        icon: const Icon(Icons.add_task),
+        label: const Text('Agendar Cita'),
+        backgroundColor: const Color(0xFF2563EB),
+      ),
     );
   }
 }

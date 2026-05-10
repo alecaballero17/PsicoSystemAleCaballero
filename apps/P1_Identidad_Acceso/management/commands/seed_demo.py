@@ -5,12 +5,10 @@ from apps.P2_Gestion_Clinica.models import Paciente, HistoriaClinica
 from apps.P3_Logistica_Citas.models import Cita, ListaEspera
 
 class Command(BaseCommand):
-    help = 'Limpia la base de datos y crea usuarios de prueba (Sprints 0, 1, 2) para el Tribunal.'
+    help = 'Limpia la base de datos y crea usuarios usando el EMAIL como USERNAME para facilidad del tribunal.'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write(self.style.WARNING("Iniciando limpieza profunda de la base de datos..."))
-        
-        # Eliminar en orden para respetar dependencias foráneas
+        self.stdout.write("Iniciando limpieza profunda...")
         Cita.objects.all().delete()
         ListaEspera.objects.all().delete()
         HistoriaClinica.objects.all().delete()
@@ -18,48 +16,79 @@ class Command(BaseCommand):
         Usuario.objects.all().delete()
         Clinica.objects.all().delete()
         
-        self.stdout.write(self.style.SUCCESS("Base de datos limpia."))
-        
-        self.stdout.write(self.style.WARNING("Creando Súper Administrador Global..."))
-        # CREAR SUPERADMIN
-        Usuario.objects.create_superuser(username='superadmin', email='etsech67@gmail.com', password='Test12345', rol='ADMIN')
+        # 1. SUPERADMIN
+        admin_email = 'etsech67@gmail.com'
+        admin = Usuario.objects.create_superuser(username=admin_email, email=admin_email)
+        admin.set_password('Test12345')
+        admin.rol = 'ADMIN'
+        admin.debe_cambiar_password = False
+        admin.save()
 
-        self.stdout.write(self.style.WARNING("Creando Clínica 1: Centro Psicológico San Aurelio..."))
-        # CREAR CLÍNICA 1
-        c1 = Clinica.objects.create(nombre="Centro Psicológico San Aurelio", nit="111111", direccion="Av. San Aurelio", plan_suscripcion="Premium")
+        # 2. CLÍNICA 1
+        c1 = Clinica.objects.create(nombre="Centro Psicologico San Aurelio", nit="111111", direccion="Av. San Aurelio", plan_suscripcion="Premium")
         
-        # CLÍNICA 1 - ADMIN Y PSICOLOGO
-        Usuario.objects.create_user(username='admin_aurelio', email='ramosvargabrayan@gmail.com', password='Test12345', rol='ADMIN', clinica=c1, debe_cambiar_password=False)
-        Usuario.objects.create_user(username='psico_aurelio', email='joelramostrbj@gmail.com', password='Test12345', rol='PSICOLOGO', clinica=c1, especialidad='Terapia de Pareja', debe_cambiar_password=False)
+        # Admin 1
+        email_a1 = 'ramosvargabrayan@gmail.com'
+        u1 = Usuario.objects.create_user(username=email_a1, email=email_a1)
+        u1.set_password('Test12345')
+        u1.rol = 'ADMIN'
+        u1.clinica = c1
+        u1.debe_cambiar_password = False
+        u1.save()
+
+        # Psico 1
+        email_p1 = 'joelramostrbj@gmail.com'
+        u2 = Usuario.objects.create_user(username=email_p1, email=email_p1)
+        u2.set_password('Test12345')
+        u2.rol = 'PSICOLOGO'
+        u2.clinica = c1
+        u2.especialidad = 'Terapia de Pareja'
+        u2.debe_cambiar_password = False
+        u2.save()
         
-        # CLÍNICA 1 - PACIENTES
+        # Pacientes Clínica 1
+        pac_email1 = 'xdreicarlos@gmail.com'
         p1 = Paciente.objects.create(nombre="Carlos Dre", ci="888888", fecha_nacimiento="1995-01-01", telefono="7771111", clinica=c1)
-        Usuario.objects.create_user(username='paciente_carlos', email='xdreicarlos@gmail.com', password='Test12345', rol='PACIENTE', clinica=c1, debe_cambiar_password=False)
-        HistoriaClinica.objects.create(paciente=p1) # Expediente autogenerado
+        up1 = Usuario.objects.create_user(username=pac_email1, email=pac_email1)
+        up1.set_password('Test12345')
+        up1.rol = 'PACIENTE'
+        up1.clinica = c1
+        up1.debe_cambiar_password = False
+        up1.save()
+        HistoriaClinica.objects.create(paciente=p1)
         
-        p2 = Paciente.objects.create(nombre="Joe Toe", ci="999999", fecha_nacimiento="1990-05-05", telefono="7772222", clinica=c1)
-        Usuario.objects.create_user(username='paciente_joe', email='joetoe250@gmail.com', password='Test12345', rol='PACIENTE', clinica=c1, debe_cambiar_password=False)
-        HistoriaClinica.objects.create(paciente=p2)
+        # 3. CLÍNICA 2
+        c2 = Clinica.objects.create(nombre="Clinica Integral Mente Sana", nit="222222", direccion="Av. Bush", plan_suscripcion="Profesional")
         
-        self.stdout.write(self.style.WARNING("Creando Clínica 2: Clínica Integral Mente Sana..."))
-        # CREAR CLÍNICA 2
-        c2 = Clinica.objects.create(nombre="Clínica Integral Mente Sana", nit="222222", direccion="Av. Bush", plan_suscripcion="Profesional")
+        # Admin 2
+        email_a2 = 'si2psicologiaproy@gmail.com'
+        u3 = Usuario.objects.create_user(username=email_a2, email=email_a2)
+        u3.set_password('Test12345')
+        u3.rol = 'ADMIN'
+        u3.clinica = c2
+        u3.debe_cambiar_password = False
+        u3.save()
+
+        # Psico 2
+        email_p2 = 'trabajodt1c0@gmail.com'
+        u4 = Usuario.objects.create_user(username=email_p2, email=email_p2)
+        u4.set_password('Test12345')
+        u4.rol = 'PSICOLOGO'
+        u4.clinica = c2
+        u4.especialidad = 'Ansiedad y Depresion'
+        u4.debe_cambiar_password = False
+        u4.save()
         
-        # CLÍNICA 2 - ADMIN Y PSICOLOGO
-        Usuario.objects.create_user(username='admin_sana', email='si2psicologiaproy@gmail.com', password='Test12345', rol='ADMIN', clinica=c2, debe_cambiar_password=False)
-        Usuario.objects.create_user(username='psico_sana', email='trabajodt1c0@gmail.com', password='Test12345', rol='PSICOLOGO', clinica=c2, especialidad='Ansiedad y Depresión', debe_cambiar_password=False)
-        
-        # CLÍNICA 2 - PACIENTES
+        # Pacientes Clínica 2
+        pac_email2 = 'fitgo61@gmail.com'
         p3 = Paciente.objects.create(nombre="Fit Go", ci="555555", fecha_nacimiento="2000-10-10", telefono="7773333", clinica=c2)
-        Usuario.objects.create_user(username='paciente_fit', email='fitgo61@gmail.com', password='Test12345', rol='PACIENTE', clinica=c2, debe_cambiar_password=False)
+        up3 = Usuario.objects.create_user(username=pac_email2, email=pac_email2)
+        up3.set_password('Test12345')
+        up3.rol = 'PACIENTE'
+        up3.clinica = c2
+        up3.debe_cambiar_password = False
+        up3.save()
         HistoriaClinica.objects.create(paciente=p3)
         
-        p4 = Paciente.objects.create(nombre="Joel Vargas", ci="666666", fecha_nacimiento="1998-12-12", telefono="7774444", clinica=c2)
-        Usuario.objects.create_user(username='paciente_vargas', email='ramosvargasbrayanjoel66@gmail.com', password='Test12345', rol='PACIENTE', clinica=c2, debe_cambiar_password=False)
-        HistoriaClinica.objects.create(paciente=p4)
-        
-        self.stdout.write(self.style.SUCCESS("\n========================================================"))
-        self.stdout.write(self.style.SUCCESS("✅ DEMO DATA GENERADA EXITOSAMENTE!"))
-        self.stdout.write(self.style.SUCCESS("✅ 2 Clínicas / 2 Administradores / 2 Psicólogos / 4 Pacientes"))
-        self.stdout.write(self.style.SUCCESS("🔑 Contraseña universal para todos: Test12345"))
-        self.stdout.write(self.style.SUCCESS("========================================================\n"))
+        self.stdout.write("✅ EXITO: Ahora puedes entrar usando tu EMAIL como USUARIO.")
+        self.stdout.write("Password: Test12345")
