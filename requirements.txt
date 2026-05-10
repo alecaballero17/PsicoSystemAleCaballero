@@ -18,9 +18,11 @@ django-cors-headers==4.7.0
 # Development Helpers
 django-extensions==3.2.3
 
-
 # Audio Reports
 gTTS==2.5.1
 
 # API Documentation
 drf-spectacular==0.27.2
+
+# AI Services
+google-generativeai==0.8.3
