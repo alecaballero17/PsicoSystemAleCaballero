@@ -135,7 +135,37 @@ export const SuscripcionInfo = () => {
 
                     <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
 
-                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Historial de Facturación (Últimos pagos)</h3>
+                    <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Beneficios Incluidos en tu Plan</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+                        {info.plan_nombre.includes("Básico") && (
+                            <>
+                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
+                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
+                                <div style={styles.benefitItem}>❌ Análisis de Historia Clínica con IA</div>
+                                <div style={styles.benefitItem}>❌ Auditoría de Seguridad Avanzada</div>
+                            </>
+                        )}
+                        {info.plan_nombre.includes("Profesional") && (
+                            <>
+                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
+                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
+                                <div style={styles.benefitItem}>✅ Análisis de Historia Clínica con IA</div>
+                                <div style={styles.benefitItem}>❌ Auditoría de Seguridad Avanzada</div>
+                            </>
+                        )}
+                        {info.plan_nombre.includes("Premium") && (
+                            <>
+                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
+                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
+                                <div style={styles.benefitItem}>✅ Análisis de Historia Clínica con IA (Ilimitado)</div>
+                                <div style={styles.benefitItem}>✅ Auditoría de Seguridad Avanzada (RF-30)</div>
+                            </>
+                        )}
+                    </div>
+
+                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Historial de Facturación</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
                             <thead>
@@ -191,7 +221,8 @@ const styles = {
     divider: { fontSize: '24px', color: '#cbd5e1', fontWeight: '300' },
     maximo: { fontSize: '20px', color: '#94a3b8', fontWeight: 'bold' },
     progressBarBg: { width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' },
-    progressBarFill: { height: '100%', borderRadius: '4px', transition: 'width 0.5s ease-out' }
+    progressBarFill: { height: '100%', borderRadius: '4px', transition: 'width 0.5s ease-out' },
+    benefitItem: { padding: '10px', backgroundColor: '#f1f5f9', borderRadius: '8px', fontSize: '13px', color: '#475569', fontWeight: '500' }
 };
 
 export default SuscripcionInfo;

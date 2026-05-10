@@ -70,13 +70,13 @@ export const AuthProvider = ({ children }) => {
 
         const resetTimer = () => {
             clearTimeout(timeoutId);
-            // 2 minutos de inactividad
+            // 30 minutos de inactividad
             timeoutId = setTimeout(() => {
                 if (user) {
                     alert('Tu sesión ha expirado por inactividad.');
                     logout();
                 }
-            }, 120000); 
+            }, 1800000); 
         };
 
         if (user) {

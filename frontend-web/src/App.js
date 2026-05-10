@@ -27,13 +27,14 @@ import Finanzas from './pages/Finanzas';
 import ReportesFinancieros from './pages/ReportesFinancieros';
 import ListaEspera from './pages/ListaEspera';
 import EscanerQR from './pages/EscanerQR';
+import GlobalSidebar from './components/GlobalSidebar';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
 // ==============================================================================
 const PrivateRoute = ({ children, allowedRoles }) => {
     const { user } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     if (!user) {
         return <Navigate to="/" />;
@@ -50,12 +51,12 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     return (
         <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+            <div style={{ display: 'flex', flex: 1, position: 'relative', zIndex: 1000 }}>
                 <GlobalSidebar 
                     isOpen={isSidebarOpen} 
                     onClose={() => setIsSidebarOpen(false)} 
                 />
-                <div className={`app-content-wrapper ${isSidebarOpen ? 'with-sidebar' : ''}`}>
+                <div className={`app-content-wrapper ${isSidebarOpen ? 'with-sidebar' : ''}`} style={{ flex: 1 }}>
                     {children}
                 </div>
             </div>
