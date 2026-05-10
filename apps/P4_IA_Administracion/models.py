@@ -6,7 +6,10 @@ from apps.P2_Gestion_Clinica.models import Paciente
 
 class LogAuditoria(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    clinica = models.ForeignKey('P1_Identidad_Acceso.Clinica', on_delete=models.CASCADE, null=True, blank=True)
     accion = models.CharField(max_length=255)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -45,10 +48,26 @@ class Comprobante(models.Model):
 # Señales automáticas para Login y Logout
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
-    LogAuditoria.objects.create(usuario=user, accion="Inició sesión en el sistema.")
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    
+    LogAuditoria.objects.create(
+        usuario=user, 
+        clinica=user.clinica if hasattr(user, 'clinica') else None,
+        accion="Inició sesión en el sistema.",
+        ip_address=ip,
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
+    )
 
 @receiver(user_logged_out)
 def log_user_logout(sender, request, user, **kwargs):
     if user:
-        LogAuditoria.objects.create(usuario=user, accion="Cerró sesión a través del portal web.")
+        LogAuditoria.objects.create(
+            usuario=user, 
+            clinica=user.clinica if hasattr(user, 'clinica') else None,
+            accion="Cerró sesión a través del portal web."
+        )
 

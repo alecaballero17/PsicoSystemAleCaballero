@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .forms import RegistroPsicologoCompletoForm
-from .models import Clinica, Usuario
+from .models import Clinica, Usuario, TransaccionClinica
 from .serializers import (
     ClinicaSerializer,
     UsuarioSerializer,
@@ -23,6 +23,7 @@ from .serializers import (
     PsicologoCreateSerializer,
     PsicologoUpdateSerializer,
     OnboardingSaaSSerializer,
+    TransaccionClinicaSerializer,
 )
 from .permissions import HasClinicaAsignada, EsPsicologoOAdministrador, EsAdministrador
 
@@ -200,10 +201,16 @@ class OnboardingSaaSAPIView(APIView):
 class MiClinicaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     """GET/PUT/PATCH: Ver y actualizar datos de la clínica del usuario logueado."""
     serializer_class = ClinicaSerializer
-    permission_classes = [IsAuthenticated, EsAdministrador, HasClinicaAsignada]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
 
     def get_object(self):
         return self.request.user.clinica
+
+    def perform_update(self, serializer):
+        if self.request.user.rol != 'ADMIN':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo el administrador puede modificar los datos de la clínica.")
+        serializer.save()
 
 
 class ClinicaCreateAPIView(APIView):
@@ -356,9 +363,10 @@ class SuscripcionInfoAPIView(APIView):
         info = {
             "clinica_id": clinica.id,
             "clinica_nombre": clinica.nombre,
+            "saldo": float(clinica.saldo),
             "plan_nombre": f"Plan {plan}",
             "estado": "ACTIVA",
-            "fecha_inicio": clinica.id, # Mock
+            "fecha_creacion": clinica.fecha_creacion.isoformat(),
             "uso": {
                 "pacientes_actuales": pacientes_count,
                 "pacientes_limite": "Ilimitado",
@@ -372,11 +380,43 @@ class SuscripcionInfoAPIView(APIView):
             }
         }
         
-        # Fix mock fecha_inicio
-        import datetime
-        info["fecha_inicio"] = (datetime.datetime.now() - datetime.timedelta(days=10)).isoformat()
-        
         return Response(info, status=status.HTTP_200_OK)
+
+
+class TransaccionClinicaListAPIView(generics.ListAPIView):
+    """GET: Historial de transacciones de facturación de la clínica."""
+    serializer_class = TransaccionClinicaSerializer
+    permission_classes = [IsAuthenticated, EsAdministrador, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return TransaccionClinica.objects.filter(clinica=self.request.user.clinica).order_by("-fecha")
+
+
+class CargarSaldoAPIView(APIView):
+    """POST: Cargar saldo a la cuenta de la clínica."""
+    permission_classes = [IsAuthenticated, EsAdministrador, HasClinicaAsignada]
+
+    def post(self, request):
+        clinica = request.user.clinica
+        monto = request.data.get("monto")
+        descripcion = request.data.get("descripcion", "Carga de saldo manual")
+        
+        if not monto or float(monto) <= 0:
+            return Response({"detail": "Monto inválido."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        import decimal
+        clinica.saldo += decimal.Decimal(monto)
+        clinica.save()
+        
+        TransaccionClinica.objects.create(
+            clinica=clinica,
+            tipo='CARGA',
+            monto=monto,
+            descripcion=descripcion,
+            metodo_pago=request.data.get("metodo_pago", "TRANSFERENCIA")
+        )
+        
+        return Response({"detail": "Saldo cargado exitosamente.", "nuevo_saldo": float(clinica.saldo)}, status=status.HTTP_200_OK)
 
 
 class PsicologoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):

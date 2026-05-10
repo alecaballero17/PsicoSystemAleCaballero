@@ -1,41 +1,48 @@
+import os
+import datetime
+import uuid
+import base64
+import requests
+import io
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from rest_framework import viewsets, status
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.core.files.storage import default_storage
+from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-import requests
-from apps.P1_Identidad_Acceso.models import DispositivoMovil
-from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA, RequiresModuloAuditoria
+from gtts import gTTS
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import openpyxl
+
+from apps.P1_Identidad_Acceso.models import Usuario, DispositivoMovil
+from apps.P1_Identidad_Acceso.permissions import (
+    HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, 
+    RequiresModuloContabilidad, RequiresModuloIA, RequiresModuloAuditoria, EsPaciente
+)
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
 from .models import LogAuditoria, Transaccion, Comprobante
-from .serializers import TransaccionSerializer, ComprobanteSerializer
+from .serializers import TransaccionSerializer, ComprobanteSerializer, LogAuditoriaSerializer
 from .services.ai_service import AIService
 
-class LogAuditoriaAPIView(APIView):
+class LogAuditoriaAPIView(generics.ListAPIView):
     """
     Endpoint de bitácora exclusivo para el Administrador de la clínica.
     """
+    serializer_class = LogAuditoriaSerializer
     permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador, RequiresModuloAuditoria]
 
-    def get(self, request):
-        clinica = request.user.clinica
-        logs = LogAuditoria.objects.filter(usuario__clinica=clinica).order_by('-fecha')[:50]
-        
-        data = [
-            {
-                "fecha": log.fecha.strftime("%Y-%m-%d %H:%M:%S"),
-                "usuario": getattr(log.usuario, "username", "Desconocido") if log.usuario else "Desconocido",
-                "accion": log.accion
-            }
-            for log in logs
-        ]
-        return Response(data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return LogAuditoria.objects.filter(clinica=self.request.user.clinica).order_by('-fecha')
 
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated, HasClinicaAsignada]
@@ -109,9 +116,6 @@ class GenerarComprobantePDFView(APIView):
         )
         
         # Lógica simplificada de PDF usando reportlab
-        from reportlab.pdfgen import canvas
-        import io
-
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
         
@@ -172,13 +176,6 @@ class AnalisisIAView(APIView):
         )
 
         return Response({"analisis_ia": resultado}, status=status.HTTP_200_OK)
-
-
-import os
-import datetime
-from django.conf import settings
-from django.core.files.storage import default_storage
-from gtts import gTTS
 
 class ReportePersonalizadoAPIView(APIView):
     """
@@ -262,10 +259,6 @@ class ReportePersonalizadoAPIView(APIView):
             "texto": texto_reporte,
             "audio_url": audio_url
         }, status=status.HTTP_200_OK)
-
-
-import uuid
-from apps.P1_Identidad_Acceso.permissions import EsPaciente
 
 class MobileSaldoPacienteView(APIView):
     """
@@ -378,15 +371,6 @@ class RegistroTokenFCMAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-from django.db.models import Count
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
-import openpyxl
-from io import BytesIO
-import base64
-from apps.P1_Identidad_Acceso.models import Usuario
 
 class VoiceToReportAPIView(APIView):
     """
@@ -437,7 +421,7 @@ class VoiceToReportAPIView(APIView):
                     psicologo_top = f"{user.get_full_name() or user.username} ({top['total']} citas)"
 
         # 3. Generar PDF
-        buffer = BytesIO()
+        buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
         elements = []
         styles = getSampleStyleSheet()

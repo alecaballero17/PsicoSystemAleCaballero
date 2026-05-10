@@ -106,43 +106,75 @@ class _SeleccionClinicaScreenState extends State<SeleccionClinicaScreen> {
                 style: TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  children: [
-                    _isLoading && _clinicas.isEmpty
-                        ? const CircularProgressIndicator()
-                        : DropdownButtonFormField<int>(
-                            value: _selectedClinica,
-                            items: _clinicas.map((c) {
-                              return DropdownMenuItem<int>(
-                                value: c['id'],
-                                child: Text(c['nombre']),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: _isLoading && _clinicas.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : _clinicas.isEmpty
+                        ? const Center(child: Text("No hay clínicas disponibles", style: TextStyle(color: Colors.grey)))
+                        : ListView.builder(
+                            itemCount: _clinicas.length,
+                            itemBuilder: (context, index) {
+                              final c = _clinicas[index];
+                              final isSelected = _selectedClinica == c['id'];
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.2),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    width: 45,
+                                    height: 45,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: c['logo'] != null
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(c['logo'], fit: BoxFit.cover),
+                                          )
+                                        : const Icon(Icons.business, color: Colors.blue),
+                                  ),
+                                  title: Text(
+                                    c['nombre'],
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected ? Colors.blue : Colors.black87,
+                                    ),
+                                  ),
+                                  subtitle: Text(c['email_contacto'] ?? 'Centro Médico', style: const TextStyle(fontSize: 11)),
+                                  trailing: isSelected 
+                                      ? const Icon(Icons.check_circle, color: Colors.blue)
+                                      : null,
+                                  onTap: () => setState(() => _selectedClinica = c['id']),
+                                ),
                               );
-                            }).toList(),
-                            onChanged: (val) =>
-                                setState(() => _selectedClinica = val),
-                            decoration: const InputDecoration(
-                              labelText: 'Clínica Disponible',
-                              prefixIcon: Icon(Icons.apartment),
-                              border: OutlineInputBorder(),
-                            ),
+                            },
                           ),
-                    const SizedBox(height: 30),
-                    _isLoading && _clinicas.isNotEmpty
-                        ? const CircularProgressIndicator()
-                        : CustomButton(
-                            text: 'CONFIRMAR Y ENTRAR',
-                            color: const Color(0xFF16a34a),
-                            onPressed: _finalizarVinculacion,
-                          ),
-                  ],
                 ),
               ),
+              const SizedBox(height: 20),
+              if (_clinicas.isNotEmpty)
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : CustomButton(
+                        text: 'CONFIRMAR Y ENTRAR',
+                        color: const Color(0xFF2563eb),
+                        onPressed: _finalizarVinculacion,
+                      ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

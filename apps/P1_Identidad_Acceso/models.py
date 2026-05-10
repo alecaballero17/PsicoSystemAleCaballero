@@ -12,6 +12,8 @@ class Clinica(models.Model):
     telefono = models.CharField(max_length=20, blank=True, default='')
     email_contacto = models.EmailField(blank=True, default='')
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
+    saldo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     PLANES = [
         ('Basico', 'Básico'),
@@ -22,6 +24,17 @@ class Clinica(models.Model):
 
     def __str__(self):
         return str(self.nombre)
+
+class TransaccionClinica(models.Model):
+    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE, related_name='transacciones_facturacion')
+    tipo = models.CharField(max_length=50, choices=[('CARGA', 'Carga de Saldo'), ('PAGO_SUSCRIPCION', 'Pago de Suscripción'), ('OTRO', 'Otro')])
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    descripcion = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    metodo_pago = models.CharField(max_length=50, default='TRANSFERENCIA')
+
+    def __str__(self):
+        return f"{self.clinica.nombre} - {self.tipo} - {self.monto}"
 
 # ==============================================================================
 # MÓDULO: SEGURIDAD Y ACCESO (USUARIOS)

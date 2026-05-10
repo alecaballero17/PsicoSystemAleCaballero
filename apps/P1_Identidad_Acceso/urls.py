@@ -18,6 +18,8 @@ from .views import (
     UsuarioPerfilAPIView,
     ChangePasswordAPIView,
     SuscripcionInfoAPIView,
+    TransaccionClinicaListAPIView,
+    CargarSaldoAPIView,
 )
 
 urlpatterns = [
@@ -67,5 +69,15 @@ urlpatterns = [
         "api/suscripciones/<int:pk>/",
         SuscripcionInfoAPIView.as_view(),
         name="api_suscripcion_info",
+    ),
+    path(
+        "api/suscripciones/transacciones/",
+        TransaccionClinicaListAPIView.as_view(),
+        name="api_transacciones_clinica",
+    ),
+    path(
+        "api/suscripciones/cargar-saldo/",
+        CargarSaldoAPIView.as_view(),
+        name="api_cargar_saldo",
     ),
 ]

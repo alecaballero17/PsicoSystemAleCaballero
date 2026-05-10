@@ -1,6 +1,3 @@
-// [SPRINT 1 - T025] Interfaz de monitoreo de límites SaaS.
-// Componente de visualización de Suscripción para el Administrador de la Clínica.
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosConfig';
@@ -9,220 +6,206 @@ import authService from '../services/authService';
 export const SuscripcionInfo = () => {
     const navigate = useNavigate();
     const [info, setInfo] = useState(null);
+    const [transacciones, setTransacciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [montoCarga, setMontoCarga] = useState('');
+    const [cargandoSaldo, setCargandoSaldo] = useState(false);
 
-    useEffect(() => {
-        const fetchSuscripcionData = async () => {
-            try {
-                // Obtenemos el perfil del usuario para sacar su clinica_id (Tenant)
-                const user = await authService.getCurrentUser(localStorage.getItem('token'));
-                if (!user.clinica) {
-                    setError('No tienes una clínica asignada, o eres SuperAdmin.');
-                    setLoading(false);
-                    return;
-                }
-
-                // Consumimos el endpoint de detalle de suscripción del Tenant
-                const response = await apiClient.get(`suscripciones/${user.clinica}/`);
-                setInfo(response.data);
-            } catch (err) {
-                console.error(err);
-                setError('Error al obtener la información de la suscripción.');
-            } finally {
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const user = await authService.getCurrentUser(localStorage.getItem('token'));
+            if (!user.clinica) {
+                setError('No tienes una clínica asignada.');
                 setLoading(false);
+                return;
             }
-        };
 
-        fetchSuscripcionData();
-    }, []);
+            const [infoRes, transRes] = await Promise.all([
+                apiClient.get(`suscripciones/${user.clinica}/`),
+                apiClient.get(`suscripciones/transacciones/`)
+            ]);
 
-    // Helper de estado y color
-    const getBadgeStyle = (estado) => {
-        switch (estado) {
-            case 'ACTIVA': return { backgroundColor: '#dcfce7', color: '#166534', padding: '5px 10px', borderRadius: '12px', fontWeight: 'bold' };
-            case 'SUSPENDIDA': return { backgroundColor: '#fee2e2', color: '#991b1b', padding: '5px 10px', borderRadius: '12px', fontWeight: 'bold' };
-            case 'TRIAL': return { backgroundColor: '#fef3c7', color: '#92400e', padding: '5px 10px', borderRadius: '12px', fontWeight: 'bold' };
-            default: return { backgroundColor: '#f1f5f9', color: '#475569', padding: '5px 10px', borderRadius: '12px', fontWeight: 'bold' };
+            setInfo(infoRes.data);
+            setTransacciones(transRes.data);
+        } catch (err) {
+            console.error(err);
+            setError('Error al obtener la información de la suscripción.');
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleCargarSaldo = async (e) => {
+        e.preventDefault();
+        if (!montoCarga || isNaN(montoCarga) || montoCarga <= 0) {
+            alert("Ingrese un monto válido.");
+            return;
+        }
+
+        try {
+            setCargandoSaldo(true);
+            await apiClient.post('suscripciones/cargar-saldo/', {
+                monto: montoCarga,
+                descripcion: "Carga de saldo desde panel administrativo",
+                metodo_pago: "TARJETA_WEB"
+            });
+            alert("Saldo cargado exitosamente.");
+            setMontoCarga('');
+            fetchData();
+        } catch (err) {
+            alert("Error al cargar saldo.");
+        } finally {
+            setCargandoSaldo(false);
+        }
+    };
+
+    const getBadgeStyle = (estado) => {
+        switch (estado) {
+            case 'ACTIVA': return { backgroundColor: '#dcfce7', color: '#166534', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold', fontSize: '11px' };
+            case 'SUSPENDIDA': return { backgroundColor: '#fee2e2', color: '#991b1b', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold', fontSize: '11px' };
+            default: return { backgroundColor: '#f1f5f9', color: '#475569', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold', fontSize: '11px' };
+        }
+    };
+
+    if (loading) return <div style={styles.loading}>Cargando información...</div>;
+    if (error) return <div style={styles.errorBox}>{error}</div>;
 
     return (
         <div style={styles.container}>
             <header style={styles.header}>
-                <div>
-                    <h1 style={styles.headerTitle}>Mi Suscripción (SaaS)</h1>
-                    <p style={styles.headerSubtitle}>Monitoreo de Límites y Plan Activo</p>
-                </div>
-                <button style={styles.btnSecondary} onClick={() => navigate('/dashboard')}>
-                    Volver al Dashboard
-                </button>
+                <h1 style={styles.headerTitle}>Gestión de Suscripción & Finanzas</h1>
+                <p style={styles.headerSubtitle}>Administración del Tenant: {info?.clinica_nombre}</p>
             </header>
 
-            {loading ? (
-                <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                    <p style={{ color: '#64748b' }}>Consultando estado de suscripción...</p>
+            <div style={styles.topGrid}>
+                {/* Card de Saldo */}
+                <div style={styles.cardBalance}>
+                    <p style={styles.balanceLabel}>SALDO DISPONIBLE</p>
+                    <h2 style={styles.balanceValue}>{info?.saldo?.toFixed(2)} BOB</h2>
+                    <form onSubmit={handleCargarSaldo} style={styles.chargeForm}>
+                        <input 
+                            type="number" 
+                            placeholder="Monto" 
+                            value={montoCarga}
+                            onChange={(e) => setMontoCarga(e.target.value)}
+                            style={styles.inputCharge}
+                        />
+                        <button type="submit" disabled={cargandoSaldo} style={styles.btnCharge}>
+                            {cargandoSaldo ? '...' : 'CARGAR'}
+                        </button>
+                    </form>
                 </div>
-            ) : error ? (
-                <div style={styles.errorBox}>{error}</div>
-            ) : info?.estado === 'SIN_SUSCRIPCION' ? (
-                <div style={styles.card}>
-                    <h2 style={{ margin: '0 0 10px 0', color: '#0f172a' }}>{info.clinica_nombre}</h2>
-                    <p style={{ color: '#ef4444', fontWeight: '500' }}>{info.mensaje}</p>
+
+                {/* Card de Plan */}
+                <div style={styles.cardPlan}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <p style={styles.balanceLabel}>PLAN ACTUAL</p>
+                            <h2 style={{ margin: '5px 0', fontSize: '24px', fontWeight: '800' }}>{info?.plan_nombre}</h2>
+                        </div>
+                        <span style={getBadgeStyle(info?.estado)}>{info?.estado}</span>
+                    </div>
+                    <p style={{ margin: '10px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                        Registrado el: {new Date(info?.fecha_creacion).toLocaleDateString()}
+                    </p>
                 </div>
-            ) : (
-                <div style={styles.card}>
-                    <h2 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Clínica: {info.clinica_nombre}</h2>
-                    
-                    <div style={styles.grid}>
-                        <div style={styles.infoBlock}>
-                            <p style={styles.label}>Plan Actual</p>
-                            <p style={styles.value}>{info.plan_nombre}</p>
-                        </div>
-                        <div style={styles.infoBlock}>
-                            <p style={styles.label}>Estado</p>
-                            <span style={getBadgeStyle(info.estado)}>
-                                {info.estado} {info.estado === 'ACTIVA' ? '✅' : ''}
-                            </span>
-                        </div>
-                        <div style={styles.infoBlock}>
-                            <p style={styles.label}>Fecha de Inicio</p>
-                            <p style={{ ...styles.value, fontSize: '16px' }}>{new Date(info.fecha_inicio).toLocaleDateString()}</p>
-                        </div>
-                    </div>
+            </div>
 
-                    <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
-
-                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Límites de Uso (Uso de Cupos)</h3>
-                    
-                    <div style={styles.limitsGrid}>
-                        {/* Cupo Pacientes */}
-                        <div style={styles.limitBox}>
-                            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🏃</div>
-                            <p style={styles.limitTitle}>Pacientes Registrados</p>
-                            <p style={styles.limitRatio}>
-                                <span style={styles.actual}>{info.uso.pacientes_actuales}</span>
-                                <span style={styles.divider}>/</span>
-                                <span style={styles.maximo}>{info.uso.pacientes_limite}</span>
-                            </p>
-                            <div style={styles.progressBarBg}>
-                                <div style={{
-                                    ...styles.progressBarFill,
-                                    width: `${Math.min(100, (info.uso.pacientes_actuales / info.uso.pacientes_limite) * 100)}%`,
-                                    backgroundColor: (info.uso.pacientes_actuales >= info.uso.pacientes_limite) ? '#ef4444' : '#2563eb'
-                                }} />
-                            </div>
-                        </div>
-
-                        {/* Cupo Psicólogos */}
-                        <div style={styles.limitBox}>
-                            <div style={{ fontSize: '32px', marginBottom: '10px' }}>⚕️</div>
-                            <p style={styles.limitTitle}>Psicólogos del Tenant</p>
-                            <p style={styles.limitRatio}>
-                                <span style={styles.actual}>{info.uso.psicologos_actuales}</span>
-                                <span style={styles.divider}>/</span>
-                                <span style={styles.maximo}>{info.uso.psicologos_limite}</span>
-                            </p>
-                            <div style={styles.progressBarBg}>
-                                <div style={{
-                                    ...styles.progressBarFill,
-                                    width: `${Math.min(100, (info.uso.psicologos_actuales / info.uso.psicologos_limite) * 100)}%`,
-                                    backgroundColor: (info.uso.psicologos_actuales >= info.uso.psicologos_limite) ? '#ef4444' : '#16a34a'
-                                }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
-
-                    <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
-
-                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Beneficios Incluidos en tu Plan</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-                        {info.plan_nombre.includes("Básico") && (
-                            <>
-                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
-                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
-                                <div style={styles.benefitItem}>❌ Análisis de Historia Clínica con IA</div>
-                                <div style={styles.benefitItem}>❌ Auditoría de Seguridad Avanzada</div>
-                            </>
-                        )}
-                        {info.plan_nombre.includes("Profesional") && (
-                            <>
-                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
-                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
-                                <div style={styles.benefitItem}>✅ Análisis de Historia Clínica con IA</div>
-                                <div style={styles.benefitItem}>❌ Auditoría de Seguridad Avanzada</div>
-                            </>
-                        )}
-                        {info.plan_nombre.includes("Premium") && (
-                            <>
-                                <div style={styles.benefitItem}>✅ Gestión de Citas y Pacientes</div>
-                                <div style={styles.benefitItem}>✅ Calendario Profesional</div>
-                                <div style={styles.benefitItem}>✅ Análisis de Historia Clínica con IA (Ilimitado)</div>
-                                <div style={styles.benefitItem}>✅ Auditoría de Seguridad Avanzada (RF-30)</div>
-                            </>
-                        )}
-                    </div>
-
-                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Historial de Facturación</h3>
+            <div style={styles.mainGrid}>
+                <div style={{ ...styles.card, gridColumn: 'span 2' }}>
+                    <h3 style={styles.sectionTitle}>Historial de Facturación</h3>
                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                        <table style={styles.table}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#64748b' }}>
-                                    <th style={{ padding: '12px' }}>Fecha</th>
-                                    <th style={{ padding: '12px' }}>Descripción</th>
-                                    <th style={{ padding: '12px' }}>Método</th>
-                                    <th style={{ padding: '12px' }}>Monto</th>
-                                    <th style={{ padding: '12px' }}>Estado</th>
+                                <tr style={styles.tableHead}>
+                                    <th style={styles.th}>FECHA</th>
+                                    <th style={styles.th}>DESCRIPCIÓN</th>
+                                    <th style={styles.th}>MÉTODO</th>
+                                    <th style={styles.th}>MONTO</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '12px', color: '#1e293b', fontWeight: '500' }}>{new Date(info.fecha_inicio).toLocaleDateString()}</td>
-                                    <td style={{ padding: '12px' }}>Suscripción {info.plan_nombre}</td>
-                                    <td style={{ padding: '12px' }}>💳 **** 4242</td>
-                                    <td style={{ padding: '12px', fontWeight: 'bold' }}>
-                                        {info.plan_nombre.includes("Premium") ? "$499.99" : info.plan_nombre.includes("Profesional") ? "$49.99" : "$0.00"}
-                                    </td>
-                                    <td style={{ padding: '12px' }}>
-                                        <span style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>PAGADO</span>
-                                    </td>
-                                </tr>
+                                {transacciones.length > 0 ? transacciones.map(t => (
+                                    <tr key={t.id} style={styles.tr}>
+                                        <td style={styles.td}>{t.fecha_formateada}</td>
+                                        <td style={styles.td}>{t.descripcion}</td>
+                                        <td style={styles.td}>
+                                            <span style={styles.badgeMethod}>{t.metodo_pago}</span>
+                                        </td>
+                                        <td style={{ ...styles.td, fontWeight: 'bold', color: t.tipo === 'CARGA' ? '#16a34a' : '#dc2626' }}>
+                                            {t.tipo === 'CARGA' ? '+' : '-'}{t.monto} BOB
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Sin transacciones recientes.</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            )}
+
+                <div style={styles.card}>
+                    <h3 style={styles.sectionTitle}>Uso de Recursos</h3>
+                    <div style={styles.usageItem}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={styles.usageLabel}>Pacientes</span>
+                            <span style={styles.usageValue}>{info?.uso?.pacientes_actuales} / {info?.uso?.pacientes_limite}</span>
+                        </div>
+                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: '10%', backgroundColor: '#2563eb' }} /></div>
+                    </div>
+                    <div style={styles.usageItem}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={styles.usageLabel}>Especialistas</span>
+                            <span style={styles.usageValue}>{info?.uso?.psicologos_actuales} / {info?.uso?.psicologos_limite}</span>
+                        </div>
+                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: '20%', backgroundColor: '#16a34a' }} /></div>
+                    </div>
+
+                    <h3 style={{ ...styles.sectionTitle, marginTop: '30px' }}>Acciones Rápidas</h3>
+                    <button onClick={() => navigate('/configuracion-clinica')} style={styles.btnAction}>⚙️ Configuración del Tenant</button>
+                    <button onClick={() => navigate('/bitacora')} style={styles.btnAction}>📜 Ver Bitácora de Auditoría</button>
+                </div>
+            </div>
         </div>
     );
 };
 
-// ===============================================
-// ESTILOS
-// ===============================================
 const styles = {
-    container: { padding: '30px', maxWidth: '900px', margin: '0 auto', backgroundColor: '#f8fafc', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-    headerTitle: { margin: 0, fontSize: '24px', color: '#0f172a' },
-    headerSubtitle: { margin: 0, fontSize: '14px', color: '#64748b' },
-    btnSecondary: { backgroundColor: '#fff', color: '#475569', padding: '10px 16px', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
-    errorBox: { padding: '15px', backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '8px' },
-    card: { backgroundColor: 'white', borderRadius: '16px', padding: '40px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
-    infoBlock: { padding: '15px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' },
-    label: { margin: '0 0 5px 0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' },
-    value: { margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1e293b' },
-    limitsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' },
-    limitBox: { border: '1px solid #e2e8f0', borderRadius: '16px', padding: '25px', textAlign: 'center', backgroundColor: '#fafaf9' },
-    limitTitle: { margin: '0 0 15px 0', fontSize: '15px', fontWeight: 'bold', color: '#475569' },
-    limitRatio: { margin: '0 0 15px 0', display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '8px' },
-    actual: { fontSize: '36px', fontWeight: '900', color: '#0f172a' },
-    divider: { fontSize: '24px', color: '#cbd5e1', fontWeight: '300' },
-    maximo: { fontSize: '20px', color: '#94a3b8', fontWeight: 'bold' },
-    progressBarBg: { width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' },
-    progressBarFill: { height: '100%', borderRadius: '4px', transition: 'width 0.5s ease-out' },
-    benefitItem: { padding: '10px', backgroundColor: '#f1f5f9', borderRadius: '8px', fontSize: '13px', color: '#475569', fontWeight: '500' }
+    container: { padding: '32px', maxWidth: '1200px', margin: '0 auto', backgroundColor: '#f1f5f9', minHeight: '100vh' },
+    header: { marginBottom: '32px' },
+    headerTitle: { margin: 0, fontSize: '28px', color: '#0f172a', fontWeight: '800' },
+    headerSubtitle: { margin: 0, color: '#64748b', fontSize: '16px' },
+    topGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' },
+    cardBalance: { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', padding: '30px', borderRadius: '20px', color: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' },
+    balanceLabel: { margin: 0, fontSize: '11px', fontWeight: '900', color: '#94a3b8', letterSpacing: '1px' },
+    balanceValue: { margin: '10px 0 20px 0', fontSize: '36px', fontWeight: '800' },
+    chargeForm: { display: 'flex', gap: '10px' },
+    inputCharge: { backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '10px', borderRadius: '8px', color: 'white', flex: 1, outline: 'none' },
+    btnCharge: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '0 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' },
+    cardPlan: { backgroundColor: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' },
+    mainGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' },
+    card: { backgroundColor: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' },
+    sectionTitle: { margin: '0 0 20px 0', fontSize: '18px', color: '#1e293b', fontWeight: '700' },
+    table: { width: '100%', borderCollapse: 'collapse' },
+    tableHead: { borderBottom: '2px solid #f1f5f9' },
+    th: { textAlign: 'left', padding: '12px', fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' },
+    tr: { borderBottom: '1px solid #f8fafc' },
+    td: { padding: '12px', fontSize: '13px', color: '#334155' },
+    badgeMethod: { backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold' },
+    usageItem: { marginBottom: '20px' },
+    usageLabel: { fontSize: '13px', color: '#64748b', fontWeight: '600' },
+    usageValue: { fontSize: '13px', color: '#1e293b', fontWeight: 'bold' },
+    progressBg: { height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' },
+    progressFill: { height: '100%', borderRadius: '3px' },
+    btnAction: { width: '100%', padding: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', textAlign: 'left', marginBottom: '10px', cursor: 'pointer', fontWeight: '600', color: '#334155', transition: 'all 0.2s' },
+    loading: { textAlign: 'center', padding: '100px', fontSize: '18px', color: '#64748b' },
+    errorBox: { padding: '20px', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fee2e2', borderRadius: '12px', margin: '32px' }
 };
 
 export default SuscripcionInfo;

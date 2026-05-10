@@ -16,7 +16,9 @@ import ConfiguracionClinica from './pages/ConfiguracionClinica';
 import Navbar from './components/Navbar';
 import RecuperarContrasena from './pages/RecuperarContrasena';
 import GestionPersonal from './pages/GestionPersonal';
-import SuscripcionInfo from './pages/SuscripcionInfo';
+import { SuscripcionInfo } from './pages/SuscripcionInfo';
+import BitacoraAudit from './pages/BitacoraAudit';
+import CambiarPassword from './pages/CambiarPassword';
 import Landing from './pages/Landing';
 
 // --- SPRINT 2: Nuevas páginas ---
@@ -64,6 +66,8 @@ function App() {
                         <Route path="/gestion-personal" element={<GestionPersonal />} />
                         <Route path="/configuracion-clinica" element={<ConfiguracionClinica />} />
                         <Route path="/suscripcion" element={<SuscripcionInfo />} />
+                        <Route path="/bitacora" element={<BitacoraAudit />} />
+                        <Route path="/cambiar-password" element={<CambiarPassword />} />
                         <Route path="/reportes" element={<ReportesFinancieros />} />
                     </Route>
 

@@ -119,20 +119,30 @@ const AgendaCitas = () => {
     };
 
     return (
-        <div className="agenda-container" style={{ padding: '20px', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
+        <div className="agenda-container" style={styles.pageContainer}>
             <ToastContainer />
 
-            {/* Header */}
-            <div className="agenda-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={styles.pageTitle}>📅 Agenda Profesional</h1>
-                    <p style={styles.pageSubtitle}>
-                        Gestión de horarios y citas sincronizada
-                    </p>
+            {/* Header Glassmorphism Card */}
+            <div style={styles.headerCard}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={styles.iconCircle}>📅</div>
+                    <div>
+                        <h1 style={styles.pageTitle}>Agenda Profesional</h1>
+                        <p style={styles.pageSubtitle}>
+                            Gestión centralizada de citas y disponibilidad para {tenant?.nombre}
+                        </p>
+                    </div>
                 </div>
-                <div className="agenda-actions" style={{ display: 'flex', gap: '12px' }}>
+                
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                        onClick={() => setCurrentDate(new Date())} 
+                        style={styles.btnToday}
+                    >
+                        Hoy
+                    </button>
                     <button onClick={fetchCitas} style={styles.btnSecondary} disabled={loading}>
-                        🔄 {loading ? 'Cargando...' : 'Actualizar'}
+                        {loading ? '🔄 Sincronizando...' : '🔄 Actualizar'}
                     </button>
                     <button
                         onClick={() => navigate('/gestion-citas')}
@@ -143,18 +153,38 @@ const AgendaCitas = () => {
                 </div>
             </div>
 
-            {/* Calendario */}
+            {/* Leyenda de Estados */}
+            <div style={styles.legendBar}>
+                <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendDot, backgroundColor: '#3b82f6' }}></div>
+                    <span style={styles.legendText}>Pendientes</span>
+                </div>
+                <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendDot, backgroundColor: '#10b981' }}></div>
+                    <span style={styles.legendText}>Completadas</span>
+                </div>
+                <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendDot, backgroundColor: '#ef4444' }}></div>
+                    <span style={styles.legendText}>Canceladas</span>
+                </div>
+                <div style={{ marginLeft: 'auto', fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
+                    Tip: Haz clic en una cita para ver detalles o reprogramar.
+                </div>
+            </div>
+
+            {/* Calendario Container */}
             <div style={styles.calendarWrapper}>
                 {loading ? (
                     <div style={styles.loadingState}>
-                        <div style={styles.spinner} />
-                        <p>Sincronizando agenda con el servidor...</p>
+                        <div className="premium-spinner" />
+                        <p style={{ marginTop: '20px', fontWeight: '600' }}>Sincronizando agenda con el servidor...</p>
                     </div>
                 ) : error ? (
-                    <div style={{ textAlign: 'center', padding: '60px' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '20px' }}>❌</div>
-                        <h2 style={{ color: '#0f172a' }}>{error}</h2>
-                        <button onClick={fetchCitas} style={{ ...styles.btnPrimary, marginTop: '20px' }}>
+                    <div style={styles.errorState}>
+                        <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚠️</div>
+                        <h2 style={{ color: '#0f172a', fontWeight: '800' }}>No se pudo cargar la agenda</h2>
+                        <p style={{ color: '#64748b', maxWidth: '400px', margin: '10px auto' }}>{error}</p>
+                        <button onClick={fetchCitas} style={styles.btnPrimary}>
                             Reintentar Conexión
                         </button>
                     </div>
@@ -164,7 +194,7 @@ const AgendaCitas = () => {
                         events={citas}
                         startAccessor="start"
                         endAccessor="end"
-                        style={{ height: 700 }}
+                        style={{ height: 'calc(100vh - 350px)', minHeight: '600px' }}
                         views={['month', 'week', 'day', 'agenda']}
                         defaultView="week"
                         view={currentView}
@@ -176,8 +206,6 @@ const AgendaCitas = () => {
                         onSelectSlot={handleSelectSlot}
                         selectable
                         messages={MESSAGES_ES}
-                        min={new Date(2026, 0, 1, 7, 0)}
-                        max={new Date(2026, 0, 1, 21, 0)}
                         step={30}
                         timeslots={2}
                         popup
@@ -185,40 +213,66 @@ const AgendaCitas = () => {
                     />
                 )}
             </div>
+
+            <style>{`
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .premium-spinner {
+                    width: 50px; height: 50px;
+                    border: 4px solid #f1f5f9;
+                    border-top: 4px solid #2563eb;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                .rbc-calendar { font-family: 'Inter', sans-serif !important; border: none !important; }
+                .rbc-header { padding: 12px !important; font-weight: 700 !important; color: #475569 !important; background: #f8fafc !important; border-bottom: 2px solid #e2e8f0 !important; }
+                .rbc-event { padding: 5px 10px !important; }
+                .rbc-today { background-color: #eff6ff !important; }
+            `}</style>
         </div>
     );
 };
 
-// ==============================================================================
-// ESTILOS — Sistema de diseño consistente con Sprint 1
-// ==============================================================================
 const styles = {
     pageContainer: {
-        padding: 'clamp(16px, 5vw, 40px)',
-        backgroundColor: '#f1f5f9',
+        padding: '24px',
+        backgroundColor: '#f8fafc',
         minHeight: '100vh',
-        fontFamily: '"Inter", sans-serif',
     },
-    headerSection: {
+    headerCard: {
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '24px',
+        padding: '24px 32px',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '24px',
+        alignItems: 'center',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid white',
+        marginBottom: '24px'
+    },
+    iconCircle: {
+        width: '56px',
+        height: '56px',
+        borderRadius: '16px',
+        backgroundColor: '#eff6ff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        boxShadow: '0 4px 12px rgba(37,99,235,0.1)'
     },
     pageTitle: {
-        fontSize: '28px',
-        fontWeight: '800',
+        fontSize: '24px',
+        fontWeight: '900',
         color: '#0f172a',
         margin: 0,
+        letterSpacing: '-0.5px'
     },
     pageSubtitle: {
         fontSize: '14px',
         color: '#64748b',
-        marginTop: '4px',
-    },
-    headerActions: {
-        display: 'flex',
-        gap: '12px',
+        margin: '4px 0 0 0',
+        fontWeight: '500'
     },
     btnPrimary: {
         backgroundColor: '#2563eb',
@@ -229,8 +283,8 @@ const styles = {
         fontWeight: '700',
         fontSize: '14px',
         cursor: 'pointer',
-        transition: 'all 0.2s',
-        boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
+        boxShadow: '0 10px 15px -3px rgba(37,99,235,0.3)',
+        transition: 'all 0.2s'
     },
     btnSecondary: {
         backgroundColor: 'white',
@@ -238,65 +292,65 @@ const styles = {
         padding: '12px 20px',
         borderRadius: '12px',
         border: '1px solid #e2e8f0',
-        fontWeight: '600',
+        fontWeight: '700',
         fontSize: '14px',
         cursor: 'pointer',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    },
+    btnToday: {
+        backgroundColor: '#f1f5f9',
+        color: '#1e293b',
+        padding: '12px 20px',
+        borderRadius: '12px',
+        border: 'none',
+        fontWeight: '700',
+        fontSize: '14px',
+        cursor: 'pointer'
     },
     legendBar: {
         display: 'flex',
         gap: '24px',
-        alignItems: 'center',
-        padding: '16px 24px',
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        marginBottom: '24px',
+        padding: '12px 24px',
+        marginBottom: '24px'
     },
     legendItem: {
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: '8px'
     },
     legendDot: {
-        width: '12px',
-        height: '12px',
-        borderRadius: '50%',
+        width: '10px',
+        height: '10px',
+        borderRadius: '50%'
     },
     legendText: {
-        fontSize: '13px',
-        fontWeight: '600',
-        color: '#475569',
-        textTransform: 'capitalize',
-    },
-    legendInfo: {
-        fontSize: '13px',
-        color: '#64748b',
-        marginLeft: 'auto',
+        fontSize: '12px',
+        fontWeight: '700',
+        color: '#475569'
     },
     calendarWrapper: {
         backgroundColor: 'white',
-        borderRadius: '20px',
-        border: '1px solid #e2e8f0',
+        borderRadius: '24px',
         padding: '24px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+        border: '1px solid #f1f5f9'
     },
     loadingState: {
+        height: '500px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        color: '#64748b'
+    },
+    errorState: {
         height: '500px',
-        color: '#64748b',
-    },
-    spinner: {
-        width: '48px',
-        height: '48px',
-        border: '4px solid #e2e8f0',
-        borderTopColor: '#3b82f6',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-        marginBottom: '16px',
-    },
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center'
+    }
 };
 
 export default AgendaCitas;

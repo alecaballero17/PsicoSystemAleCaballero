@@ -4,7 +4,21 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Clinica, Usuario
+from .models import Clinica, Usuario, TransaccionClinica
+
+
+# --------------------------------------------------------------------------
+# Facturación SaaS: Transacciones de la Clínica (Tenant Billing)
+# --------------------------------------------------------------------------
+class TransaccionClinicaSerializer(serializers.ModelSerializer):
+    fecha_formateada = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TransaccionClinica
+        fields = ["id", "tipo", "monto", "descripcion", "fecha", "fecha_formateada", "metodo_pago"]
+
+    def get_fecha_formateada(self, obj):
+        return obj.fecha.strftime("%d/%m/%Y %H:%M")
 
 
 # --------------------------------------------------------------------------

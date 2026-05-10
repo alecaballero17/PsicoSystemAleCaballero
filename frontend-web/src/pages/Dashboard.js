@@ -86,54 +86,94 @@ const Dashboard = () => {
     const matchesSearch = (text) => text.toLowerCase().includes(searchTerm.toLowerCase());
 
     return (
-        <div style={styles.content}>
-            {/* KPIs */}
-            <div style={styles.kpiGrid} className="kpi-grid">
-                <div style={styles.kpiCard}>
-                    <span style={styles.kpiLabel}>TOTAL PACIENTES</span>
-                    <div style={styles.kpiValue}>{metrics.total_pacientes}</div>
-                    <div style={styles.kpiSub}>Sincronizado con PostgreSQL</div>
+        <div style={{ ...styles.content, backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            {/* Welcome Premium Section */}
+            <div style={{
+                marginBottom: '40px',
+                padding: '32px',
+                borderRadius: '24px',
+                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                color: 'white',
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', opacity: 0.7, letterSpacing: '1px' }}>RESUMEN OPERATIVO</p>
+                    <h1 style={{ margin: '8px 0', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px' }}>
+                        ¡Hola, {userName.split(' ')[0]}! 👋
+                    </h1>
+                    <p style={{ margin: 0, fontSize: '16px', fontWeight: '500', opacity: 0.9 }}>
+                        Gestionando <span style={{ color: '#3b82f6', fontWeight: '800' }}>{tenant?.nombre || 'tu clínica'}</span> en el Plan {tenant?.plan_suscripcion || 'SaaS'}
+                    </p>
                 </div>
-                <div style={styles.kpiCard}>
-                    <span style={styles.kpiLabel}>CITAS PENDIENTES</span>
+                {/* Decoración abstracta */}
+                <div style={{ position: 'absolute', right: '-50px', top: '-50px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', filter: 'blur(40px)' }}></div>
+                <div style={{ position: 'absolute', right: '100px', bottom: '-50px', width: '150px', height: '150px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', filter: 'blur(40px)' }}></div>
+            </div>
+
+            {/* KPIs Grid */}
+            <div style={styles.kpiGrid} className="kpi-grid">
+                <div style={{ ...styles.kpiCard, borderLeft: '6px solid #3b82f6' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={styles.kpiLabel}>TOTAL PACIENTES</span>
+                        <span style={{ fontSize: '20px' }}>👥</span>
+                    </div>
+                    <div style={styles.kpiValue}>{metrics.total_pacientes}</div>
+                    <div style={styles.kpiSub}>Expedientes activos</div>
+                </div>
+                <div style={{ ...styles.kpiCard, borderLeft: '6px solid #10b981' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={styles.kpiLabel}>CITAS HOY</span>
+                        <span style={{ fontSize: '20px' }}>📅</span>
+                    </div>
                     <div style={styles.kpiValue}>{metrics.citas_hoy}</div>
-                    <div style={{ ...styles.kpiSub, cursor: 'pointer' }} onClick={() => navigate('/agenda')}>
-                        Ver en Agenda →
+                    <div style={{ ...styles.kpiSub, cursor: 'pointer', color: '#10b981' }} onClick={() => navigate('/agenda')}>
+                        Ver agenda ahora →
                     </div>
                 </div>
-                <div style={styles.kpiCard}>
-                    <span style={styles.kpiLabel}>ESTADO API</span>
-                    <div style={styles.kpiValue}>ONLINE</div>
-                    <div style={styles.kpiSub}>Sprint 2 — v2.0.0</div>
+                <div style={{ ...styles.kpiCard, borderLeft: '6px solid #f59e0b' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={styles.kpiLabel}>ESTADO DEL SISTEMA</span>
+                        <span style={{ fontSize: '20px' }}>⚡</span>
+                    </div>
+                    <div style={styles.kpiValue}>ACTIVO</div>
+                    <div style={{ ...styles.kpiSub, color: '#f59e0b' }}>Latencia: 45ms</div>
                 </div>
             </div>
 
-            {/* Sprint 2 Quick Actions */}
+            {/* Quick Actions Header */}
+            <div style={{ marginBottom: '20px', padding: '0 10px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Accesos Directos</h3>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Módulos más utilizados en tu flujo de trabajo</p>
+            </div>
+
+            {/* Quick Actions Grid */}
             <div className="quick-actions-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '16px',
-                marginBottom: '32px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '20px',
+                marginBottom: '40px',
             }}>
                 <div onClick={() => navigate('/gestion-citas')} style={quickActionStyle}>
-                    <span style={{ fontSize: '28px' }}>🗓️</span>
-                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Nueva Cita</span>
+                    <div style={iconCircleStyle('#eff6ff', '#2563eb')}>🗓️</div>
+                    <span style={actionLabelStyle}>Nueva Cita</span>
                 </div>
                 <div onClick={() => navigate('/historia-clinica')} style={quickActionStyle}>
-                    <span style={{ fontSize: '28px' }}>📋</span>
-                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Expedientes</span>
+                    <div style={iconCircleStyle('#f0fdf4', '#16a34a')}>🏥</div>
+                    <span style={actionLabelStyle}>Historias IA</span>
                 </div>
                 <div onClick={() => navigate('/finanzas')} style={quickActionStyle}>
-                    <span style={{ fontSize: '28px' }}>💰</span>
-                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Registrar Pago</span>
+                    <div style={iconCircleStyle('#fffbeb', '#d97706')}>💰</div>
+                    <span style={actionLabelStyle}>Pagos</span>
                 </div>
                 <div onClick={() => navigate('/lista-espera')} style={quickActionStyle}>
-                    <span style={{ fontSize: '28px' }}>⏳</span>
-                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Lista Espera</span>
+                    <div style={iconCircleStyle('#faf5ff', '#9333ea')}>⏳</div>
+                    <span style={actionLabelStyle}>Espera</span>
                 </div>
                 <div onClick={() => navigate('/escaner-qr')} style={quickActionStyle}>
-                    <span style={{ fontSize: '28px' }}>📷</span>
-                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Escanear QR</span>
+                    <div style={iconCircleStyle('#fdf2f8', '#db2777')}>📷</div>
+                    <span style={actionLabelStyle}>Escanear QR</span>
                 </div>
             </div>
 
@@ -221,16 +261,37 @@ const Dashboard = () => {
 // Quick Action Card Style
 const quickActionStyle = {
     backgroundColor: 'white',
-    borderRadius: '16px',
-    border: '1px solid #e2e8f0',
-    padding: '20px',
+    borderRadius: '24px',
+    border: '1px solid #f1f5f9',
+    padding: '24px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '10px',
+    justifyContent: 'center',
+    gap: '12px',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+};
+
+const iconCircleStyle = (bg, color) => ({
+    width: '56px',
+    height: '56px',
+    borderRadius: '16px',
+    backgroundColor: bg,
+    color: color,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    boxShadow: `0 8px 12px ${bg}80`
+});
+
+const actionLabelStyle = {
+    fontWeight: '800',
+    color: '#1e293b',
+    fontSize: '13px',
+    letterSpacing: '-0.2px'
 };
 
 export default Dashboard;

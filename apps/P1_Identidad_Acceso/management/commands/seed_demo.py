@@ -19,12 +19,12 @@ class Command(BaseCommand):
         ]
 
         clinicas_creadas = []
-        for plan, nombre, dir in planes:
+        for plan, nombre, direccion in planes:
             clinica, created = Clinica.objects.get_or_create(
                 nombre=nombre,
                 defaults={
                     "nit": f"100200{random.randint(100, 999)}",
-                    "direccion": dir,
+                    "direccion": direccion,
                     "telefono": f"2222{random.randint(1000, 9999)}",
                     "email_contacto": f"contacto@{nombre.split()[0].lower()}.com",
                     "plan_suscripcion": plan
@@ -94,9 +94,29 @@ class Command(BaseCommand):
                 }
             )
 
-            # --- SPRINT 2 SEEDING: Citas y Pagos ---
+            # --- SPRINT 2 SEEDING: Citas, Pagos, Auditoría y Facturación SaaS ---
             psicologos = Usuario.objects.filter(clinica=clinica, rol="PSICOLOGO")
             pacientes_list = Paciente.objects.filter(clinica=clinica)
+            
+            from apps.P4_IA_Administracion.models import LogAuditoria
+            from apps.P1_Identidad_Acceso.models import TransaccionClinica
+
+            # Auditoría
+            LogAuditoria.objects.create(
+                clinica=clinica, usuario=admin_user, 
+                accion="Configuración inicial del sistema completada.",
+                ip_address="192.168.1.1", user_agent="Chrome / Windows 11"
+            )
+
+            # Facturación SaaS
+            TransaccionClinica.objects.create(
+                clinica=clinica, tipo='CARGA', monto=1000.00,
+                descripcion="Carga inicial de bienvenida PsicoSystem",
+                metodo_pago="SISTEMA"
+            )
+            clinica.saldo = 1000.00
+            clinica.save()
+
             if psicologos.exists() and pacientes_list.exists():
                 from apps.P3_Logistica_Citas.models import Cita
                 for i in range(3):
@@ -104,16 +124,7 @@ class Command(BaseCommand):
                         paciente=random.choice(pacientes_list),
                         psicologo=random.choice(psicologos),
                         fecha_hora=datetime.now() + timedelta(days=i, hours=random.randint(1, 4)),
-                        defaults={"motivo": "Seguimiento", "estado": "PENDIENTE", "clinica": clinica}
-                    )
-
-            if pacientes_list.exists():
-                from apps.P4_Modulo_Financiero.models import Pago
-                for i in range(2):
-                    Pago.objects.get_or_create(
-                        paciente=random.choice(pacientes_list),
-                        monto=100,
-                        defaults={"metodo_pago": "EFECTIVO", "estado": "COMPLETADO", "clinica": clinica, "concepto": "Consulta"}
+                        defaults={"motivo": "Seguimiento", "estado": "PENDIENTE"}
                     )
 
         self.stdout.write(self.style.SUCCESS("¡Seeding completado! Datos listos para la demostración."))

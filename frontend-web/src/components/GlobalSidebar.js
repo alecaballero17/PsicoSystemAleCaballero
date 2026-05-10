@@ -12,7 +12,9 @@ const GlobalSidebar = ({ isOpen, onClose }) => {
     const matchesSearch = (text) => text.toLowerCase().includes(searchTerm.toLowerCase());
 
     const handleNavigate = (path) => {
-        onClose();
+        if (window.innerWidth <= 768) {
+            onClose();
+        }
         navigate(path);
     };
 
@@ -25,68 +27,71 @@ const GlobalSidebar = ({ isOpen, onClose }) => {
             ></div>
 
             {/* Panel Lateral */}
-            <aside className={`global-sidebar ${isOpen ? 'open' : ''}`}>
+            <aside className={`global-sidebar ${isOpen ? 'open' : ''}`} style={{ paddingTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {tenant?.logo ? (
-                            <img src={tenant.logo} alt="Tenant Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                            <img src={tenant.logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }} />
                         ) : (
-                            <div style={{ width: '32px', height: '32px', backgroundColor: '#3b82f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                                🏥
-                            </div>
+                            <div style={{ width: '40px', height: '40px', backgroundColor: '#3b82f6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🧠</div>
                         )}
-                        <span style={{ fontWeight: '800', fontSize: '18px', color: 'white' }}>
-                            {tenant?.nombre?.toUpperCase() || 'PSICOSYSTEM'}
-                        </span>
+                        <span style={{ fontWeight: '900', color: 'white', fontSize: '16px', letterSpacing: '0.5px' }}>PSICOSYSTEM</span>
                     </div>
-                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>×</button>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+                </div>
+                
+                <div style={{ padding: '15px 0 25px 0', borderBottom: '1px solid #1e293b', marginBottom: '20px' }}>
+                    <p style={{ color: '#3b82f6', fontSize: '10px', fontWeight: '900', letterSpacing: '2px', margin: '0 0 8px 0', opacity: 0.8 }}>TENANT ACTIVO</p>
+                    <h3 style={{ margin: 0, fontSize: '17px', color: 'white', fontWeight: '900', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tenant?.nombre || 'MI CLÍNICA'}
+                    </h3>
                 </div>
                 
                 {/* Buscador de Módulos */}
                 <div style={{ marginBottom: '24px' }}>
-                    <input 
-                        type="text" 
-                        placeholder="🔍 Buscar módulo..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%', padding: '10px 14px', borderRadius: '10px', 
-                            border: '1px solid #334155', backgroundColor: '#1e293b', 
-                            color: 'white', fontSize: '13px', outline: 'none', boxSizing: 'border-box'
-                        }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Buscar módulo..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%', padding: '12px 14px 12px 35px', borderRadius: '12px', 
+                                border: '1px solid #334155', backgroundColor: '#1e293b', 
+                                color: 'white', fontSize: '13px', outline: 'none', boxSizing: 'border-box'
+                            }}
+                        />
+                        <span style={{ position: 'absolute', left: '12px', top: '12px', opacity: 0.5 }}>🔍</span>
+                    </div>
                 </div>
 
-                <div style={{ overflowY: 'auto', flex: 1 }}>
+                <div className="sidebar-scroll-container" style={{ overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
                     {/* Sección Principal */}
                     <nav className="navSection">
-                        <p className="sectionLabel">PRINCIPAL</p>
+                        <p className="sectionLabel">PANEL DE CONTROL</p>
                         {matchesSearch('Vista General Analítica') && (
-                            <div className="navItem" onClick={() => handleNavigate('/dashboard')}>📊 Vista General Analítica</div>
+                            <div className="navItem" onClick={() => handleNavigate('/dashboard')}>📊 Dashboard</div>
                         )}
                         {matchesSearch('Agenda Profesional') && (
-                            <div className="navItem" onClick={() => handleNavigate('/agenda')}>📅 Agenda Profesional</div>
+                            <div className="navItem" onClick={() => handleNavigate('/agenda')}>📅 Agenda</div>
                         )}
                         {matchesSearch('Gestión de Citas') && (
-                            <div className="navItem" onClick={() => handleNavigate('/gestion-citas')}>🗓️ Gestión de Citas</div>
+                            <div className="navItem" onClick={() => handleNavigate('/gestion-citas')}>🗓️ Citas</div>
                         )}
                     </nav>
 
                     {/* Sección Clínica */}
                     {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
                         <nav className="navSection">
-                            <p className="sectionLabel">CLÍNICA</p>
+                            <p className="sectionLabel">MÓDULOS CLÍNICOS</p>
                             {matchesSearch('Registro de Pacientes') && (
-                                <div className="navItem" onClick={() => handleNavigate('/registro-paciente')}>📋 Registro de Pacientes</div>
+                                <div className="navItem" onClick={() => handleNavigate('/registro-paciente')}>👤 Pacientes</div>
                             )}
                             {matchesSearch('Historia Clínica IA') && (
-                                <div className="navItem" onClick={() => handleNavigate('/historia-clinica')}>🏥 Historia Clínica + IA</div>
+                                <div className="navItem" onClick={() => handleNavigate('/historia-clinica')}>🏥 Historias + IA</div>
                             )}
                             {matchesSearch('Lista de Espera') && (
-                                <div className="navItem" onClick={() => handleNavigate('/lista-espera')}>⏳ Lista de Espera</div>
-                            )}
-                            {matchesSearch('Escáner QR Citas') && (
-                                <div className="navItem" onClick={() => handleNavigate('/escaner-qr')}>📷 Escáner QR de Citas</div>
+                                <div className="navItem" onClick={() => handleNavigate('/lista-espera')}>⏳ Espera</div>
                             )}
                         </nav>
                     )}
@@ -94,12 +99,12 @@ const GlobalSidebar = ({ isOpen, onClose }) => {
                     {/* Sección Financiera */}
                     {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
                         <nav className="navSection">
-                            <p className="sectionLabel">FINANZAS</p>
+                            <p className="sectionLabel">ADMIN. FINANCIERA</p>
                             {matchesSearch('Módulo Financiero') && (
-                                <div className="navItem" onClick={() => handleNavigate('/finanzas')}>💰 Módulo Financiero</div>
+                                <div className="navItem" onClick={() => handleNavigate('/finanzas')}>💰 Finanzas</div>
                             )}
                             {userRole === 'ADMIN' && matchesSearch('Reportes Económicos') && (
-                                <div className="navItem" onClick={() => handleNavigate('/reportes')}>📊 Reportes Económicos</div>
+                                <div className="navItem" onClick={() => handleNavigate('/reportes')}>📊 Reportes</div>
                             )}
                         </nav>
                     )}
@@ -111,18 +116,21 @@ const GlobalSidebar = ({ isOpen, onClose }) => {
                             {matchesSearch('Gestión de Personal') && (
                                 <div className="navItem" onClick={() => handleNavigate('/gestion-personal')}>👥 Gestión de Personal</div>
                             )}
-                            {matchesSearch('Configuración Clínica') && (
-                                <div className="navItem" onClick={() => handleNavigate('/configuracion-clinica')}>⚙️ Configuración de Clínica</div>
-                            )}
-                            {matchesSearch('Suscripción SaaS') && (
-                                <div className="navItem" onClick={() => handleNavigate('/suscripcion')}>💎 Suscripción SaaS</div>
-                            )}
                         </nav>
                     )}
                 </div>
 
-                {/* Footer */}
-                <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #1e293b' }}>
+                {/* Footer User Card */}
+                <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #1e293b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px', padding: '0 5px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                            {user?.username?.[0]?.toUpperCase()}
+                        </div>
+                        <div style={{ overflow: 'hidden' }}>
+                            <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'white', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.first_name || user?.username}</p>
+                            <p style={{ margin: 0, fontSize: '10px', color: '#64748b', fontWeight: '600' }}>{userRole}</p>
+                        </div>
+                    </div>
                     <button 
                         onClick={async () => { 
                             onClose();
@@ -130,12 +138,15 @@ const GlobalSidebar = ({ isOpen, onClose }) => {
                             navigate('/'); 
                         }} 
                         style={{
-                            width: '100%', padding: '12px', backgroundColor: '#ef444415', 
+                            width: '100%', padding: '12px', backgroundColor: '#ef444420', 
                             color: '#ef4444', border: 'none', borderRadius: '12px', 
-                            cursor: 'pointer', fontWeight: '600'
+                            cursor: 'pointer', fontWeight: '800', fontSize: '13px',
+                            transition: 'all 0.2s'
                         }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#ef444430'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#ef444420'}
                     >
-                        Finalizar Sesión
+                        Cerrar Sesión
                     </button>
                 </div>
             </aside>
