@@ -18,14 +18,13 @@ django-cors-headers==4.7.0
 # Development Helpers
 django-extensions==3.2.3
 
-# Audio Reports
+# Audio Reports & PDFs
 gTTS==2.5.1
+reportlab==4.1.0
+openpyxl==3.1.2
 
 # API Documentation
 drf-spectacular==0.27.2
 
 # AI Services
 google-generativeai==0.8.3
-
-# Excel Export
-openpyxl==3.1.5

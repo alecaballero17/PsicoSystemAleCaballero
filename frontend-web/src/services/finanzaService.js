@@ -54,6 +54,17 @@ const finanzaService = {
         });
         return response.data;
     },
+
+    /**
+     * RF-27 (Voz): Enviar texto transcrito al backend para extraer filtros con IA
+     * y generar PDF automático.
+     */
+    generarReporteVoz: async (transcript) => {
+        const response = await apiClient.post('reportes/voz/', {
+            transcript: transcript
+        });
+        return response.data;
+    }
 };
 
 export default finanzaService;
