@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
-// [SPRINT 1 - T015] [CU-02] Flujo de Onboarding: Registro de Paciente
-import 'registro_paciente_screen.dart';
 import 'agendar_cita_stepper_screen.dart';
-
-// [SPRINT 1 - T012] Modelo tipado del usuario autenticado
 import '../models/user_model.dart';
 
 class PacienteDashboard extends StatefulWidget {
@@ -26,9 +23,10 @@ class PacienteDashboard extends StatefulWidget {
 
 class _PacienteDashboardState extends State<PacienteDashboard> {
   bool _isLoading = true;
-  
-  // 🎯 1. CAMBIO CLAVE: Ahora usamos el Modelo User en vez de un Map genérico
-  User? _user; 
+  User? _user;
+
+  final Color primaryBlue = const Color(0xFF2563EB);
+  final Color darkBlue = const Color(0xFF0F172A);
 
   @override
   void initState() {
@@ -36,128 +34,207 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
     _loadUserInfo();
   }
 
-  // T009: Eliminamos el Hardcoding llamando al endpoint /me/
   Future<void> _loadUserInfo() async {
     try {
-      // ✅ AHORA (Profesional): debugPrint sin exponer tokens
-      debugPrint("Dashboard: Iniciando carga de perfil de usuario..."); 
-      
-      // Delegamos al servicio. ¡Ahora 'data' es un objeto User real!
       final data = await AuthService.getCurrentUser(widget.token);
-      
       setState(() {
-        _user = data; // 🎯 2. Guardamos el objeto tipado
+        _user = data;
         _isLoading = false;
       });
     } catch (e) {
-      // ✅ AHORA: debugPrint para errores
-      debugPrint("Error al cargar usuario en el Dashboard: $e"); 
+      debugPrint("Error loading user: $e");
       setState(() => _isLoading = false);
     }
   }
 
-  // 👇 FUNCIÓN PROFESIONAL DE LOGOUT PARA T014
   void _handleLogout(BuildContext context) {
-    // ✅ AHORA: debugPrint sin exponer lógica interna de negocio
-    debugPrint("Auth: Sesión finalizada correctamente.");
-    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (Route<dynamic> route) => false, 
+      (Route<dynamic> route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Mi Perfil - ${widget.role}'),
-        backgroundColor: const Color(0xFF1a2233),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: IconThemeData(color: darkBlue),
+        title: Text(
+          'PsicoSystem',
+          style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 20),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () {
-              _handleLogout(context); 
+          PopupMenuButton<String>(
+            icon: Icon(Icons.account_circle_outlined, color: darkBlue, size: 28),
+            onSelected: (value) {
+              if (value == 'logout') _handleLogout(context);
             },
-          )
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text('Hola, ${widget.username.split("@").first}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black87)),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'perfil',
+                child: Row(children: [Icon(Icons.person, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Mi Perfil', style: GoogleFonts.outfit())]),
+              ),
+              PopupMenuItem<String>(
+                value: 'pagos',
+                child: Row(children: [Icon(Icons.payment, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Realizar Pagos', style: GoogleFonts.outfit())]),
+              ),
+              PopupMenuItem<String>(
+                value: 'historial',
+                child: Row(children: [Icon(Icons.history, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Historial de Pagos', style: GoogleFonts.outfit())]),
+              ),
+              PopupMenuItem<String>(
+                value: 'password',
+                child: Row(children: [Icon(Icons.lock_reset, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Cambiar Contraseña', style: GoogleFonts.outfit())]),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(children: [const Icon(Icons.logout, color: Colors.red, size: 20), const SizedBox(width: 10), Text('Cerrar Sesión', style: GoogleFonts.outfit(color: Colors.red))]),
+              ),
+            ],
+          ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          ? Center(child: CircularProgressIndicator(color: primaryBlue))
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          const CircleAvatar(
-                            radius: 40,
-                            backgroundColor: Color(0xFF2563eb),
-                            child: Icon(Icons.person, size: 50, color: Colors.white),
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            'Bienvenido, ${widget.username}',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 5),
-                          
-                          // 🎯 3. CAMBIO CLAVE: Usamos el PUNTO para acceder al dato de forma segura
-                          Text(
-                            'Clínica: ${_user?.clinicaNombre ?? 'Sin Clínica Asignada'}',
-                            style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w500),
-                          ),
-                          
-                          const Text(
-                            'Estado de la API: Conectado (JWT) ✅',
-                            style: TextStyle(color: Colors.green, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Text(
+                    '¿En qué podemos ayudarte hoy?',
+                    style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: darkBlue),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Mis Próximas Sesiones',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1a2233)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Selecciona uno de nuestros centros especializados',
+                    style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
                   ),
-                  const SizedBox(height: 10),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "No tienes sesiones pendientes para hoy.\n(Sincronizado con PostgreSQL)",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                  )
+                  const SizedBox(height: 24),
+                  _buildClinicCard(
+                    nombre: _user?.clinicaNombre ?? 'Clínica San Aurelio',
+                    direccion: 'Av. Principal #123, Zona Sur',
+                    especialidades: 'Terapia Cognitiva, Parejas, Infantil',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildClinicCard(
+                    nombre: 'Clínica Mente Sana',
+                    direccion: 'Calle Los Pinos #45, Centro',
+                    especialidades: 'Psiquiatría, Ansiedad, Depresión',
+                  ),
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (_user != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AgendarCitaStepperScreen(
-                  user: _user!,
-                  token: widget.token,
+    );
+  }
+
+  Widget _buildClinicCard({required String nombre, required String direccion, required String especialidades}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5))],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                child: Icon(Icons.health_and_safety, color: primaryBlue, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(nombre, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: darkBlue)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(child: Text(direccion, style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600))),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            );
-          }
-        },
-        icon: const Icon(Icons.add_task),
-        label: const Text('Agendar Cita'),
-        backgroundColor: const Color(0xFF2563EB),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              children: [
+                Icon(Icons.psychology, size: 16, color: primaryBlue),
+                const SizedBox(width: 8),
+                Expanded(child: Text(especialidades, style: GoogleFonts.outfit(fontSize: 12, color: darkBlue, fontWeight: FontWeight.w500))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Consultando historial en $nombre...', style: GoogleFonts.outfit()), backgroundColor: primaryBlue),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: darkBlue, side: BorderSide(color: Colors.grey.shade300),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Consultar Citas', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_user != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AgendarCitaStepperScreen(
+                            user: _user!, 
+                            token: widget.token,
+                            clinicaSeleccionada: nombre,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Programar Cita', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }

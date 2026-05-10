@@ -2,14 +2,16 @@ from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from rest_framework import generics, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, viewsets, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
 
 from .forms import PacienteForm
 from .serializers import (
     PacienteSerializer, 
     HistoriaClinicaSerializer, 
-    EvolucionClinicaSerializer
+    EvolucionClinicaSerializer,
+    PacienteRegistroPublicoSerializer
 )
 from .models import Paciente, HistoriaClinica, EvolucionClinica
 from apps.P4_IA_Administracion.models import LogAuditoria
@@ -141,3 +143,18 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
             usuario=self.request.user,
             accion=f"Añadió nota de evolución para: {evolucion.historia.paciente.nombre}",
         )
+
+class PacienteRegistroPublicoAPIView(generics.CreateAPIView):
+    """Endpoint público para que los pacientes se auto-registren desde la App Móvil."""
+    serializer_class = PacienteRegistroPublicoSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Registro exitoso. Ya puedes iniciar sesión."},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

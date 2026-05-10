@@ -3,6 +3,7 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     PacienteListCreateAPIView,
     PacienteRetrieveUpdateAPIView,
+    PacienteRegistroPublicoAPIView,
     HistoriaClinicaViewSet,
     EvolucionClinicaViewSet
 )
@@ -17,6 +18,11 @@ urlpatterns = [
         "api/pacientes/<int:pk>/",
         PacienteRetrieveUpdateAPIView.as_view(),
         name="api_pacientes_detalle",
+    ),
+    path(
+        "api/pacientes/registro-publico/",
+        PacienteRegistroPublicoAPIView.as_view(),
+        name="api_pacientes_registro_publico",
     ),
     path("api/", include(router.urls)),
 ]

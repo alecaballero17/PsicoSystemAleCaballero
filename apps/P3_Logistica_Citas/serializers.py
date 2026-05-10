@@ -83,6 +83,21 @@ class CitaSerializer(serializers.ModelSerializer):
                     {"fecha_hora": "El psicólogo ya tiene una cita en ese horario."}
                 )
 
+            # Colisión del Paciente (No puede estar en 2 clínicas a la misma hora)
+            colision_paciente_qs = Cita.objects.filter(
+                paciente=paciente,
+                fecha_hora__lt=fin_bloque,
+                fecha_hora__gte=inicio_bloque - DURACION_SESION,
+            ).exclude(estado="CANCELADA")
+
+            if self.instance:
+                colision_paciente_qs = colision_paciente_qs.exclude(pk=self.instance.pk)
+
+            if colision_paciente_qs.exists():
+                raise serializers.ValidationError(
+                    {"fecha_hora": "Ya tienes una cita programada en este horario (posiblemente en otra clínica). No puedes estar en dos lugares a la vez."}
+                )
+
         return attrs
 
 
