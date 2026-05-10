@@ -116,18 +116,18 @@ const AgendaCitas = () => {
     };
 
     return (
-        <div style={styles.pageContainer}>
+        <div className="agenda-container" style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
             <ToastContainer />
 
             {/* Header */}
-            <div style={styles.headerSection}>
+            <div className="agenda-header">
                 <div>
                     <h1 style={styles.pageTitle}>📅 Agenda Profesional</h1>
                     <p style={styles.pageSubtitle}>
                         RF-08 — Calendario interactivo sincronizado en tiempo real
                     </p>
                 </div>
-                <div style={styles.headerActions}>
+                <div className="agenda-actions">
                     <button
                         onClick={() => navigate('/gestion-citas')}
                         style={styles.btnPrimary}
@@ -141,7 +141,7 @@ const AgendaCitas = () => {
             </div>
 
             {/* Leyenda de Estados */}
-            <div style={styles.legendBar}>
+            <div className="agenda-legend">
                 {Object.entries(ESTADO_COLORS).map(([estado, colors]) => (
                     <div key={estado} style={styles.legendItem}>
                         <div style={{ ...styles.legendDot, backgroundColor: colors.bg }} />

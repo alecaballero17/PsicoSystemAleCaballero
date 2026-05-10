@@ -149,3 +149,52 @@ code {
   color: white;
 }
 
+/* ==============================================================================
+   Responsive Layout (Mobile Fixes)
+   ============================================================================== */
+.agenda-container {
+  padding: 32px 40px;
+}
+.agenda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.agenda-actions {
+  display: flex;
+  gap: 12px;
+}
+.agenda-legend {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .agenda-container {
+    padding: 16px !important;
+  }
+  .agenda-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .agenda-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .agenda-legend {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+  .rbc-calendar {
+    height: 500px !important;
+  }
+}
+

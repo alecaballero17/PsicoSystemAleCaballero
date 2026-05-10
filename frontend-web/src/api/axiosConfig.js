@@ -4,8 +4,8 @@
 // [RNF-05] Compatibilidad: Base URL configurable por entorno (.env).
 import axios from 'axios';
 
-// [SPRINT 0 - T008] Extraemos la IP del .env o usamos localhost por defecto
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+// [SPRINT 0 - T008] Extraemos la IP del .env o usamos el backend de Render por defecto
+const API_URL = process.env.REACT_APP_API_URL || 'https://psicosystem-api.onrender.com/api';
 const API_BASE = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
 
 const apiClient = axios.create({

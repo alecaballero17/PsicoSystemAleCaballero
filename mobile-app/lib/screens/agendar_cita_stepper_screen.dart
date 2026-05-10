@@ -34,18 +34,52 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   String? _selectedTime;
   int? _createdCitaId;
 
+  // Controladores para Datos del Paciente
+  final TextEditingController _ciCtrl = TextEditingController();
+  final TextEditingController _motivoCtrl = TextEditingController();
+
   final List<String> _psicologos = ['Lic. Juan Pérez (Terapia Cognitiva)', 'Lic. María Gómez (Parejas)', 'Lic. Carlos Ruiz (Infantil)'];
   final List<String> _horasManana = ['08:30', '09:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45'];
   final List<String> _horasTarde = ['12:00', '12:15', '13:00', '13:15', '13:30', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15'];
 
   final List<String> _stepTitles = ['Especialista', 'Datos', 'Fecha', 'Hora', 'Confirmar'];
 
+  @override
+  void dispose() {
+    _ciCtrl.dispose();
+    _motivoCtrl.dispose();
+    super.dispose();
+  }
+
   void _nextStep() {
+    if (_currentStep == 0 && _selectedPsicologo == null) {
+      _showError('Por favor selecciona un especialista para continuar.');
+      return;
+    }
+    if (_currentStep == 1) {
+      if (_ciCtrl.text.trim().isEmpty) {
+        _showError('Por favor ingresa tu Nro de Documento (CI).');
+        return;
+      }
+      if (_motivoCtrl.text.trim().isEmpty) {
+        _showError('Por favor describe brevemente el motivo de tu consulta.');
+        return;
+      }
+    }
+    if (_currentStep == 3 && _selectedTime == null) {
+      _showError('Por favor selecciona un horario disponible.');
+      return;
+    }
+
     if (_currentStep < 3) {
       setState(() => _currentStep += 1);
     } else if (_currentStep == 3) {
       _confirmarCita();
     }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   void _prevStep() {
@@ -198,10 +232,34 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
           if (_currentStep == 1) ...[
             Text('Datos del Paciente', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: darkBlue)),
             const SizedBox(height: 24),
-            _buildDataRow('Tipo de documento', 'CI'),
-            _buildDataRow('Nro de documento', widget.user.username.split('@').first), 
             _buildDataRow('Nombre Completo', widget.user.username),
             _buildDataRow('Correo Electrónico', widget.user.email),
+            const SizedBox(height: 16),
+            
+            Text('Nro de Documento (CI) *', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _ciCtrl,
+              decoration: InputDecoration(
+                hintText: 'Ej. 1234567',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            Text('Motivo de Consulta o Test (Breve) *', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _motivoCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Ej. Estrés, Ansiedad, Terapia de pareja, Test Vocacional...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+            
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
@@ -210,7 +268,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
                 children: [
                   const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
                   const SizedBox(width: 12),
-                  Expanded(child: Text('Las cancelaciones reiteradas restringirán su acceso. Su cita será cancelada si no se presenta a tiempo.', style: GoogleFonts.outfit(color: const Color(0xFF991B1B), fontSize: 12))),
+                  Expanded(child: Text('Asegúrate de llenar estos datos correctamente. Las cancelaciones reiteradas restringirán su acceso.', style: GoogleFonts.outfit(color: const Color(0xFF991B1B), fontSize: 12))),
                 ],
               ),
             ),
@@ -250,7 +308,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Fecha seleccionada', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 12)),
-                          Text(DateFormat('EEEE, d MMMM yyyy', 'es').format(_selectedDate).toUpperCase(), style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: darkBlue, fontSize: 14)),
+                          Text(DateFormat('EEEE, d MMMM yyyy').format(_selectedDate).toUpperCase(), style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: darkBlue, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -262,7 +320,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
           ],
           if (_currentStep == 3) ...[
             Text('Disponibilidad', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: darkBlue)),
-            Text(DateFormat('EEEE, d MMMM', 'es').format(_selectedDate), style: GoogleFonts.outfit(color: Colors.grey.shade600)),
+            Text(DateFormat('EEEE, d MMMM').format(_selectedDate), style: GoogleFonts.outfit(color: Colors.grey.shade600)),
             const SizedBox(height: 24),
             Row(children: [const Icon(Icons.wb_twilight, color: Color(0xFFF59E0B), size: 18), const SizedBox(width: 8), Text('TURNO MAÑANA', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.grey.shade500, fontSize: 12))]),
             const SizedBox(height: 12),
