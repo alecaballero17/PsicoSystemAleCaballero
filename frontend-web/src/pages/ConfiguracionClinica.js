@@ -24,14 +24,14 @@ const ConfiguracionClinica = () => {
     useEffect(() => {
         const fetchClinica = async () => {
             try {
-                const response = await apiClient.get('clinica/me/');
+                const response = await apiClient.get('clinicas/mi/'); // Fixed URL
                 setFormData({
                     nombre: response.data.nombre || '',
                     nit: response.data.nit || '',
                     direccion: response.data.direccion || '',
                     telefono: response.data.telefono || '',
                     email_contacto: response.data.email_contacto || '',
-                    logo_url: response.data.logo_url || ''
+                    logo_url: response.data.logo || '' // Logo URL from backend
                 });
             } catch (err) {
                 console.error("Error cargando configuración de clínica", err);
@@ -43,6 +43,9 @@ const ConfiguracionClinica = () => {
         fetchClinica();
     }, []);
 
+    // Manejo de archivo
+    const [logoFile, setLogoFile] = useState(null);
+
     // Actualización de Datos (PUT)
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -50,17 +53,26 @@ const ConfiguracionClinica = () => {
         setMessage(null);
         setError(null);
 
+        const data = new FormData();
+        data.append('nombre', formData.nombre);
+        data.append('nit', formData.nit);
+        data.append('direccion', formData.direccion);
+        data.append('telefono', formData.telefono);
+        data.append('email_contacto', formData.email_contacto);
+        if (logoFile) {
+            data.append('logo', logoFile);
+        }
+
         try {
-            await apiClient.put('clinica/me/', formData);
-            updateTenant(formData); // [ALINEACIÓN RF-29] Sincronización en tiempo real
+            const response = await apiClient.patch('clinicas/mi/', data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            updateTenant(response.data); 
+            setFormData({ ...formData, logo_url: response.data.logo });
             setMessage("Configuración guardada exitosamente.");
         } catch (err) {
             console.error("Error guardando clínica", err);
-            if (err.response?.data?.nit) {
-                setError("El NIT proporcionado ya está en uso por otra clínica.");
-            } else {
-                setError("Error al guardar la configuración.");
-            }
+            setError("Error al guardar la configuración institucional.");
         } finally {
             setSaving(false);
         }
@@ -85,7 +97,7 @@ const ConfiguracionClinica = () => {
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
                         <button onClick={() => navigate('/dashboard')} style={styles.btnBack}>← Volver</button>
                         <h2 style={styles.title}>CONFIGURACIÓN INSTITUCIONAL</h2>
-                        <div style={{width: '60px'}}></div> {/* Spacer balance */}
+                        <div style={{width: '60px'}}></div>
                     </div>
                     <p style={styles.subtitle}>Mantenimiento del Perfil de la Clínica (Tenant)</p>
                 </header>
@@ -93,6 +105,33 @@ const ConfiguracionClinica = () => {
                 <form onSubmit={handleSubmit} style={styles.form}>
                     {error && <div style={styles.errorBox}>{error}</div>}
                     {message && <div style={styles.successBox}>{message}</div>}
+
+                    <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                        <div style={{ 
+                            width: '120px', height: '120px', borderRadius: '15px', 
+                            border: '2px dashed #cbd5e1', margin: '0 auto 15px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            overflow: 'hidden', backgroundColor: '#f8fafc'
+                        }}>
+                            {logoFile ? (
+                                <img src={URL.createObjectURL(logoFile)} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : formData.logo_url ? (
+                                <img src={formData.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <span style={{ fontSize: '40px' }}>🏢</span>
+                            )}
+                        </div>
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => setLogoFile(e.target.files[0])}
+                            style={{ display: 'none' }}
+                            id="logo-upload"
+                        />
+                        <label htmlFor="logo-upload" style={styles.btnSecondarySmall}>
+                            📷 SUBIR / CAMBIAR LOGO
+                        </label>
+                    </div>
 
                     <h3 style={styles.sectionTitle}>Datos de la Compañía</h3>
                     
@@ -142,7 +181,7 @@ const ConfiguracionClinica = () => {
                     </div>
 
                     <div style={styles.inputGroup}>
-                        <label style={styles.label}>DIRECCIÓN FÍSICA / LEGAL</label>
+                        <label style={styles.label}>DIRECCIÓN FÍSICA</label>
                         <input 
                             type="text" 
                             style={styles.input} 
@@ -152,21 +191,9 @@ const ConfiguracionClinica = () => {
                         />
                     </div>
 
-                    <div style={styles.inputGroup}>
-                        <label style={styles.label}>LOGO INSTITUCIONAL (URL)</label>
-                        <input 
-                            type="url" 
-                            style={styles.input} 
-                            value={formData.logo_url} 
-                            onChange={(e) => setFormData({...formData, logo_url: e.target.value})} 
-                            placeholder="https://ejemplo.com/logo.png"
-                        />
-                        <p style={styles.helpText}>URL directa a la imagen de su corporación</p>
-                    </div>
-
                     <div style={styles.actions}>
                         <button type="submit" style={styles.btnPrimary} disabled={saving}>
-                            {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS DEL TENANT'}
+                            {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS INSTITUCIONALES'}
                         </button>
                     </div>
                 </form>
@@ -192,7 +219,8 @@ const styles = {
     successBox: { padding: '12px', backgroundColor: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: '6px', marginBottom: '20px', fontSize: '13px' },
     actions: { display: 'flex', justifyContent: 'flex-end', marginTop: '30px' },
     btnPrimary: { width: '100%', padding: '14px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' },
-    btnBack: { backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '5px 10px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }
+    btnBack: { backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '5px 10px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' },
+    btnSecondarySmall: { display: 'inline-block', backgroundColor: '#f1f5f9', color: '#475569', padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }
 };
 
 export default ConfiguracionClinica;

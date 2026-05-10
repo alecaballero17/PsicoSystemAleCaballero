@@ -9,6 +9,9 @@ class Clinica(models.Model):
     nombre = models.CharField(max_length=100)
     nit = models.CharField(max_length=20, unique=True)
     direccion = models.TextField()
+    telefono = models.CharField(max_length=20, blank=True, default='')
+    email_contacto = models.EmailField(blank=True, default='')
+    logo = models.ImageField(upload_to='logos/', blank=True, null=True)
 
     PLANES = [
         ('Basico', 'Básico'),

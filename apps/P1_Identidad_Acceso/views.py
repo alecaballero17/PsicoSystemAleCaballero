@@ -197,9 +197,10 @@ class OnboardingSaaSAPIView(APIView):
         )
 
 
-class MiClinicaRetrieveAPIView(generics.RetrieveAPIView):
+class MiClinicaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+    """GET/PUT/PATCH: Ver y actualizar datos de la clínica del usuario logueado."""
     serializer_class = ClinicaSerializer
-    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+    permission_classes = [IsAuthenticated, EsAdministrador, HasClinicaAsignada]
 
     def get_object(self):
         return self.request.user.clinica

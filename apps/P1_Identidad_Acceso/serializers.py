@@ -46,7 +46,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class ClinicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clinica
-        fields = ["id", "nombre", "nit", "direccion", "plan_suscripcion"]
+        fields = ["id", "nombre", "nit", "direccion", "telefono", "email_contacto", "logo", "plan_suscripcion"]
 
 
 class UsuarioSerializer(serializers.ModelSerializer):

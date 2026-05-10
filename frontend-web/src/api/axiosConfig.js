@@ -6,11 +6,13 @@ import axios from 'axios';
 
 // [SPRINT 0 - T008] Extraemos la IP del .env o usamos el backend de Render por defecto
 const API_URL = process.env.REACT_APP_API_URL || 'https://psicosystem-api.onrender.com/api';
-const API_BASE = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+// Asegurar que termine en /api/ si no lo tiene
+const normalizedUrl = API_URL.includes('/api') ? API_URL : `${API_URL}/api`;
+const API_BASE = normalizedUrl.endsWith('/') ? normalizedUrl : `${normalizedUrl}/`;
 
 const apiClient = axios.create({
     baseURL: API_BASE,
-    timeout: 10000, // 10 segundos de espera máxima
+    timeout: 30000, // 30 segundos para evitar cortes en Render
     headers: {
         'Content-Type': 'application/json',
     }

@@ -11,9 +11,13 @@
     padding: 24px;
     box-sizing: border-box;
     z-index: 1050;
-    transform: translateX(0); /* Abierto por defecto en desktop */
+    transform: translateX(-100%); /* Oculto por defecto */
     transition: transform 0.3s ease;
     box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+}
+
+.global-sidebar.open {
+    transform: translateX(0);
 }
 
 .global-sidebar-overlay {

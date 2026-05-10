@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GlobalSidebar from './GlobalSidebar';
 
 const Navbar = ({ onToggleSidebar }) => {
+    const navigate = useNavigate();
     const { user, logout, tenant } = useAuth(); 
 
     return (
@@ -49,21 +51,43 @@ const Navbar = ({ onToggleSidebar }) => {
             </div>
             
             {user && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* Botón de Perfil / Suscripción */}
+                    <button 
+                        onClick={() => navigate('/suscripcion')}
+                        title="Ver mi perfil y suscripción"
+                        style={{ 
+                            background: '#334155', border: 'none', color: 'white', 
+                            padding: '8px', borderRadius: '50%', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '36px', height: '36px'
+                        }}
+                    >
+                        👤
+                    </button>
+
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                        <span style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 'bold' }}>
+                        <span style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 'bold' }}>
                             🏥 {tenant?.nombre || "PsicoSystem"}
                         </span>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>
-                            👤 {user.name}
+                        <span style={{ color: '#94a3b8', fontSize: '11px' }}>
+                            {user.username}
                         </span>
                     </div>
-                    <button onClick={() => {
-                        if (window.confirm('¿Está seguro que desea cerrar sesión?')) {
-                            logout();
-                        }
-                    }} style={{ padding: '8px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-                        Cerrar Sesión
+
+                    <button 
+                        onClick={() => {
+                            if (window.confirm('¿Está seguro que desea cerrar sesión?')) {
+                                logout();
+                            }
+                        }} 
+                        style={{ 
+                            padding: '8px 14px', background: '#dc2626', color: 'white', 
+                            border: 'none', borderRadius: '8px', cursor: 'pointer', 
+                            fontWeight: 'bold', fontSize: '12px' 
+                        }}
+                    >
+                        SALIR
                     </button>
                 </div>
             )}

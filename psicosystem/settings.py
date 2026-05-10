@@ -216,8 +216,7 @@ LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 # Configuración de CORS para Interoperabilidad (RNF)
-# En producción se recomienda definir explícitamente los orígenes permitidos.
-CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=DEBUG, cast=bool)
+CORS_ALLOW_ALL_ORIGINS = True  # Permitir todo para la demo en Render
 _cors_origins = config("CORS_ALLOWED_ORIGINS", default="").strip()
 if _cors_origins:
     CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
