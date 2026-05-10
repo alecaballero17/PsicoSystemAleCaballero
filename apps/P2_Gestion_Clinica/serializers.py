@@ -39,9 +39,9 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
     nombre = serializers.CharField(max_length=200)
     ci = serializers.CharField(max_length=20)
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, min_length=8)
-    clinica_id = serializers.IntegerField()
-    fecha_nacimiento = serializers.DateField()
+    password = serializers.CharField(write_only=True, min_length=6)
+    clinica_id = serializers.IntegerField(required=False, allow_null=True)
+    fecha_nacimiento = serializers.DateField(required=False, allow_null=True)
     telefono = serializers.CharField(max_length=20)
 
     def validate_email(self, value):
@@ -50,23 +50,17 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
         return value
 
     def validate_clinica_id(self, value):
-        if not Clinica.objects.filter(id=value).exists():
+        if value and not Clinica.objects.filter(id=value).exists():
             raise serializers.ValidationError("La clínica seleccionada no existe.")
         return value
 
     def create(self, validated_data):
-        clinica = Clinica.objects.get(id=validated_data['clinica_id'])
+        clinica_id = validated_data.get('clinica_id')
+        clinica = None
+        if clinica_id:
+            clinica = Clinica.objects.get(id=clinica_id)
         
-        # 1. Crear el Paciente en la Clínica
-        paciente = Paciente.objects.create(
-            nombre=validated_data['nombre'],
-            ci=validated_data['ci'],
-            fecha_nacimiento=validated_data['fecha_nacimiento'],
-            telefono=validated_data['telefono'],
-            clinica=clinica
-        )
-        
-        # 2. Crear el Usuario para acceso móvil (Email como Username)
+        # 1. Crear el Usuario siempre (Acceso Global)
         user = Usuario.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
@@ -74,10 +68,23 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
             clinica=clinica,
             rol='PACIENTE'
         )
+        user.first_name = validated_data['nombre']
+        user.telefono = validated_data['telefono']
+        user.ci = validated_data['ci']
         user.debe_cambiar_password = False
         user.save()
         
-        # 3. Crear Historia Clínica automática
-        HistoriaClinica.objects.create(paciente=paciente)
+        # 2. Si se eligió clínica, crear el registro de Paciente y la Historia Clínica
+        if clinica:
+            fecha_nac = validated_data.get('fecha_nacimiento') or "2000-01-01"
+            paciente = Paciente.objects.create(
+                nombre=validated_data['nombre'],
+                ci=validated_data['ci'],
+                fecha_nacimiento=fecha_nac,
+                telefono=validated_data['telefono'],
+                clinica=clinica
+            )
+            HistoriaClinica.objects.create(paciente=paciente)
+            return paciente
         
-        return paciente
+        return user

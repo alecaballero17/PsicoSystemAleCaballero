@@ -15,7 +15,7 @@ class PacienteProfileScreen extends StatefulWidget {
 
 class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
   late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
+  late TextEditingController _ciController;
   late TextEditingController _telefonoController;
   bool _isLoading = false;
 
@@ -25,14 +25,14 @@ class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
   void initState() {
     super.initState();
     _firstNameController = TextEditingController(text: widget.user.firstName ?? '');
-    _lastNameController = TextEditingController(text: widget.user.lastName ?? '');
+    _ciController = TextEditingController(text: widget.user.ci ?? '');
     _telefonoController = TextEditingController(text: widget.user.telefono ?? '');
   }
 
   @override
   void dispose() {
     _firstNameController.dispose();
-    _lastNameController.dispose();
+    _ciController.dispose();
     _telefonoController.dispose();
     super.dispose();
   }
@@ -43,7 +43,7 @@ class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
       await AuthService.updateProfile(
         widget.token,
         _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
+        _ciController.text.trim(), // Enviamos CI en lugar de apellido
         _telefonoController.text.trim(),
       );
       
@@ -105,7 +105,7 @@ class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
             
             _buildTextField('Nombre', _firstNameController, Icons.person_outline),
             const SizedBox(height: 16),
-            _buildTextField('Apellido', _lastNameController, Icons.person_outline),
+            _buildTextField('Cédula de Identidad (CI)', _ciController, Icons.badge_outlined),
             const SizedBox(height: 16),
             _buildTextField('Teléfono', _telefonoController, Icons.phone_outlined),
             const SizedBox(height: 16),

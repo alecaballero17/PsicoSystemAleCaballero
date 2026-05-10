@@ -23,14 +23,14 @@ class PacienteService {
   }
 
   // [SPRINT 1 - T015] Registro Público (Autogestión / Onboarding)
-  // [MODIFICACIÓN V2.0]: clinicaId ahora es opcional.
+  // [MODIFICACIÓN V3.0]: Parámetros simplificados y opcionales.
   static Future<void> registrarPacientePublico({
     int? clinicaId,
     required String nombre,
     required String ci,
     required String email,
     required String password,
-    required String fechaNacimiento,
+    String? fechaNacimiento,
     required String telefono,
   }) async {
     try {
@@ -43,7 +43,7 @@ class PacienteService {
           'ci': ci,
           'email': email,
           'password': password,
-          'fecha_nacimiento': fechaNacimiento,
+          if (fechaNacimiento != null) 'fecha_nacimiento': fechaNacimiento,
           'telefono': telefono,
         }),
       );

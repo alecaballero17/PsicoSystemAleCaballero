@@ -55,6 +55,7 @@ class Usuario(AbstractUser):
     rol = models.CharField(max_length=20, choices=ROLES, default='PSICOLOGO')
     especialidad = models.CharField(max_length=100, blank=True, default='')
     telefono = models.CharField(max_length=20, blank=True, default='')
+    ci = models.CharField(max_length=20, blank=True, default='')
     
     # Seguridad: Cambio de contraseña cada 90 días
     ultimo_cambio_password = models.DateTimeField(default=timezone.now)

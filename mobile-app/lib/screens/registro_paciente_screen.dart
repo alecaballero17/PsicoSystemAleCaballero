@@ -19,8 +19,6 @@ class RegistroPacienteScreen extends StatefulWidget {
 class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  List<Map<String, dynamic>> _clinicas = [];
-  int? _selectedClinica;
 
   // Controladores de campos
   final _nombreCtrl = TextEditingController();
@@ -33,16 +31,6 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarClinicas();
-  }
-
-  Future<void> _cargarClinicas() async {
-    final clinicas = await PacienteService.getClinicasPublic();
-    if (mounted) {
-      setState(() {
-        _clinicas = clinicas;
-      });
-    }
   }
 
   @override
@@ -56,7 +44,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
     super.dispose();
   }
 
-  // [SPRINT 1 - T015] [CU-02] Envío del formulario al API REST público
+  // [SPRINT 1 - T015] [CU-02] Envío del formulario simplificado
   Future<void> _registrar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -64,24 +52,23 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
 
     try {
       await PacienteService.registrarPacientePublico(
-        clinicaId: _selectedClinica,
         nombre: _nombreCtrl.text.trim(),
         ci: _ciCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
-        fechaNacimiento: _fechaNacimientoCtrl.text.trim(),
         telefono: _telefonoCtrl.text.trim(),
+        // clinicaId y fechaNacimiento son ahora opcionales en el backend
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Registro completado. ¡Inicia sesión!'),
+          content: Text('✅ Registro exitoso. ¡Ahora inicia sesión!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
       );
-      Navigator.pop(context); // Vuelve al login
+      Navigator.pop(context); 
     } catch (e) {
       if (!mounted) return;
       _showError(e.toString().replaceAll("Exception: ", ""));
@@ -96,9 +83,6 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
     );
   }
 
-  // ==============================================================================
-  // CONSTRUCCIÓN DE LA INTERFAZ
-  // ==============================================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,128 +93,105 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF1a2233),
-        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSectionTitle('DATOS PERSONALES'),
-                const SizedBox(height: 12),
+                const Text(
+                  'ÚNETE A PSICOSYSTEM',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.extrabold, color: Color(0xFF1e293b)),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Ingresa tus datos básicos para comenzar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF64748b)),
+                ),
+                const SizedBox(height: 32),
 
                 _buildField(
                   controller: _nombreCtrl,
                   label: 'Nombre Completo',
-                  icon: Icons.person,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                  icon: Icons.person_outline,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu nombre' : null,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 _buildField(
                   controller: _ciCtrl,
                   label: 'Cédula de Identidad (CI)',
-                  icon: Icons.badge,
+                  icon: Icons.badge_outlined,
                   keyboardType: TextInputType.number,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu CI' : null,
                 ),
-                const SizedBox(height: 20),
-
-                _buildSectionTitle('CREDENCIALES DE ACCESO'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 _buildField(
                   controller: _emailCtrl,
                   label: 'Correo Electrónico',
-                  icon: Icons.email,
+                  icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) => (v == null || !v.contains('@')) ? 'Correo inválido' : null,
                 ),
-                const SizedBox(height: 14),
-
-                _buildField(
-                  controller: _fechaNacimientoCtrl,
-                  label: 'Fecha de Nacimiento (YYYY-MM-DD)',
-                  icon: Icons.calendar_today,
-                  validator: (v) => (v == null || v.length < 10) ? 'Formato: YYYY-MM-DD' : null,
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 _buildField(
                   controller: _telefonoCtrl,
-                  label: 'Teléfono',
-                  icon: Icons.phone,
+                  label: 'Teléfono / WhatsApp',
+                  icon: Icons.phone_android,
                   keyboardType: TextInputType.phone,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu teléfono' : null,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
-                // Selector de clínica (Multi-tenant)
-                if (_clinicas.isNotEmpty) ...[
-                  _buildSectionTitle('CLÍNICA DE PREFERENCIA'),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<int>(
-                    value: _selectedClinica,
-                    decoration: _inputDecoration('Selecciona una clínica', Icons.local_hospital),
-                    items: _clinicas.map((clinica) {
-                      return DropdownMenuItem<int>(
-                        value: clinica['id'],
-                        child: Text(clinica['nombre']),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedClinica = value;
-                      });
-                    },
-                    validator: (value) => value == null ? 'Selecciona una clínica' : null,
-                  ),
-                  const SizedBox(height: 14),
-                ],
-
-                // [RNF-03] Máscara de asteriscos para contraseña
                 _buildField(
                   controller: _passwordCtrl,
-                  label: 'Contraseña',
-                  icon: Icons.lock,
+                  label: 'Contraseña de Acceso',
+                  icon: Icons.lock_outline,
                   obscureText: true,
-                  validator: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Campo obligatorio';
+                    if (v.length < 8) return 'Mínimo 8 caracteres';
+                    if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$').hasMatch(v)) {
+                      return 'Usa 1 mayúscula, 1 minúscula y 1 número';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
 
                 _isLoading
                     ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563eb)))
-                    : ElevatedButton.icon(
+                    : ElevatedButton(
                         onPressed: _registrar,
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text(
-                          'COMPLETAR REGISTRO',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2563eb),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                        ),
+                        child: const Text(
+                          'REGISTRARME AHORA',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                       ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('¿Ya tienes cuenta? Inicia Sesión', style: TextStyle(color: Color(0xFF2563eb), fontWeight: FontWeight.w600)),
+                ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748b), letterSpacing: 1.0,
       ),
     );
   }

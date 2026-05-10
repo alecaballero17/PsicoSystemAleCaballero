@@ -68,7 +68,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "id", "username", "email", "first_name", "last_name", 
-            "clinica", "rol", "especialidad", "telefono"
+            "clinica", "rol", "especialidad", "telefono", "ci"
         ]
 
 

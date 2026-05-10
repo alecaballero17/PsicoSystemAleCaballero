@@ -97,7 +97,7 @@ class AuthService {
   }
 
   // Actualizar Perfil
-  static Future<void> updateProfile(String token, String firstName, String lastName, String telefono) async {
+  static Future<void> updateProfile(String token, String firstName, String ci, String telefono) async {
     try {
       final response = await http.put(
         Uri.parse('${ApiConfig.baseUrl}/auth/me/'),
@@ -107,7 +107,7 @@ class AuthService {
         },
         body: json.encode({
           'first_name': firstName,
-          'last_name': lastName,
+          'ci': ci,
           'telefono': telefono,
         }),
       );
