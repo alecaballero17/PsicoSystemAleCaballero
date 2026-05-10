@@ -17,6 +17,7 @@ export const GestionPersonal = () => {
         username: '',
         email: '',
         password: '',
+        password_confirm: '',
         rol: 'PSICOLOGO',
         especialidad: '',
         horario_atencion: '',
@@ -72,7 +73,7 @@ export const GestionPersonal = () => {
     };
 
     const openCreateModal = () => {
-        setFormData({ id: null, username: '', email: '', password: '', rol: 'PSICOLOGO', especialidad: '', horario_atencion: '' });
+        setFormData({ id: null, username: '', email: '', password: '', password_confirm: '', rol: 'PSICOLOGO', especialidad: '', horario_atencion: '' });
         setShowModal(true);
     };
 
@@ -82,6 +83,7 @@ export const GestionPersonal = () => {
             username: p.username,
             email: p.email,
             password: '', // No traer la contraseña
+            password_confirm: '',
             rol: p.rol || 'PSICOLOGO',
             especialidad: p.especialidad || '',
             horario_atencion: p.horario_atencion || '',
@@ -184,6 +186,10 @@ export const GestionPersonal = () => {
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>{formData.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}</label>
                                 <input required={!formData.id} type="password" name="password" value={formData.password} onChange={handleInputChange} style={styles.input} />
+                            </div>
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>{formData.id ? 'Confirmar Nueva Contraseña' : 'Confirmar Contraseña'}</label>
+                                <input required={!formData.id} type="password" name="password_confirm" value={formData.password_confirm} onChange={handleInputChange} style={styles.input} />
                             </div>
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Rol en la Clínica</label>
