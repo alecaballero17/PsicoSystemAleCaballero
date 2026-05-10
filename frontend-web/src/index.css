@@ -1,13 +1,151 @@
+/* ==============================================================================
+   PsicoSystem SI2 — Global Design System (Sprint 1 + Sprint 2)
+   Google Fonts: Inter for UI, system fallbacks
+   ============================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f1f5f9;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* ==============================================================================
+   Animaciones globales (Toast, Spinner, Transiciones)
+   ============================================================================== */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ==============================================================================
+   react-big-calendar — Customizaciones para PsicoSystem
+   ============================================================================== */
+.rbc-calendar {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.rbc-toolbar {
+  margin-bottom: 20px !important;
+  padding: 12px 0 !important;
+}
+
+.rbc-toolbar button {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: #475569 !important;
+  transition: all 0.15s !important;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #2563eb !important;
+  color: white !important;
+  border-color: #2563eb !important;
+}
+
+.rbc-header {
+  padding: 12px 8px !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.rbc-today {
+  background-color: #eff6ff !important;
+}
+
+.rbc-current-time-indicator {
+  background-color: #ef4444 !important;
+  height: 2px !important;
+}
+
+.rbc-event {
+  border: none !important;
+}
+
+.rbc-time-slot {
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+.rbc-time-header-gutter {
+  background-color: white !important;
+}
+
+.rbc-label {
+  font-size: 12px !important;
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+}
+
+/* ==============================================================================
+   Scrollbar personalizado (RNF-04: Usabilidad)
+   ============================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ==============================================================================
+   Mejoras de accesibilidad
+   ============================================================================== */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+

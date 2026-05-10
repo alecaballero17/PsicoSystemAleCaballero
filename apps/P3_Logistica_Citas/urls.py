@@ -1,15 +1,22 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import SimpleRouter
 
 from .views import (
     CitaListCreateAPIView,
-    CitaRetrieveUpdateAPIView,
+    CitaRetrieveUpdateDestroyAPIView,
+    ListaEsperaViewSet,
 )
+
+# T031: Router para Lista de Espera
+router = SimpleRouter()
+router.register(r'lista-espera', ListaEsperaViewSet, basename='lista-espera')
 
 urlpatterns = [
     path("api/citas/", CitaListCreateAPIView.as_view(), name="api_citas"),
     path(
         "api/citas/<int:pk>/",
-        CitaRetrieveUpdateAPIView.as_view(),
+        CitaRetrieveUpdateDestroyAPIView.as_view(),
         name="api_citas_detalle",
     ),
+    path("api/", include(router.urls)),
 ]

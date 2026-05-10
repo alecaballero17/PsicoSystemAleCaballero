@@ -1,27 +1,27 @@
+// ==============================================================================
+// [SPRINT 1 + SPRINT 2] Dashboard — Panel de Control Principal
+// KPIs en tiempo real, navegación por módulos, tabla de expedientes.
+// ==============================================================================
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import dashboardService from '../services/dashboardService';
-import pacienteService from '../services/pacienteService'; 
+import pacienteService from '../services/pacienteService';
 import { dashboardStyles as styles } from '../styles/dashboardStyles';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { user, tenant, logout } = useAuth(); 
+    const { user, tenant, logout } = useAuth();
     
-    // [ALINEACIÓN RF-29] - Visualización dinámica de identidad del Tenant: El sistema refleja los metadatos institucionales actualizados mediante T024.    
-    // ESTADOS DE UI
     const [pacientes, setPacientes] = useState([]);
     const [metrics, setMetrics] = useState({ total_pacientes: 0, citas_hoy: 0 });
     const [cargando, setCargando] = useState(true);
     
-    // OBTENEMOS DATOS DE SESIÓN
     const userName = user?.name || 'USUARIO';
     const userRole = user?.role || 'ADMIN';
     const token = user?.token;
 
-    // FUNCIÓN DE CARGA DE DATOS (CONEXIÓN CENTRALIZADA)
     const fetchData = useCallback(async () => {
         if (!token) {
             navigate('/');
@@ -31,21 +31,18 @@ const Dashboard = () => {
         try {
             setCargando(true);
             
-            // RNF-01: Peticiones paralelas usando los servicios centralizados
             const [listaPacientes, metricasData] = await Promise.all([
-                pacienteService.getPacientes(), 
-                dashboardService.getMetrics() 
+                pacienteService.getPacientes(),
+                dashboardService.getMetrics()
             ]);
             
             setPacientes(Array.isArray(listaPacientes) ? listaPacientes : []);
             
-            // --- APLICAMOS EL MAPEO DE DATOS AQUÍ ---
             const datosCrudos = metricasData.metricas || metricasData;
             setMetrics({
                 total_pacientes: datosCrudos.total_pacientes || 0,
-                citas_hoy: datosCrudos.citas_pendientes || 0  // Transformamos 'pendientes' a 'hoy'
+                citas_hoy: datosCrudos.citas_pendientes || 0
             });
-            // ----------------------------------------
 
             setCargando(false);
 
@@ -53,15 +50,13 @@ const Dashboard = () => {
             console.error("Error cargando datos de Django:", error.response?.data || error.message);
             setCargando(false);
             
-            // --- MANEJO DE ERROR 403 (RF-29 Multi-tenant) ---
             if (error.response?.status === 403) {
                 const mensajeError = error.response.data.detail || "Error de permisos. Contacte al administrador.";
                 alert(`⚠️ ALERTA DE SEGURIDAD\n\n${mensajeError}`);
             }
             
-            // Si el token expiró (401), limpiamos la RAM. 
             if (error.response?.status === 401) {
-                logout(); 
+                logout();
             }
         }
     }, [navigate, token, logout]);
@@ -71,7 +66,7 @@ const Dashboard = () => {
             try {
                 await authService.apiClient.delete(`pacientes/${id}/`);
                 alert("Paciente dado de baja exitosamente.");
-                fetchData(); // Recargamos lista y métricas
+                fetchData();
             } catch (error) {
                 console.error("Error al dar de baja:", error);
                 alert("No se pudo completar la acción. Verifique sus permisos de administrador.");
@@ -79,7 +74,6 @@ const Dashboard = () => {
         }
     };
 
-    // DISPARADOR INICIAL
     useEffect(() => {
         fetchData();
     }, [fetchData]);
@@ -88,7 +82,7 @@ const Dashboard = () => {
         <div style={styles.layout}>
             {/* SIDEBAR: Navegación Lateral */}
             <aside style={styles.sidebar}>
-                {/* [ALINEACIÓN RF-29] - Identidad visual dinámica del Tenant: El sistema personaliza la interfaz según la pertenencia organizacional del usuario autenticado. */}
+                {/* Identidad del Tenant */}
                 <div style={styles.brandContainer}>
                     {tenant.logo ? (
                         <img src={tenant.logo} alt="Tenant Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
@@ -98,55 +92,75 @@ const Dashboard = () => {
                         </div>
                     )}
                     <span style={styles.brandText}>
-                        {tenant.nombre?.toUpperCase() || 'PSICOSYSTEM'} <span style={styles.brandVersion}>v1.0.4</span>
+                        {tenant.nombre?.toUpperCase() || 'PSICOSYSTEM'} <span style={styles.brandVersion}>v2.0.0</span>
                     </span>
                 </div>
                 
+                {/* Sección Principal */}
                 <nav style={styles.navSection}>
                     <p style={styles.sectionLabel}>PRINCIPAL</p>
-                    <div style={styles.navItemActive}>Vista General Analítica</div>
-                    {/* [SEGURIDAD RNF-03] Aislamiento Frontend: Solo PSICOLOGO ve expedientes clínicos */}
-                    {userRole === 'PSICOLOGO' && (
-                        <div 
-                            style={styles.navItem} 
-                            onClick={() => navigate('/registro-paciente')}
-                        >
-                            Gestión de Expedientes
-                        </div>
-                    )}
+                    <div style={styles.navItemActive}>📊 Vista General Analítica</div>
+                    
+                    {/* Sprint 2: Agenda y Citas */}
+                    <div style={styles.navItem} onClick={() => navigate('/agenda')}>
+                        📅 Agenda Profesional
+                    </div>
+                    <div style={styles.navItem} onClick={() => navigate('/gestion-citas')}>
+                        🗓️ Gestión de Citas
+                    </div>
                 </nav>
 
-                {userRole === 'ADMIN' && (
+                {/* Sección Clínica (Psicólogo + Admin) */}
+                {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
                     <nav style={styles.navSection}>
-                        <p style={styles.sectionLabel}>ADMINISTRACIÓN</p>
-                        {/* [SPRINT 1 - CU-05] Gestión de Personal Clínico completa (especialidades, horarios) -> Sprint 1 Finalizado */}
-                        {userRole === 'ADMIN' && (
-                            <div style={styles.navItem} onClick={() => navigate('/gestion-personal')}>
-                                Gestión de Personal Clínico (RF-28)
-                            </div>
-                        )}
+                        <p style={styles.sectionLabel}>CLÍNICA</p>
+                        <div style={styles.navItem} onClick={() => navigate('/registro-paciente')}>
+                            📋 Registro de Pacientes
+                        </div>
+                        <div style={styles.navItem} onClick={() => navigate('/historia-clinica')}>
+                            🏥 Historia Clínica + IA
+                        </div>
+                        <div style={styles.navItem} onClick={() => navigate('/lista-espera')}>
+                            ⏳ Lista de Espera
+                        </div>
+                        <div style={styles.navItem} onClick={() => navigate('/escaner-qr')}>
+                            📷 Escáner QR de Citas
+                        </div>
+                    </nav>
+                )}
 
+                {/* Sección Financiera */}
+                {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
+                    <nav style={styles.navSection}>
+                        <p style={styles.sectionLabel}>FINANZAS</p>
+                        <div style={styles.navItem} onClick={() => navigate('/finanzas')}>
+                            💰 Módulo Financiero
+                        </div>
                         {userRole === 'ADMIN' && (
-                            <div 
-                                style={styles.navItem} 
-                                onClick={() => navigate('/configuracion-clinica')}
-                            >
-                                Configuración de Clínica
-                            </div>
-                        )}
-
-                        {/* [SPRINT 1 - T025] Interfaz de monitoreo de límites SaaS. */}
-                        {userRole === 'ADMIN' && (
-                            <div 
-                                style={styles.navItem} 
-                                onClick={() => navigate('/suscripcion')}
-                            >
-                                Suscripción SaaS (CU-24)
+                            <div style={styles.navItem} onClick={() => navigate('/reportes')}>
+                                📊 Reportes Económicos
                             </div>
                         )}
                     </nav>
                 )}
 
+                {/* Sección Administración (Solo Admin) */}
+                {userRole === 'ADMIN' && (
+                    <nav style={styles.navSection}>
+                        <p style={styles.sectionLabel}>ADMINISTRACIÓN</p>
+                        <div style={styles.navItem} onClick={() => navigate('/gestion-personal')}>
+                            👥 Gestión de Personal
+                        </div>
+                        <div style={styles.navItem} onClick={() => navigate('/configuracion-clinica')}>
+                            ⚙️ Configuración de Clínica
+                        </div>
+                        <div style={styles.navItem} onClick={() => navigate('/suscripcion')}>
+                            💎 Suscripción SaaS
+                        </div>
+                    </nav>
+                )}
+
+                {/* Footer */}
                 <div style={styles.sidebarFooter}>
                     <div style={{ paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '15px' }}>
                         <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>
@@ -173,7 +187,7 @@ const Dashboard = () => {
                 </div>
             </aside>
 
-            {/* MAIN CONTENT: Área de Trabajo */}
+            {/* MAIN CONTENT */}
             <main style={styles.main}>
                 <header style={styles.header}>
                     <div style={styles.headerPath}>Consola / Dashboard</div>
@@ -189,7 +203,7 @@ const Dashboard = () => {
                 </header>
 
                 <div style={styles.content}>
-                    {/* INDICADORES KPI */}
+                    {/* KPIs */}
                     <div style={styles.kpiGrid}>
                         <div style={styles.kpiCard}>
                             <span style={styles.kpiLabel}>TOTAL PACIENTES</span>
@@ -197,18 +211,49 @@ const Dashboard = () => {
                             <div style={styles.kpiSub}>Sincronizado con PostgreSQL</div>
                         </div>
                         <div style={styles.kpiCard}>
-                            <span style={styles.kpiLabel}>CITAS HOY</span>
+                            <span style={styles.kpiLabel}>CITAS PENDIENTES</span>
                             <div style={styles.kpiValue}>{metrics.citas_hoy}</div>
-                            <div style={styles.kpiSub}>Módulo Agenda (Sprint 2)</div>
+                            <div style={{ ...styles.kpiSub, cursor: 'pointer' }} onClick={() => navigate('/agenda')}>
+                                Ver en Agenda →
+                            </div>
                         </div>
                         <div style={styles.kpiCard}>
                             <span style={styles.kpiLabel}>ESTADO API</span>
                             <div style={styles.kpiValue}>ONLINE</div>
-                            <div style={styles.kpiSub}>Latencia: 24ms</div>
+                            <div style={styles.kpiSub}>Sprint 2 — v2.0.0</div>
                         </div>
                     </div>
 
-                    {/* PANEL DE TABLA */}
+                    {/* Sprint 2 Quick Actions */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, 1fr)',
+                        gap: '16px',
+                        marginBottom: '32px',
+                    }}>
+                        <div onClick={() => navigate('/gestion-citas')} style={quickActionStyle}>
+                            <span style={{ fontSize: '28px' }}>🗓️</span>
+                            <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Nueva Cita</span>
+                        </div>
+                        <div onClick={() => navigate('/historia-clinica')} style={quickActionStyle}>
+                            <span style={{ fontSize: '28px' }}>📋</span>
+                            <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Expedientes</span>
+                        </div>
+                        <div onClick={() => navigate('/finanzas')} style={quickActionStyle}>
+                            <span style={{ fontSize: '28px' }}>💰</span>
+                            <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Registrar Pago</span>
+                        </div>
+                        <div onClick={() => navigate('/lista-espera')} style={quickActionStyle}>
+                            <span style={{ fontSize: '28px' }}>⏳</span>
+                            <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Lista Espera</span>
+                        </div>
+                        <div onClick={() => navigate('/escaner-qr')} style={quickActionStyle}>
+                            <span style={{ fontSize: '28px' }}>📷</span>
+                            <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>Escanear QR</span>
+                        </div>
+                    </div>
+
+                    {/* Tabla de Pacientes */}
                     <div style={styles.panelSection}>
                         <div style={styles.panelHeader}>
                             <h3 style={styles.panelTitle}>EXPEDIENTES RECIENTES (TRAZABILIDAD T014)</h3>
@@ -289,6 +334,21 @@ const Dashboard = () => {
             </main>
         </div>
     );
+};
+
+// Quick Action Card Style
+const quickActionStyle = {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    border: '1px solid #e2e8f0',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
 };
 
 export default Dashboard;

@@ -69,6 +69,7 @@ const RegistroClinica = () => {
             plan_id: formData.plan_id
         };
 
+        try {
             // Envío público hacia el onboarding SaaS (Alineado con backend P1)
             await apiClient.post('onboarding/', atomicPayload);
             alert("ALTA EXITOSA: La clínica, la suscripción y tu usuario administrador se crearon correctamente.");

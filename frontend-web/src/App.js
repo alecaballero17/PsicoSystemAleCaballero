@@ -1,60 +1,59 @@
-// [SPRINT 1 - T010] Interfaz de Autenticación: Enrutador raíz de la SPA React.
-// [RF-28] Control de Acceso RBAC: Guardia de rutas 'PrivateRoute' con validación de roles.
-// [RNF-03] Seguridad: Redirección automática a login si no hay sesión válida.
-// [SPRINT 0 - T002] Stack Tecnológico: React 19 + React Router v7 confirmado.
+// ==============================================================================
+// [SPRINT 1 + SPRINT 2] Enrutador Principal de PsicoSystem SI2
+// [RF-28] Control de Acceso RBAC: PrivateRoute con validación de roles.
+// [SPRINT 2] Nuevas rutas: Agenda, Citas, Historia Clínica, Finanzas, Reportes
+// ==============================================================================
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext'; // [SPRINT 1 - T021] Contexto global de sesión
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-// [SPRINT 1 - T010] Página de Login
+// --- SPRINT 1: Páginas existentes ---
 import Login from './pages/Login';
-// [SPRINT 1 - T016] Dashboard administrativo con métricas
 import Dashboard from './pages/Dashboard';
-// [SPRINT 1 - T013] Módulo de Registro de Pacientes
 import RegistroPaciente from './pages/RegistroPaciente';
-// [SPRINT 1 - T024] Módulo de Alta de Clínica (Tenant)
 import RegistroClinica from './pages/RegistroClinica';
-// [SPRINT 1 - RF-29] Mantenimiento de Clínica Institucional
 import ConfiguracionClinica from './pages/ConfiguracionClinica';
-// [SPRINT 1 - T021] Navbar con botón de Logout (CU-04)
 import Navbar from './components/Navbar';
-// [SPRINT 1 - T019] [CU-03] Flujo de recuperación de credenciales (pública)
 import RecuperarContrasena from './pages/RecuperarContrasena';
-// [SPRINT 1 - CU-05] Gestión de Psicólogos
 import GestionPersonal from './pages/GestionPersonal';
-// [SPRINT 1 - T025] Interfaz de monitoreo de límites SaaS
 import SuscripcionInfo from './pages/SuscripcionInfo';
-import Landing from './pages/Landing'; // [CIERRE SPRINT 1] Landing Comercial B2B
+import Landing from './pages/Landing';
+
+// --- SPRINT 2: Nuevas páginas ---
+import AgendaCitas from './pages/AgendaCitas';
+import GestionCitas from './pages/GestionCitas';
+import HistoriaClinica from './pages/HistoriaClinica';
+import Finanzas from './pages/Finanzas';
+import ReportesFinancieros from './pages/ReportesFinancieros';
+import ListaEspera from './pages/ListaEspera';
+import EscanerQR from './pages/EscanerQR';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
 // ==============================================================================
 const PrivateRoute = ({ children, allowedRoles }) => {
-    const { user } = useAuth(); // 👈 El guardia ahora escucha la radio oficial
+    const { user } = useAuth();
 
-    // Si no hay usuario en la RAM, patada al Login
     if (!user) {
         return <Navigate to="/" />;
     }
 
-    // [ALINEACIÓN SPRINT 1 - RF-29] "Bypass Global": Si el administrador no tiene Clínica asignada, solo puede ver el Registro B2B
-    // Excepción: Los pacientes móviles no tienen clinica_id (o podrían no tenerlo) hasta escanear, pero esta Web es solo Admin/B2B
+    // [RF-29] Bypass Global: Admin sin clínica solo puede registrar clínica
     if (user && (!user.clinica_id || user.clinica_id === "null" || user.clinica_id === "undefined") && user.role !== 'PACIENTE') {
         return <Navigate to="/registro-clinica" />;
     }
 
-    // Si la ruta exige rol (ej. ADMIN) y el usuario no lo tiene, patada al Dashboard
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         return <Navigate to="/dashboard" />;
     }
-    // 👇 AQUÍ ESTÁ LA MAGIA: Renderizamos el Navbar globalmente para rutas seguras
+
     return (
         <>
-            <Navbar /> 
+            <Navbar />
             {children}
         </>
     );
-};    
+};
 
 
 // ==============================================================================
@@ -62,21 +61,16 @@ const PrivateRoute = ({ children, allowedRoles }) => {
 // ==============================================================================
 function App() {
     return (
-        <AuthProvider> 
+        <AuthProvider>
             <Router>
                 <Routes>
-                    {/* [CIERRE SPRINT 1] Landing Page Comercial B2B SaaS */}
+                    {/* === RUTAS PÚBLICAS === */}
                     <Route path="/" element={<Landing />} />
-                    
-                    {/* [SPRINT 1 - T010] Login reubicado */}
                     <Route path="/login" element={<Login />} />
-                    
-                    {/* [SPRINT 1 - T019] [CU-03] Ruta pública: no requiere autenticación */}
                     <Route path="/recuperar" element={<RecuperarContrasena />} />
-
-                    {/* [SPRINT 1 - T024] [CU-25] Registro B2B de Clínicas SaaS */}
                     <Route path="/registro-clinica" element={<RegistroClinica />} />
-                    
+
+                    {/* === SPRINT 1: Rutas protegidas === */}
                     <Route path="/dashboard" element={
                         <PrivateRoute>
                             <Dashboard />
@@ -89,27 +83,76 @@ function App() {
                         </PrivateRoute>
                     } />
 
-                    {/* [SPRINT 1 - CU-05] Gestión de Personal Clínico (Solo Admin) */}
                     <Route path="/gestion-personal" element={
                         <PrivateRoute allowedRoles={['ADMIN']}>
                             <GestionPersonal />
                         </PrivateRoute>
                     } />
 
-                    {/* [SPRINT 1 - RF-29] Mantenimiento de Clínica (Solo Admin) */}
                     <Route path="/configuracion-clinica" element={
                         <PrivateRoute allowedRoles={['ADMIN']}>
                             <ConfiguracionClinica />
                         </PrivateRoute>
                     } />
 
-                    {/* [SPRINT 1 - T025] Límites SaaS (Solo Admin) */}
                     <Route path="/suscripcion" element={
                         <PrivateRoute allowedRoles={['ADMIN']}>
                             <SuscripcionInfo />
                         </PrivateRoute>
                     } />
 
+                    {/* === SPRINT 2: Nuevas rutas protegidas === */}
+
+                    {/* RF-08 / CU14: Agenda Dinámica — Calendario Interactivo */}
+                    <Route path="/agenda" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <AgendaCitas />
+                        </PrivateRoute>
+                    } />
+
+                    {/* RF-06/RF-07 / CU11/CU12/CU13: Gestión de Citas */}
+                    <Route path="/gestion-citas" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <GestionCitas />
+                        </PrivateRoute>
+                    } />
+
+                    {/* T026 / IA-01: Historia Clínica + Análisis IA */}
+                    <Route path="/historia-clinica" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <HistoriaClinica />
+                        </PrivateRoute>
+                    } />
+
+                    {/* RF-25/RF-26 / T058/T059 / CU26: Finanzas */}
+                    <Route path="/finanzas" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <Finanzas />
+                        </PrivateRoute>
+                    } />
+
+                    {/* RF-27: Reportes Económicos */}
+                    <Route path="/reportes" element={
+                        <PrivateRoute allowedRoles={['ADMIN']}>
+                            <ReportesFinancieros />
+                        </PrivateRoute>
+                    } />
+
+                    {/* T031: Lista de Espera */}
+                    <Route path="/lista-espera" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <ListaEspera />
+                        </PrivateRoute>
+                    } />
+
+                    {/* Escáner QR de Asistencia */}
+                    <Route path="/escaner-qr" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <EscanerQR />
+                        </PrivateRoute>
+                    } />
+
+                    {/* Catch-all */}
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </Router>
