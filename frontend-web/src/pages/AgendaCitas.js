@@ -42,7 +42,7 @@ const ESTADO_COLORS = {
 
 const AgendaCitas = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, tenant } = useAuth();
     const { showToast, ToastContainer } = useToast();
     const [citas, setCitas] = useState([]);
     const [loading, setLoading] = useState(true);
