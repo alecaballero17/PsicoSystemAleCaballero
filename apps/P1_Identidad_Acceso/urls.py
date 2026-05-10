@@ -15,6 +15,7 @@ from .views import (
     PlanesListAPIView,
     OnboardingSaaSAPIView,
     ClinicaPublicListAPIView,
+    UsuarioPerfilAPIView,
 )
 
 urlpatterns = [
@@ -27,6 +28,7 @@ urlpatterns = [
     path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/logout/", TokenBlacklistView.as_view(), name="api_logout_blacklist"),
+    path("api/auth/me/", UsuarioPerfilAPIView.as_view(), name="api_auth_me"),
     path(
         "api/auth/registro/psicologo/",
         RegistroPsicologoAPIView.as_view(),

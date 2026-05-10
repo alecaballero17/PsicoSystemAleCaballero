@@ -137,6 +137,15 @@ class RegistroPsicologoAPIView(APIView):
         )
 
 
+class UsuarioPerfilAPIView(generics.RetrieveAPIView):
+    """GET: Devuelve los datos del usuario autenticado (Anti-huérfano / Sesión persistente)."""
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
 class PlanesListAPIView(APIView):
     """GET público: devuelve el catálogo de planes configurados en el modelo Clínica."""
     permission_classes = [AllowAny]
