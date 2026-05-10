@@ -12,6 +12,7 @@ class Paciente(models.Model):
     fecha_nacimiento = models.DateField()
     telefono = models.CharField(max_length=20)
     motivo_consulta = models.TextField(null=True, blank=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True, null=True)  # Requerido por ReportePersonalizadoAPIView
 
     objects = models.Manager()
 

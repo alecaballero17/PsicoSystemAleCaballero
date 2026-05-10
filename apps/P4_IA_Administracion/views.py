@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 import requests
+from apps.P1_Identidad_Acceso.models import DispositivoMovil
 from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
@@ -260,4 +261,118 @@ class ReportePersonalizadoAPIView(APIView):
             "fecha_fin": fecha_fin,
             "texto": texto_reporte,
             "audio_url": audio_url
+        }, status=status.HTTP_200_OK)
+
+
+import uuid
+from apps.P1_Identidad_Acceso.permissions import EsPaciente
+
+class MobileSaldoPacienteView(APIView):
+    """
+    Endpoint para que la app móvil (Flutter) consulte la deuda del paciente.
+    """
+    permission_classes = [IsAuthenticated, EsPaciente]
+
+    def get(self, request, paciente_id):
+        paciente = get_object_or_404(Paciente, id=paciente_id)
+        
+        pagos = Transaccion.objects.filter(paciente=paciente, tipo='PAGO').aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        deudas = Transaccion.objects.filter(paciente=paciente, tipo='DEUDA').aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ajustes = Transaccion.objects.filter(paciente=paciente, tipo='AJUSTE').aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+        saldo = deudas - pagos + ajustes
+        
+        return Response({
+            "paciente_id": paciente.id,
+            "paciente_nombre": paciente.nombre,
+            "total_pagado": pagos,
+            "total_deuda_acumulada": deudas,
+            "saldo_pendiente": saldo
+        }, status=status.HTTP_200_OK)
+
+class PasarelaPagoMobileAPIView(APIView):
+    """
+    Endpoint que simula la pasarela de pagos para la aplicación Flutter.
+    """
+    permission_classes = [IsAuthenticated, EsPaciente]
+
+    def post(self, request):
+        paciente_id = request.data.get('paciente_id')
+        monto = request.data.get('monto')
+        metodo_pago = request.data.get('metodo_pago', 'TARJETA')
+        numero_tarjeta = request.data.get('numero_tarjeta', '')
+
+        if not paciente_id or not monto:
+            return Response({"error": "Debe proveer paciente_id y monto."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validación MUY básica para facilitar las pruebas del Frontend
+        # En la vida real, aquí se llamaría a la API de Stripe o PayPal.
+        if len(str(numero_tarjeta)) < 4:
+            return Response({"error": "La tarjeta debe tener al menos 4 números para ser procesada."}, status=status.HTTP_400_BAD_REQUEST)
+
+        paciente = get_object_or_404(Paciente, id=paciente_id)
+
+        try:
+            monto_decimal = Decimal(str(monto))
+        except:
+            return Response({"error": "Monto inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Registrar la transacción de Pago
+        transaccion = Transaccion.objects.create(
+            paciente=paciente,
+            monto=monto_decimal,
+            tipo='PAGO',
+            descripcion=f"Pago Móvil via {metodo_pago} (****{numero_tarjeta[-4:]})"
+        )
+
+        # 2. Generar el Comprobante automáticamente
+        nro_comp = f"MOB-{uuid.uuid4().hex[:8].upper()}"
+        comprobante = Comprobante.objects.create(
+            transaccion=transaccion,
+            nro_comprobante=nro_comp
+        )
+
+        # 3. Auditoria
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Pago móvil registrado ({monto_decimal} BOB) para el paciente {paciente.nombre}"
+        )
+
+        # 4. Enviar Notificación Push (Simulada para la Defensa)
+        dispositivos = DispositivoMovil.objects.filter(usuario=request.user)
+        for dispositivo in dispositivos:
+            # Aquí iría la lógica real de firebase-admin. Ej: messaging.send(...)
+            print(f"\n[FIREBASE PUSH SIMULATOR] Enviando notificación de Pago Exitoso al token: {dispositivo.fcm_token}")
+            print(f"[FIREBASE PUSH SIMULATOR] Titulo: Pago Aprobado")
+            print(f"[FIREBASE PUSH SIMULATOR] Cuerpo: Su pago de {monto_decimal} BOB ha sido procesado con éxito.\n")
+
+        return Response({
+            "mensaje": "Pago procesado exitosamente por la pasarela virtual.",
+            "transaccion_id": transaccion.id,
+            "comprobante": nro_comp,
+            "monto_pagado": monto_decimal
+        }, status=status.HTTP_201_CREATED)
+
+
+class RegistroTokenFCMAPIView(APIView):
+    """
+    Registra el token de dispositivo (Firebase Cloud Messaging) para enviar notificaciones Push.
+    """
+    permission_classes = [IsAuthenticated, EsPaciente]
+
+    def post(self, request):
+        fcm_token = request.data.get('fcm_token')
+
+        if not fcm_token:
+            return Response({"error": "Debe proveer fcm_token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Actualizar o crear el dispositivo para este usuario
+        dispositivo, created = DispositivoMovil.objects.update_or_create(
+            usuario=request.user,
+            defaults={'fcm_token': fcm_token}
+        )
+
+        return Response({
+            "mensaje": "Token registrado exitosamente para notificaciones Push.",
+            "fcm_token": dispositivo.fcm_token
         }, status=status.HTTP_200_OK)

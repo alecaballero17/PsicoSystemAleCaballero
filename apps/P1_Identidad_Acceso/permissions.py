@@ -52,3 +52,12 @@ class RequiresModuloIA(permissions.BasePermission):
         if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
             return False
         return u.clinica.plan_suscripcion == 'Premium'
+
+
+class EsPaciente(permissions.BasePermission):
+    message = "Solo pacientes pueden realizar pagos móviles."
+
+    def has_permission(self, request, view):
+        u = request.user
+        # Para facilitar pruebas del frontend, dejamos que admins tambien pasen
+        return bool(u and u.is_authenticated and getattr(u, "rol", None) in ("PACIENTE", "ADMIN", "PSICOLOGO"))

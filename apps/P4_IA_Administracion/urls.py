@@ -7,7 +7,10 @@ from .views import (
     TransaccionViewSet,
     SaldoPacienteView,
     GenerarComprobantePDFView,
-    ReportePersonalizadoAPIView
+    ReportePersonalizadoAPIView,
+    MobileSaldoPacienteView,
+    PasarelaPagoMobileAPIView,
+    RegistroTokenFCMAPIView
 )
 
 router = SimpleRouter()
@@ -23,4 +26,9 @@ urlpatterns = [
     path("api/finanzas/saldo/<int:paciente_id>/", SaldoPacienteView.as_view(), name="api_saldo_paciente"),
     path("api/finanzas/comprobante/<int:transaccion_id>/pdf/", GenerarComprobantePDFView.as_view(), name="api_comprobante_pdf"),
     path("api/reportes/personalizado/", ReportePersonalizadoAPIView.as_view(), name="api_reporte_personalizado"),
+
+    # Mobile Flutter Endpoints
+    path("api/mobile/paciente/<int:paciente_id>/saldo/", MobileSaldoPacienteView.as_view(), name="api_mobile_saldo"),
+    path("api/mobile/paciente/pagar/", PasarelaPagoMobileAPIView.as_view(), name="api_mobile_pagar"),
+    path("api/mobile/notificaciones/registrar-token/", RegistroTokenFCMAPIView.as_view(), name="api_mobile_fcm_token"),
 ]

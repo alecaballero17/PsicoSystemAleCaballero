@@ -33,6 +33,7 @@
                 <input type="text" id="username" placeholder="Usuario (ej. admin)" value="admin">
                 <input type="password" id="password" placeholder="Contraseña" value="admin">
                 <button onclick="login()">Iniciar Sesión</button>
+                <button onclick="logout()" style="background-image: linear-gradient(to right, #ff4b4b 0%, #ff8e53 100%);">Cerrar Sesión</button>
             </div>
             <p id="login-status"></p>
         </div>
@@ -58,6 +59,18 @@
             <input type="text" id="cita-motivo" placeholder="Motivo de la cita...">
             <button onclick="crearCita()">📅 Agendar Cita (Intenta crear dos a la misma hora)</button>
             <p id="cita-status"></p>
+
+            <div class="row" style="margin-top: 15px; border-top: 1px solid #3b3b55; padding-top: 15px;">
+                <input type="number" id="mod-cita-id" placeholder="ID de Cita a Modificar">
+                <select id="mod-cita-estado">
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="COMPLETADA">Completada</option>
+                    <option value="CANCELADA">Cancelada</option>
+                </select>
+                <button onclick="editarCita()">✏️ Editar Estado</button>
+                <button onclick="eliminarCita()" style="background-image: linear-gradient(to right, #ff4b4b 0%, #ff8e53 100%);">🗑️ Eliminar (Soft-Delete)</button>
+            </div>
+            <p id="mod-cita-status"></p>
         </div>
 
         <!-- 4. EVOLUCION -->
@@ -149,6 +162,13 @@
             } catch (e) { status.innerHTML = `<span class="error">❌ Error de conexión</span>`; }
         }
 
+        
+        function logout() {
+            token = '';
+            document.getElementById('login-status').innerHTML = '<span class="error">Sesión cerrada.</span>';
+            alert("Has cerrado sesión.");
+        }
+
         // 2. BUSCAR PACIENTES
         async function buscarPacientes() {
             if(!token) return alert("Inicia sesión primero");
@@ -176,6 +196,38 @@
                 const data = await res.json();
                 if(res.ok) status.innerHTML = `<span class="success">✅ Cita Agendada: ID ${data.id}</span>`;
                 else status.innerHTML = `<span class="error">❌ Error: ${JSON.stringify(data)}</span>`;
+            } catch (e) { status.innerHTML = e; }
+        }
+
+        
+        async function editarCita() {
+            if(!token) return alert("Inicia sesión primero");
+            const status = document.getElementById('mod-cita-status');
+            try {
+                const id = document.getElementById('mod-cita-id').value;
+                const estado = document.getElementById('mod-cita-estado').value;
+                const res = await fetch(`${BASE_URL}/citas/${id}/`, { 
+                    method: 'PATCH', 
+                    headers: headers(), 
+                    body: JSON.stringify({ estado: estado }) 
+                });
+                const data = await res.json();
+                if(res.ok) status.innerHTML = `<span class="success">✅ Cita editada. Nuevo estado: ${data.estado}</span>`;
+                else status.innerHTML = `<span class="error">❌ Error: ${JSON.stringify(data)}</span>`;
+            } catch (e) { status.innerHTML = e; }
+        }
+
+        async function eliminarCita() {
+            if(!token) return alert("Inicia sesión primero");
+            const status = document.getElementById('mod-cita-status');
+            try {
+                const id = document.getElementById('mod-cita-id').value;
+                const res = await fetch(`${BASE_URL}/citas/${id}/`, { 
+                    method: 'DELETE', 
+                    headers: headers()
+                });
+                if(res.ok) status.innerHTML = `<span class="success">✅ Cita eliminada correctamente (Soft-Delete).</span>`;
+                else status.innerHTML = `<span class="error">❌ Error al eliminar.</span>`;
             } catch (e) { status.innerHTML = e; }
         }
 

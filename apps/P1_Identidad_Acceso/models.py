@@ -57,3 +57,15 @@ class Usuario(AbstractUser):
             self.debe_cambiar_password = False
             
         super().save(*args, **kwargs)
+
+
+# ==============================================================================
+# MÓDULO: NOTIFICACIONES PUSH (MÓVIL)
+# ==============================================================================
+class DispositivoMovil(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='dispositivos')
+    fcm_token = models.CharField(max_length=255, unique=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dispositivo de {self.usuario.username}"
