@@ -29,41 +29,7 @@ import ListaEspera from './pages/ListaEspera';
 import EscanerQR from './pages/EscanerQR';
 import GlobalSidebar from './components/GlobalSidebar';
 
-// ==============================================================================
-// RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
-// ==============================================================================
-const PrivateRoute = ({ children, allowedRoles }) => {
-    const { user } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-    if (!user) {
-        return <Navigate to="/" />;
-    }
-
-    if (user && (!user.clinica_id || user.clinica_id === "null" || user.clinica_id === "undefined") && user.role !== 'PACIENTE') {
-        return <Navigate to="/registro-clinica" />;
-    }
-
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-        return <Navigate to="/dashboard" />;
-    }
-
-    return (
-        <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <div style={{ display: 'flex', flex: 1, position: 'relative', zIndex: 1000 }}>
-                <GlobalSidebar 
-                    isOpen={isSidebarOpen} 
-                    onClose={() => setIsSidebarOpen(false)} 
-                />
-                <div className={`app-content-wrapper ${isSidebarOpen ? 'with-sidebar' : ''}`} style={{ flex: 1 }}>
-                    {children}
-                </div>
-            </div>
-        </div>
-    );
-};
-
+import MainLayout from './MainLayout';
 
 // ==============================================================================
 // ENRUTADOR PRINCIPAL
@@ -79,87 +45,27 @@ function App() {
                     <Route path="/recuperar" element={<RecuperarContrasena />} />
                     <Route path="/registro-clinica" element={<RegistroClinica />} />
 
-                    {/* === SPRINT 1: Rutas protegidas === */}
-                    <Route path="/dashboard" element={
-                        <PrivateRoute>
-                            <Dashboard />
-                        </PrivateRoute>
-                    } />
+                    {/* === RUTAS PROTEGIDAS (Layout unificado) === */}
+                    <Route element={<MainLayout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                    </Route>
 
-                    <Route path="/registro-paciente" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <RegistroPaciente />
-                        </PrivateRoute>
-                    } />
+                    <Route element={<MainLayout allowedRoles={['PSICOLOGO', 'ADMIN']} />}>
+                        <Route path="/registro-paciente" element={<RegistroPaciente />} />
+                        <Route path="/agenda" element={<AgendaCitas />} />
+                        <Route path="/gestion-citas" element={<GestionCitas />} />
+                        <Route path="/historia-clinica" element={<HistoriaClinica />} />
+                        <Route path="/lista-espera" element={<ListaEspera />} />
+                        <Route path="/escaner-qr" element={<EscanerQR />} />
+                        <Route path="/finanzas" element={<Finanzas />} />
+                    </Route>
 
-                    <Route path="/gestion-personal" element={
-                        <PrivateRoute allowedRoles={['ADMIN']}>
-                            <GestionPersonal />
-                        </PrivateRoute>
-                    } />
-
-                    <Route path="/configuracion-clinica" element={
-                        <PrivateRoute allowedRoles={['ADMIN']}>
-                            <ConfiguracionClinica />
-                        </PrivateRoute>
-                    } />
-
-                    <Route path="/suscripcion" element={
-                        <PrivateRoute allowedRoles={['ADMIN']}>
-                            <SuscripcionInfo />
-                        </PrivateRoute>
-                    } />
-
-                    {/* === SPRINT 2: Nuevas rutas protegidas === */}
-
-                    {/* RF-08 / CU14: Agenda Dinámica — Calendario Interactivo */}
-                    <Route path="/agenda" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <AgendaCitas />
-                        </PrivateRoute>
-                    } />
-
-                    {/* RF-06/RF-07 / CU11/CU12/CU13: Gestión de Citas */}
-                    <Route path="/gestion-citas" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <GestionCitas />
-                        </PrivateRoute>
-                    } />
-
-                    {/* T026 / IA-01: Historia Clínica + Análisis IA */}
-                    <Route path="/historia-clinica" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <HistoriaClinica />
-                        </PrivateRoute>
-                    } />
-
-                    {/* RF-25/RF-26 / T058/T059 / CU26: Finanzas */}
-                    <Route path="/finanzas" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <Finanzas />
-                        </PrivateRoute>
-                    } />
-
-                    {/* RF-27: Reportes Económicos */}
-                    <Route path="/reportes" element={
-                        <PrivateRoute allowedRoles={['ADMIN']}>
-                            <ReportesFinancieros />
-                        </PrivateRoute>
-                    } />
-
-                    {/* T031: Lista de Espera */}
-                    <Route path="/lista-espera" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <ListaEspera />
-                        </PrivateRoute>
-                    } />
-
-                    {/* Escáner QR de Asistencia */}
-                    <Route path="/escaner-qr" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <EscanerQR />
-                        </PrivateRoute>
-                    } />
+                    <Route element={<MainLayout allowedRoles={['ADMIN']} />}>
+                        <Route path="/gestion-personal" element={<GestionPersonal />} />
+                        <Route path="/configuracion-clinica" element={<ConfiguracionClinica />} />
+                        <Route path="/suscripcion" element={<SuscripcionInfo />} />
+                        <Route path="/reportes" element={<ReportesFinancieros />} />
+                    </Route>
 
                     {/* Catch-all */}
                     <Route path="*" element={<Navigate to="/" />} />
@@ -169,4 +75,4 @@ function App() {
     );
 }
 
-export default App;
+export default App;
