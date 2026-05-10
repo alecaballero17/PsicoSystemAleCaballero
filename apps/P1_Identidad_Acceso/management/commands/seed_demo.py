@@ -47,7 +47,8 @@ class Command(BaseCommand):
                     "first_name": "Gerente",
                     "last_name": plan,
                     "rol": "ADMIN",
-                    "clinica": clinica
+                    "clinica": clinica,
+                    "ci": f"{random.randint(1000000, 9999999)}"
                 }
             )
 
@@ -62,7 +63,8 @@ class Command(BaseCommand):
                         "first_name": f"Doctor {i+1}",
                         "last_name": "Pérez",
                         "rol": "PSICOLOGO",
-                        "clinica": clinica
+                        "clinica": clinica,
+                        "ci": f"{random.randint(1000000, 9999999)}"
                     }
                 )
 

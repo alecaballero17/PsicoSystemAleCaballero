@@ -103,11 +103,11 @@ class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
             ),
             const SizedBox(height: 32),
             
-            _buildTextField('Nombre', _firstNameController, Icons.person_outline),
+            _buildTextField('Nombre', _firstNameController, Icons.person),
             const SizedBox(height: 16),
-            _buildTextField('Cédula de Identidad (CI)', _ciController, Icons.badge_outlined),
+            _buildTextField('Cédula de Identidad (CI)', _ciController, Icons.credit_card),
             const SizedBox(height: 16),
-            _buildTextField('Teléfono', _telefonoController, Icons.phone_outlined),
+            _buildTextField('Teléfono', _telefonoController, Icons.phone),
             const SizedBox(height: 16),
             
             // Campo de solo lectura para el email

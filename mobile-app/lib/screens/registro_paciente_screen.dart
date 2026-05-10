@@ -106,7 +106,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                 const Text(
                   'ÚNETE A PSICOSYSTEM',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.extrabold, color: Color(0xFF1e293b)),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1e293b)),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -119,7 +119,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                 _buildField(
                   controller: _nombreCtrl,
                   label: 'Nombre Completo',
-                  icon: Icons.person_outline,
+                  icon: Icons.person,
                   validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu nombre' : null,
                 ),
                 const SizedBox(height: 16),
@@ -127,7 +127,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                 _buildField(
                   controller: _ciCtrl,
                   label: 'Cédula de Identidad (CI)',
-                  icon: Icons.badge_outlined,
+                  icon: Icons.credit_card,
                   keyboardType: TextInputType.number,
                   validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu CI' : null,
                 ),
@@ -136,7 +136,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                 _buildField(
                   controller: _emailCtrl,
                   label: 'Correo Electrónico',
-                  icon: Icons.email_outlined,
+                  icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) => (v == null || !v.contains('@')) ? 'Correo inválido' : null,
                 ),
@@ -154,7 +154,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                 _buildField(
                   controller: _passwordCtrl,
                   label: 'Contraseña de Acceso',
-                  icon: Icons.lock_outline,
+                  icon: Icons.lock,
                   obscureText: true,
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Campo obligatorio';
