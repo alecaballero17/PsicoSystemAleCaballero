@@ -42,7 +42,7 @@ class RequiresModuloContabilidad(permissions.BasePermission):
         u = request.user
         if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
             return False
-        return u.clinica.plan_suscripcion in ['Profesional', 'Premium']
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
 
 class RequiresModuloIA(permissions.BasePermission):
     message = "Tu clínica no tiene acceso al Módulo de IA. Actualiza tu plan a Premium."
@@ -51,7 +51,7 @@ class RequiresModuloIA(permissions.BasePermission):
         u = request.user
         if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
             return False
-        return u.clinica.plan_suscripcion in ['Profesional', 'Premium']
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
 
 class RequiresModuloAuditoria(permissions.BasePermission):
     message = "El Historial de Auditoría es una función avanzada. Actualiza tu plan a Profesional o Premium."
@@ -60,7 +60,7 @@ class RequiresModuloAuditoria(permissions.BasePermission):
         u = request.user
         if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
             return False
-        return u.clinica.plan_suscripcion in ['Profesional', 'Premium']
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
 
 
 class EsPaciente(permissions.BasePermission):

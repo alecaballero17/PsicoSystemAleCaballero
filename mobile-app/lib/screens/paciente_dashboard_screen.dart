@@ -240,6 +240,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
                             nombre: clinica['nombre'] ?? 'Clínica',
                             direccion: clinica['direccion'] ?? 'Dirección no registrada',
                             especialidades: clinica['especialidades'] ?? 'Psicología General',
+                            logo: clinica['logo'],
                             planSuscripcion: clinica['plan_suscripcion'],
                             psicologosCount: clinica['psicologos_count'],
                             planBeneficios: clinica['plan_beneficios'],
@@ -262,6 +263,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
     required String nombre, 
     required String direccion, 
     required String especialidades,
+    String? logo,
     String? planSuscripcion,
     int? psicologosCount,
     String? planBeneficios,
@@ -283,9 +285,22 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                child: Icon(Icons.health_and_safety, color: primaryBlue, size: 28),
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: logo != null && logo.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          logo,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(Icons.health_and_safety, color: primaryBlue, size: 28),
+                        ),
+                      )
+                    : Icon(Icons.health_and_safety, color: primaryBlue, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(

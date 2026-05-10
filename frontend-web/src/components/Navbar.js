@@ -114,7 +114,6 @@ const Navbar = ({ onToggleSidebar }) => {
                                     <>
                                         <button onClick={() => { navigate('/suscripcion'); setShowDropdown(false); }} style={styles.dropdownItem}>💎 Suscripción SaaS</button>
                                         <button onClick={() => { navigate('/configuracion-clinica'); setShowDropdown(false); }} style={styles.dropdownItem}>⚙️ Configuración de Clínica</button>
-                                        <button onClick={() => { navigate('/facturacion'); setShowDropdown(false); }} style={styles.dropdownItem}>💰 Historial de Facturación</button>
                                         <button onClick={() => { navigate('/escaner-qr'); setShowDropdown(false); }} style={styles.dropdownItem}>📷 Escáner QR de Citas</button>
                                         <div style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }}></div>
                                     </>

@@ -118,58 +118,42 @@ export const SuscripcionInfo = () => {
             </div>
 
             <div style={styles.mainGrid}>
-                <div style={{ ...styles.card, gridColumn: 'span 2' }}>
-                    <h3 style={styles.sectionTitle}>Historial de Facturación</h3>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr style={styles.tableHead}>
-                                    <th style={styles.th}>FECHA</th>
-                                    <th style={styles.th}>DESCRIPCIÓN</th>
-                                    <th style={styles.th}>MÉTODO</th>
-                                    <th style={styles.th}>MONTO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {transacciones.length > 0 ? transacciones.map(t => (
-                                    <tr key={t.id} style={styles.tr}>
-                                        <td style={styles.td}>{t.fecha_formateada}</td>
-                                        <td style={styles.td}>{t.descripcion}</td>
-                                        <td style={styles.td}>
-                                            <span style={styles.badgeMethod}>{t.metodo_pago}</span>
-                                        </td>
-                                        <td style={{ ...styles.td, fontWeight: 'bold', color: t.tipo === 'CARGA' ? '#16a34a' : '#dc2626' }}>
-                                            {t.tipo === 'CARGA' ? '+' : '-'}{t.monto} BOB
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Sin transacciones recientes.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                {/* Lado Izquierdo: Uso de Recursos */}
+                <div style={styles.card}>
+                    <h3 style={styles.sectionTitle}>📊 Uso de Recursos del Plan</h3>
+                    <div style={styles.usageItem}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={styles.usageLabel}>Pacientes Registrados</span>
+                            <span style={styles.usageValue}>{info?.uso?.pacientes_actuales} / {info?.uso?.pacientes_limite}</span>
+                        </div>
+                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: `${(info?.uso?.pacientes_actuales / info?.uso?.pacientes_limite) * 100}%`, backgroundColor: '#2563eb' }} /></div>
+                    </div>
+                    <div style={styles.usageItem}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={styles.usageLabel}>Especialistas Activos</span>
+                            <span style={styles.usageValue}>{info?.uso?.psicologos_actuales} / {info?.uso?.psicologos_limite}</span>
+                        </div>
+                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: `${(info?.uso?.psicologos_actuales / info?.uso?.psicologos_limite) * 100}%`, backgroundColor: '#16a34a' }} /></div>
+                    </div>
+
+                    <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#eff6ff', borderRadius: '12px', border: '1px solid #bfdbfe' }}>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#1e40af', fontWeight: '700' }}>
+                            💡 TIP: Si alcanzas el límite, puedes subir de nivel tu plan en cualquier momento.
+                        </p>
                     </div>
                 </div>
 
+                {/* Lado Derecho: Acciones y Enlaces */}
                 <div style={styles.card}>
-                    <h3 style={styles.sectionTitle}>Uso de Recursos</h3>
-                    <div style={styles.usageItem}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={styles.usageLabel}>Pacientes</span>
-                            <span style={styles.usageValue}>{info?.uso?.pacientes_actuales} / {info?.uso?.pacientes_limite}</span>
-                        </div>
-                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: '10%', backgroundColor: '#2563eb' }} /></div>
-                    </div>
-                    <div style={styles.usageItem}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={styles.usageLabel}>Especialistas</span>
-                            <span style={styles.usageValue}>{info?.uso?.psicologos_actuales} / {info?.uso?.psicologos_limite}</span>
-                        </div>
-                        <div style={styles.progressBg}><div style={{ ...styles.progressFill, width: '20%', backgroundColor: '#16a34a' }} /></div>
-                    </div>
-
-                    <h3 style={{ ...styles.sectionTitle, marginTop: '30px' }}>Acciones Rápidas</h3>
+                    <h3 style={styles.sectionTitle}>⚡ Acciones de Gestión</h3>
                     <button onClick={() => navigate('/configuracion-clinica')} style={styles.btnAction}>⚙️ Configuración del Tenant</button>
                     <button onClick={() => navigate('/bitacora')} style={styles.btnAction}>📜 Ver Bitácora de Auditoría</button>
+                    
+                    <div style={{ height: '1px', background: '#e2e8f0', margin: '20px 0' }}></div>
+                    
+                    <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+                        PsicoSystem SaaS v2.0 - Soporte: soporte@psicosystem.com
+                    </p>
                 </div>
             </div>
         </div>

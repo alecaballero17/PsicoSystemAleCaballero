@@ -27,7 +27,12 @@ class Clinica(models.Model):
 
 class TransaccionClinica(models.Model):
     clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE, related_name='transacciones_facturacion')
-    tipo = models.CharField(max_length=50, choices=[('CARGA', 'Carga de Saldo'), ('PAGO_SUSCRIPCION', 'Pago de Suscripción'), ('OTRO', 'Otro')])
+    tipo = models.CharField(max_length=50, choices=[
+        ('CARGA', 'Carga de Saldo'), 
+        ('PAGO_SUSCRIPCION', 'Pago de Suscripción'), 
+        ('INGRESO_PACIENTE', 'Ingreso por Pago de Paciente'),
+        ('OTRO', 'Otro')
+    ])
     monto = models.DecimalField(max_digits=10, decimal_places=2)
     descripcion = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)

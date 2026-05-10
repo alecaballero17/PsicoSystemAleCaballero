@@ -23,7 +23,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import openpyxl
 
-from apps.P1_Identidad_Acceso.models import Usuario, DispositivoMovil
+from apps.P1_Identidad_Acceso.models import Usuario, DispositivoMovil, TransaccionClinica
 from apps.P1_Identidad_Acceso.permissions import (
     HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, 
     RequiresModuloContabilidad, RequiresModuloIA, RequiresModuloAuditoria, EsPaciente
@@ -325,13 +325,28 @@ class PasarelaPagoMobileAPIView(APIView):
             nro_comprobante=nro_comp
         )
 
-        # 3. Auditoria
+        # 3. Incrementar el saldo de la clínica (Ingreso SaaS)
+        clinica = paciente.clinica
+        if clinica:
+            clinica.saldo += monto_decimal
+            clinica.save()
+            
+            # Registrar el movimiento en el historial de facturación de la clínica
+            TransaccionClinica.objects.create(
+                clinica=clinica,
+                tipo='INGRESO_PACIENTE',
+                monto=monto_decimal,
+                descripcion=f"Ingreso por Pago Móvil: Paciente {paciente.nombre} (ID {paciente.id})",
+                metodo_pago=metodo_pago
+            )
+
+        # 4. Auditoria
         LogAuditoria.objects.create(
             usuario=request.user,
-            accion=f"Pago móvil registrado ({monto_decimal} BOB) para el paciente {paciente.nombre}"
+            accion=f"Pago móvil registrado ({monto_decimal} BOB) para el paciente {paciente.nombre}. El saldo de la clínica ha sido incrementado."
         )
 
-        # 4. Enviar Notificación Push (Simulada para la Defensa)
+        # 5. Enviar Notificación Push (Simulada para la Defensa)
         dispositivos = DispositivoMovil.objects.filter(usuario=request.user)
         for dispositivo in dispositivos:
             # Aquí iría la lógica real de firebase-admin. Ej: messaging.send(...)
