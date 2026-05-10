@@ -1,5 +1,11 @@
+import io
+import base64
+import datetime
+import uuid
+import os
+
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import Sum, Count, Max
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -9,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 import requests
-from apps.P1_Identidad_Acceso.models import DispositivoMovil
+from apps.P1_Identidad_Acceso.models import DispositivoMovil, Usuario
 from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
@@ -264,7 +270,6 @@ class ReportePersonalizadoAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-import uuid
 from apps.P1_Identidad_Acceso.permissions import EsPaciente
 
 class MobileSaldoPacienteView(APIView):
@@ -375,4 +380,206 @@ class RegistroTokenFCMAPIView(APIView):
         return Response({
             "mensaje": "Token registrado exitosamente para notificaciones Push.",
             "fcm_token": dispositivo.fcm_token
+        }, status=status.HTTP_200_OK)
+
+
+# ==============================================================================
+# NUEVO: LISTADO DE CITAS CON FILTROS MANUALES (Tabla del reporte)
+# ==============================================================================
+class CitasReporteListAPIView(APIView):
+    """
+    Devuelve la lista de citas de la clínica con filtros opcionales:
+    - fecha_inicio / fecha_fin
+    - estado (PENDIENTE, COMPLETADA, CANCELADA, NO_ASISTIO)
+    Solo accesible por ADMIN.
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+
+    def get(self, request):
+        clinica = request.user.clinica
+        qs = Cita.objects.filter(paciente__clinica=clinica).select_related('paciente', 'psicologo')
+
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        estado = request.query_params.get('estado')
+
+        if fecha_inicio:
+            try:
+                qs = qs.filter(fecha_hora__date__gte=datetime.date.fromisoformat(fecha_inicio))
+            except ValueError:
+                pass
+        if fecha_fin:
+            try:
+                qs = qs.filter(fecha_hora__date__lte=datetime.date.fromisoformat(fecha_fin))
+            except ValueError:
+                pass
+        if estado and estado in ['PENDIENTE', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO']:
+            qs = qs.filter(estado=estado)
+
+        data = [
+            {
+                "id": c.id,
+                "paciente": c.paciente.nombre,
+                "psicologo": c.psicologo.get_full_name() or c.psicologo.username,
+                "fecha_hora": c.fecha_hora.strftime("%Y-%m-%d %H:%M"),
+                "estado": c.estado,
+                "motivo": c.motivo or "",
+            }
+            for c in qs.order_by('-fecha_hora')[:200]
+        ]
+        return Response({"total": len(data), "citas": data}, status=status.HTTP_200_OK)
+
+
+# ==============================================================================
+# NUEVO: VOICE-TO-REPORT CON IA (RF-27 Extendido)
+# ==============================================================================
+class VoiceToReportAPIView(APIView):
+    """
+    Recibe el texto transcrito de la voz del administrador,
+    usa Gemini para extraer filtros, aplica las queries al ORM de Django
+    y genera un reporte PDF + Excel.
+
+    POST /api/reportes/voz/
+    Body: { "transcript": "citas canceladas de enero a marzo" }
+    Returns: { "filtros": {...}, "pdf_base64": "...", "resumen": {...} }
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+
+    def post(self, request):
+        transcript = request.data.get('transcript', '').strip()
+        if not transcript:
+            return Response({"error": "Debe proveer el campo 'transcript' con el texto dictado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Interpretar el comando con Gemini
+        filtros = AIService.interpretar_comando_voz(transcript)
+        if 'error' in filtros:
+            return Response({"error": filtros['error']}, status=status.HTTP_502_BAD_GATEWAY)
+
+        clinica = request.user.clinica
+
+        # 2. Aplicar filtros a la tabla de Citas
+        qs_citas = Cita.objects.filter(paciente__clinica=clinica).select_related('paciente', 'psicologo')
+
+        if filtros.get('fecha_inicio'):
+            try:
+                qs_citas = qs_citas.filter(fecha_hora__date__gte=datetime.date.fromisoformat(filtros['fecha_inicio']))
+            except (ValueError, TypeError):
+                pass
+        if filtros.get('fecha_fin'):
+            try:
+                qs_citas = qs_citas.filter(fecha_hora__date__lte=datetime.date.fromisoformat(filtros['fecha_fin']))
+            except (ValueError, TypeError):
+                pass
+        if filtros.get('estado_cita'):
+            qs_citas = qs_citas.filter(estado=filtros['estado_cita'])
+
+        citas = list(qs_citas.order_by('-fecha_hora')[:500])
+        total_citas = len(citas)
+
+        # 3. Psicólogo con más citas (si se pidió)
+        top_psicologo_info = None
+        if filtros.get('top_psicologo'):
+            top = qs_citas.values('psicologo__username', 'psicologo__first_name', 'psicologo__last_name') \
+                          .annotate(total=Count('id')).order_by('-total').first()
+            if top:
+                nombre = f"{top.get('psicologo__first_name','')} {top.get('psicologo__last_name','')}".strip()
+                top_psicologo_info = {
+                    "nombre": nombre or top.get('psicologo__username', 'N/A'),
+                    "total_citas": top['total']
+                }
+
+        # 4. Filtros de monto en Transacciones
+        qs_trans = Transaccion.objects.filter(paciente__clinica=clinica, tipo='PAGO')
+        if filtros.get('monto_min') is not None:
+            try:
+                qs_trans = qs_trans.filter(monto__gte=Decimal(str(filtros['monto_min'])))
+            except Exception:
+                pass
+        if filtros.get('monto_max') is not None:
+            try:
+                qs_trans = qs_trans.filter(monto__lte=Decimal(str(filtros['monto_max'])))
+            except Exception:
+                pass
+        total_recaudado = qs_trans.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+        # 5. Generar PDF con ReportLab
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm,
+                                topMargin=2*cm, bottomMargin=2*cm)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # Encabezado
+        elements.append(Paragraph(f"<b>PsicoSystem — Reporte por Voz IA</b>", styles['Title']))
+        elements.append(Paragraph(f"Clínica: {clinica.nombre}", styles['Normal']))
+        elements.append(Paragraph(f"Generado el: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        elements.append(Paragraph(f"Comando dictado: \"{transcript}\"", styles['Italic']))
+        elements.append(Spacer(1, 0.5*cm))
+
+        # Resumen
+        filtros_txt = []
+        if filtros.get('fecha_inicio'): filtros_txt.append(f"Desde: {filtros['fecha_inicio']}")
+        if filtros.get('fecha_fin'): filtros_txt.append(f"Hasta: {filtros['fecha_fin']}")
+        if filtros.get('estado_cita'): filtros_txt.append(f"Estado: {filtros['estado_cita']}")
+        if filtros.get('monto_min'): filtros_txt.append(f"Monto mín: {filtros['monto_min']} BOB")
+        if filtros.get('monto_max'): filtros_txt.append(f"Monto máx: {filtros['monto_max']} BOB")
+
+        elements.append(Paragraph(f"<b>Filtros aplicados:</b> {' | '.join(filtros_txt) or 'Ninguno'}", styles['Normal']))
+        elements.append(Paragraph(f"<b>Total de citas encontradas:</b> {total_citas}", styles['Normal']))
+        elements.append(Paragraph(f"<b>Total recaudado (pagos filtrados):</b> {total_recaudado} BOB", styles['Normal']))
+        if top_psicologo_info:
+            elements.append(Paragraph(f"<b>Psicólogo más activo:</b> {top_psicologo_info['nombre']} ({top_psicologo_info['total_citas']} citas)", styles['Normal']))
+        elements.append(Spacer(1, 0.5*cm))
+
+        # Tabla de citas
+        if citas:
+            table_data = [["#", "Paciente", "Psicólogo", "Fecha/Hora", "Estado", "Motivo"]]
+            for i, c in enumerate(citas[:100], 1):  # Limitar a 100 filas en PDF
+                table_data.append([
+                    str(i),
+                    c.paciente.nombre[:25],
+                    (c.psicologo.get_full_name() or c.psicologo.username)[:20],
+                    c.fecha_hora.strftime("%d/%m/%Y %H:%M"),
+                    c.estado,
+                    (c.motivo or "")[:30],
+                ])
+            t = Table(table_data, repeatRows=1)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563eb')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f1f5f9')]),
+                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e2e8f0')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(t)
+
+        doc.build(elements)
+        buffer.seek(0)
+        pdf_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+        # 6. Auditoría
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"[VOICE-IA] Reporte por voz generado. Transcript: '{transcript[:80]}'. Citas: {total_citas}."
+        )
+
+        return Response({
+            "filtros_interpretados": filtros,
+            "resumen": {
+                "total_citas": total_citas,
+                "total_recaudado_bobs": str(total_recaudado),
+                "top_psicologo": top_psicologo_info,
+            },
+            "pdf_base64": pdf_base64,
         }, status=status.HTTP_200_OK)

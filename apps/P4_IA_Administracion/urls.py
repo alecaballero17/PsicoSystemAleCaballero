@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 from .views import (
-    DashboardAPIView, 
-    LogAuditoriaAPIView, 
+    DashboardAPIView,
+    LogAuditoriaAPIView,
     AnalisisIAView,
     TransaccionViewSet,
     SaldoPacienteView,
@@ -10,7 +10,10 @@ from .views import (
     ReportePersonalizadoAPIView,
     MobileSaldoPacienteView,
     PasarelaPagoMobileAPIView,
-    RegistroTokenFCMAPIView
+    RegistroTokenFCMAPIView,
+    # Nuevos: Voice-to-Report
+    VoiceToReportAPIView,
+    CitasReporteListAPIView,
 )
 
 router = SimpleRouter()
@@ -20,12 +23,16 @@ urlpatterns = [
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
     path("api/admin/auditoria/", LogAuditoriaAPIView.as_view(), name="api_admin_auditoria"),
     path("api/ia/analizar/<int:evolucion_id>/", AnalisisIAView.as_view(), name="api_ia_analizar"),
-    
+
     # Finanzas
     path("api/finanzas/", include(router.urls)),
     path("api/finanzas/saldo/<int:paciente_id>/", SaldoPacienteView.as_view(), name="api_saldo_paciente"),
     path("api/finanzas/comprobante/<int:transaccion_id>/pdf/", GenerarComprobantePDFView.as_view(), name="api_comprobante_pdf"),
     path("api/reportes/personalizado/", ReportePersonalizadoAPIView.as_view(), name="api_reporte_personalizado"),
+
+    # Voice-to-Report IA (RF-27 Extendido)
+    path("api/reportes/voz/", VoiceToReportAPIView.as_view(), name="api_reportes_voz"),
+    path("api/reportes/citas/", CitasReporteListAPIView.as_view(), name="api_reportes_citas"),
 
     # Mobile Flutter Endpoints
     path("api/mobile/paciente/<int:paciente_id>/saldo/", MobileSaldoPacienteView.as_view(), name="api_mobile_saldo"),
