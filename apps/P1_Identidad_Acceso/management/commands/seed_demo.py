@@ -25,6 +25,8 @@ class Command(BaseCommand):
                 defaults={
                     "nit": f"100200{random.randint(100, 999)}",
                     "direccion": dir,
+                    "telefono": f"2222{random.randint(1000, 9999)}",
+                    "email_contacto": f"contacto@{nombre.split()[0].lower()}.com",
                     "plan_suscripcion": plan
                 }
             )
@@ -96,7 +98,7 @@ class Command(BaseCommand):
             psicologos = Usuario.objects.filter(clinica=clinica, rol="PSICOLOGO")
             pacientes_list = Paciente.objects.filter(clinica=clinica)
             if psicologos.exists() and pacientes_list.exists():
-                from apps.P2_Gestion_Clinica.models import Cita
+                from apps.P3_Logistica_Citas.models import Cita
                 for i in range(3):
                     Cita.objects.get_or_create(
                         paciente=random.choice(pacientes_list),
