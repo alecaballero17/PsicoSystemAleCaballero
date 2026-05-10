@@ -3,7 +3,7 @@
 // [RF-28] Control de Acceso RBAC: PrivateRoute con validación de roles.
 // [SPRINT 2] Nuevas rutas: Agenda, Citas, Historia Clínica, Finanzas, Reportes
 // ==============================================================================
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 

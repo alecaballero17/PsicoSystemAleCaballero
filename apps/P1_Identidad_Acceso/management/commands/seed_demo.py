@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 if pac_created:
                     HistoriaClinica.objects.get_or_create(paciente=paciente)
 
-            # Paciente Usuario para la app móvil (solo 1 por clínica para probar el login)
+            # Paciente Usuario para la app móvil
             Usuario.objects.get_or_create(
                 username=f"paciente@{prefijo}.com",
                 defaults={
@@ -91,5 +91,27 @@ class Command(BaseCommand):
                     "clinica": clinica
                 }
             )
+
+            # --- SPRINT 2 SEEDING: Citas y Pagos ---
+            psicologos = Usuario.objects.filter(clinica=clinica, rol="PSICOLOGO")
+            pacientes_list = Paciente.objects.filter(clinica=clinica)
+            if psicologos.exists() and pacientes_list.exists():
+                from apps.P2_Gestion_Clinica.models import Cita
+                for i in range(3):
+                    Cita.objects.get_or_create(
+                        paciente=random.choice(pacientes_list),
+                        psicologo=random.choice(psicologos),
+                        fecha_hora=datetime.now() + timedelta(days=i, hours=random.randint(1, 4)),
+                        defaults={"motivo": "Seguimiento", "estado": "PENDIENTE", "clinica": clinica}
+                    )
+
+            if pacientes_list.exists():
+                from apps.P4_Modulo_Financiero.models import Pago
+                for i in range(2):
+                    Pago.objects.get_or_create(
+                        paciente=random.choice(pacientes_list),
+                        monto=100,
+                        defaults={"metodo_pago": "EFECTIVO", "estado": "COMPLETADO", "clinica": clinica, "concepto": "Consulta"}
+                    )
 
         self.stdout.write(self.style.SUCCESS("¡Seeding completado! Datos listos para la demostración."))
