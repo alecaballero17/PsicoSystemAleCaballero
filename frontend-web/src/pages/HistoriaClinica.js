@@ -300,7 +300,7 @@ const HistoriaClinica = () => {
 // ESTILOS
 // ==============================================================================
 const styles = {
-    page: { padding: '32px 40px', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' },
+    page: { padding: 'clamp(16px, 5vw, 40px)', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: '"Inter", sans-serif' },
     header: { marginBottom: '24px' },
     title: { fontSize: '28px', fontWeight: '800', color: '#0f172a', margin: 0 },
     subtitle: { fontSize: '14px', color: '#64748b', marginTop: '4px' },

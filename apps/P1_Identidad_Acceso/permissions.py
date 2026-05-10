@@ -51,7 +51,16 @@ class RequiresModuloIA(permissions.BasePermission):
         u = request.user
         if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
             return False
-        return u.clinica.plan_suscripcion == 'Premium'
+        return u.clinica.plan_suscripcion in ['Profesional', 'Premium']
+
+class RequiresModuloAuditoria(permissions.BasePermission):
+    message = "El Historial de Auditoría es una función avanzada. Actualiza tu plan a Profesional o Premium."
+
+    def has_permission(self, request, view):
+        u = request.user
+        if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
+            return False
+        return u.clinica.plan_suscripcion in ['Profesional', 'Premium']
 
 
 class EsPaciente(permissions.BasePermission):

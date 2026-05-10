@@ -137,8 +137,8 @@ class RegistroPsicologoAPIView(APIView):
         )
 
 
-class UsuarioPerfilAPIView(generics.RetrieveAPIView):
-    """GET: Devuelve los datos del usuario autenticado (Anti-huérfano / Sesión persistente)."""
+class UsuarioPerfilAPIView(generics.RetrieveUpdateAPIView):
+    """GET/PUT: Devuelve y actualiza los datos del usuario autenticado."""
     serializer_class = UsuarioSerializer
     permission_classes = [IsAuthenticated]
 
@@ -146,16 +146,33 @@ class UsuarioPerfilAPIView(generics.RetrieveAPIView):
         return self.request.user
 
 
+class ChangePasswordAPIView(APIView):
+    """PUT: Cambiar la contraseña del usuario autenticado."""
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        user = request.user
+        new_password = request.data.get("new_password")
+        if not new_password or len(new_password) < 8:
+            return Response({"detail": "La contraseña debe tener al menos 8 caracteres."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Contraseña actualizada exitosamente."}, status=status.HTTP_200_OK)
+
+
 class PlanesListAPIView(APIView):
-    """GET público: devuelve el catálogo de planes configurados en el modelo Clínica."""
+    """GET público: devuelve el catálogo de planes configurados en el modelo Clínica, incluyendo PRECIOS para Stripe."""
     permission_classes = [AllowAny]
 
     def get(self, request):
-        planes = [
-            {"id": p[0], "nombre": p[1]} 
-            for p in Clinica.PLANES
+        # Catálogo de precios y características de los planes SaaS
+        catalogo = [
+            {"id": "Basico", "nombre": "Plan Básico (Gratis)", "precio": 0.00, "duracion_dias": 365, "beneficios": "Gestión de 1 agenda, soporte por email."},
+            {"id": "Profesional", "nombre": "Plan Profesional", "precio": 49.99, "duracion_dias": 30, "beneficios": "Hasta 5 agendas, recordatorios WhatsApp, IA Clínica."},
+            {"id": "Premium", "nombre": "Plan Premium (Anual)", "precio": 499.99, "duracion_dias": 365, "beneficios": "Ilimitado, IA avanzada, analítica predictiva, soporte 24/7."}
         ]
-        return Response(planes, status=status.HTTP_200_OK)
+        return Response(catalogo, status=status.HTTP_200_OK)
 
 
 class OnboardingSaaSAPIView(APIView):
@@ -208,8 +225,41 @@ class ClinicaPublicListAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        clinicas = Clinica.objects.all().values("id", "nombre")
-        return Response(list(clinicas), status=status.HTTP_200_OK)
+        clinicas = Clinica.objects.all().values("id", "nombre", "direccion", "plan_suscripcion")
+        resultado = []
+        for c in clinicas:
+            # Simular especialidades base si es Premium
+            especialidades = "Psicología General"
+            if c["plan_suscripcion"] == "Premium":
+                especialidades = "Psicología General, Psiquiatría, Terapia Familiar"
+            elif c["plan_suscripcion"] == "Profesional":
+                especialidades = "Psicología General, Terapia de Pareja"
+                
+            # Contar psicólogos
+            psicologos_count = Usuario.objects.filter(clinica_id=c["id"], rol="PSICOLOGO").count()
+            
+            # Beneficios por plan para mostrar en móvil
+            plan_beneficios = "Gestión básica de citas y pacientes."
+            horario = "Lunes a Viernes, 09:00 - 18:00"
+            if c["plan_suscripcion"] == "Profesional":
+                plan_beneficios = "Soporte Prioritario, múltiples agendas, Análisis Básico."
+                horario = "Lunes a Sábado, 08:00 - 20:00"
+            elif c["plan_suscripcion"] == "Premium":
+                plan_beneficios = "Análisis IA Avanzado, Reportes Predictivos, Soporte VIP."
+                horario = "Atención 24/7 (Citas de Emergencia Disponibles)"
+            
+            resultado.append({
+                "id": c["id"],
+                "nombre": c["nombre"],
+                "direccion": c["direccion"] if c["direccion"] else "Dirección no registrada",
+                "especialidades": especialidades,
+                "plan_suscripcion": c["plan_suscripcion"],
+                "psicologos_count": psicologos_count,
+                "plan_beneficios": plan_beneficios,
+                "horario": horario
+            })
+            
+        return Response(resultado, status=status.HTTP_200_OK)
 
 
 class UsuarioColaboradorListCreateAPIView(generics.ListCreateAPIView):
@@ -282,7 +332,50 @@ class PsicologoListCreateAPIView(generics.ListCreateAPIView):
         return PsicologoSerializer
 
     def perform_create(self, serializer):
-        serializer.save(clinica=self.request.user.clinica, rol="PSICOLOGO")
+        clinica = self.request.user.clinica
+        # SaaS Feature-Gating: No hay límites de psicólogos en ningún plan.
+        serializer.save(clinica=clinica, rol="PSICOLOGO")
+
+
+class SuscripcionInfoAPIView(APIView):
+    """GET: Devuelve el estado de la suscripción y uso de cupos de la clínica."""
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get(self, request, pk):
+        clinica = request.user.clinica
+        if str(clinica.id) != str(pk):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("No tienes acceso a esta suscripción.")
+            
+        from apps.P2_Gestion_Clinica.models import Paciente
+        pacientes_count = Paciente.objects.filter(clinica=clinica).count()
+        psicologos_count = Usuario.objects.filter(clinica=clinica, rol="PSICOLOGO").count()
+        
+        plan = clinica.plan_suscripcion
+        info = {
+            "clinica_id": clinica.id,
+            "clinica_nombre": clinica.nombre,
+            "plan_nombre": f"Plan {plan}",
+            "estado": "ACTIVA",
+            "fecha_inicio": clinica.id, # Mock
+            "uso": {
+                "pacientes_actuales": pacientes_count,
+                "pacientes_limite": "Ilimitado",
+                "psicologos_actuales": psicologos_count,
+                "psicologos_limite": "Ilimitado"
+            },
+            "features": {
+                "soporte": "Estándar" if plan == "Basico" else "Prioritario 24h" if plan == "Profesional" else "VIP Dedicado 24/7",
+                "ia_medica": False if plan == "Basico" else True,
+                "auditoria_avanzada": False if plan == "Basico" else True,
+            }
+        }
+        
+        # Fix mock fecha_inicio
+        import datetime
+        info["fecha_inicio"] = (datetime.datetime.now() - datetime.timedelta(days=10)).isoformat()
+        
+        return Response(info, status=status.HTTP_200_OK)
 
 
 class PsicologoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):

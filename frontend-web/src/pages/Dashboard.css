@@ -1,0 +1,60 @@
+/* Estilos para hacer el Sidebar Responsivo en móviles */
+
+.dashboard-sidebar {
+    transition: transform 0.3s ease;
+}
+
+.hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #1e293b;
+    margin-right: 16px;
+}
+
+.sidebar-overlay {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .dashboard-layout {
+        flex-direction: column;
+    }
+    
+    .hamburger-btn {
+        display: block;
+    }
+
+    .dashboard-sidebar {
+        display: none !important; /* Ocultamos el local en movil porque ahora usamos el GlobalSidebar */
+    }
+
+    .dashboard-sidebar.open {
+        display: none !important;
+    }
+
+    .sidebar-overlay.open {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .header-user-info {
+        display: none !important; /* Ocultar detalles del usuario en la cabecera en movil para hacer espacio */
+    }
+}

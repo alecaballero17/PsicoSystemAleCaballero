@@ -93,7 +93,11 @@ class PacienteListCreateAPIView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        paciente = serializer.save(clinica=self.request.user.clinica)
+        clinica = self.request.user.clinica
+        
+        # SaaS Feature-Gating: No hay límites de pacientes en ningún plan.
+
+        paciente = serializer.save(clinica=clinica)
         # Crear automáticamente la Historia Clínica (Expediente)
         HistoriaClinica.objects.get_or_create(paciente=paciente)
         

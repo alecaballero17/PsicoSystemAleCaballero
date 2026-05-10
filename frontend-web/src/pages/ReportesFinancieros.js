@@ -282,7 +282,7 @@ const ReportesFinancieros = () => {
 };
 
 const styles = {
-    page: { padding: '32px 40px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif' },
+    page: { padding: 'clamp(16px, 5vw, 40px)', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif' },
     header: { marginBottom: '24px' },
     title: { fontSize: '28px', fontWeight: '800', color: '#0f172a', margin: 0 },
     subtitle: { fontSize: '15px', color: '#64748b', marginTop: '6px' },

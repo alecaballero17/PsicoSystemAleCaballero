@@ -198,7 +198,7 @@ const AgendaCitas = () => {
 // ==============================================================================
 const styles = {
     pageContainer: {
-        padding: '32px 40px',
+        padding: 'clamp(16px, 5vw, 40px)',
         backgroundColor: '#f1f5f9',
         minHeight: '100vh',
         fontFamily: '"Inter", sans-serif',

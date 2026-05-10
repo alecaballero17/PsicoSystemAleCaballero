@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
                 } else {
                     // [ALINEACIÓN RF-29] Carga inicial de metadatos del Tenant
                     try {
-                        const response = await authService.apiClient.get('clinica/me/');
+                        const response = await authService.apiClient.get('clinicas/mi/');
                         setTenant({
                             nombre: response.data.nombre,
                             logo: response.data.logo_url
@@ -63,6 +63,41 @@ export const AuthProvider = ({ children }) => {
         await authService.logout(); 
         setUser(null); 
     };
+
+    // --- LÓGICA DE INACTIVIDAD (IDLE TIMEOUT) ---
+    useEffect(() => {
+        let timeoutId;
+
+        const resetTimer = () => {
+            clearTimeout(timeoutId);
+            // 2 minutos de inactividad
+            timeoutId = setTimeout(() => {
+                if (user) {
+                    alert('Tu sesión ha expirado por inactividad.');
+                    logout();
+                }
+            }, 120000); 
+        };
+
+        if (user) {
+            // Escuchar eventos de interacción del usuario
+            window.addEventListener('mousemove', resetTimer);
+            window.addEventListener('keydown', resetTimer);
+            window.addEventListener('click', resetTimer);
+            window.addEventListener('scroll', resetTimer);
+            
+            // Iniciar timer
+            resetTimer();
+        }
+
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('mousemove', resetTimer);
+            window.removeEventListener('keydown', resetTimer);
+            window.removeEventListener('click', resetTimer);
+            window.removeEventListener('scroll', resetTimer);
+        };
+    }, [user]);
 
     return (
         <AuthContext.Provider value={{ user, tenant, updateTenant, login, logout }}>

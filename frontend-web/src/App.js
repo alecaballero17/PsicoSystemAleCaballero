@@ -48,10 +48,12 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     }
 
     return (
-        <>
+        <div className="app-layout">
             <Navbar />
-            {children}
-        </>
+            <div className="app-content-wrapper">
+                {children}
+            </div>
+        </div>
     );
 };
 

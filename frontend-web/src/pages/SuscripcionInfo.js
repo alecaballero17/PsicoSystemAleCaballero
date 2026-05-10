@@ -132,6 +132,36 @@ export const SuscripcionInfo = () => {
                             </div>
                         </div>
                     </div>
+
+                    <hr style={{ margin: '30px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+                    <h3 style={{ margin: '0 0 20px 0', color: '#334155' }}>Historial de Facturación (Últimos pagos)</h3>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#64748b' }}>
+                                    <th style={{ padding: '12px' }}>Fecha</th>
+                                    <th style={{ padding: '12px' }}>Descripción</th>
+                                    <th style={{ padding: '12px' }}>Método</th>
+                                    <th style={{ padding: '12px' }}>Monto</th>
+                                    <th style={{ padding: '12px' }}>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '12px', color: '#1e293b', fontWeight: '500' }}>{new Date(info.fecha_inicio).toLocaleDateString()}</td>
+                                    <td style={{ padding: '12px' }}>Suscripción {info.plan_nombre}</td>
+                                    <td style={{ padding: '12px' }}>💳 **** 4242</td>
+                                    <td style={{ padding: '12px', fontWeight: 'bold' }}>
+                                        {info.plan_nombre.includes("Premium") ? "$499.99" : info.plan_nombre.includes("Profesional") ? "$49.99" : "$0.00"}
+                                    </td>
+                                    <td style={{ padding: '12px' }}>
+                                        <span style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>PAGADO</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         </div>

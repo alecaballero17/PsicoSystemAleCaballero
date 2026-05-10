@@ -99,13 +99,15 @@ export const dashboardStyles = {
         flexDirection: 'column' 
     },
     header: { 
-        height: '80px', 
+        minHeight: '80px', 
         backgroundColor: 'white', 
         borderBottom: '1px solid #e2e8f0', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
-        padding: '0 40px' 
+        padding: '10px clamp(16px, 5vw, 40px)',
+        flexWrap: 'wrap',
+        gap: '10px'
     },
     headerPath: { 
         fontSize: '13px', 
@@ -130,11 +132,11 @@ export const dashboardStyles = {
         color: '#1e293b' 
     },
     content: { 
-        padding: '40px' 
+        padding: 'clamp(16px, 5vw, 40px)' 
     },
     kpiGrid: { 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
         gap: '24px', 
         marginBottom: '32px' 
     },

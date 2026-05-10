@@ -43,9 +43,11 @@ const Toast = ({ message, type = 'info', duration = 4000, onClose }) => {
             fontWeight: '600',
             fontFamily: '"Inter", sans-serif',
             animation: 'slideInRight 0.4s cubic-bezier(0.16,1,0.3,1)',
+            width: 'calc(100% - 48px)',
             maxWidth: '420px',
+            boxSizing: 'border-box'
         }}>
-            <span style={{ fontSize: '18px' }}>{config.icon}</span>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>{config.icon}</span>
             <span>{message}</span>
             <button
                 onClick={() => { setVisible(false); if (onClose) onClose(); }}

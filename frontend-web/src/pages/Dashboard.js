@@ -9,6 +9,7 @@ import dashboardService from '../services/dashboardService';
 import pacienteService from '../services/pacienteService';
 import { dashboardStyles as styles } from '../styles/dashboardStyles';
 import { useAuth } from '../context/AuthContext';
+import './Dashboard.css'; // Añadimos esto para manejar media queries específicas del dashboard
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -17,6 +18,10 @@ const Dashboard = () => {
     const [pacientes, setPacientes] = useState([]);
     const [metrics, setMetrics] = useState({ total_pacientes: 0, citas_hoy: 0 });
     const [cargando, setCargando] = useState(true);
+    
+    // --- ESTADOS RESPONSIVES Y DE BÚSQUEDA ---
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     
     const userName = user?.name || 'USUARIO';
     const userRole = user?.role || 'ADMIN';
@@ -78,12 +83,20 @@ const Dashboard = () => {
         fetchData();
     }, [fetchData]);
 
+    const matchesSearch = (text) => text.toLowerCase().includes(searchTerm.toLowerCase());
+
     return (
-        <div style={styles.layout}>
+        <div style={styles.layout} className="dashboard-layout">
+            {/* OVERLAY PARA CERRAR EL MENÚ EN MÓVILES */}
+            <div 
+                className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
+                onClick={() => setIsSidebarOpen(false)}
+            ></div>
+
             {/* SIDEBAR: Navegación Lateral */}
-            <aside style={styles.sidebar}>
-                {/* Identidad del Tenant */}
-                <div style={styles.brandContainer}>
+            <aside style={styles.sidebar} className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={styles.brandContainer}>
                     {tenant.logo ? (
                         <img src={tenant.logo} alt="Tenant Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
                     ) : (
@@ -96,36 +109,63 @@ const Dashboard = () => {
                     </span>
                 </div>
                 
+                {/* Buscador de Módulos */}
+                <div style={{ marginBottom: '24px' }}>
+                    <input 
+                        type="text" 
+                        placeholder="🔍 Buscar módulo..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: '100%', padding: '10px 14px', borderRadius: '10px', 
+                            border: '1px solid #334155', backgroundColor: '#1e293b', 
+                            color: 'white', fontSize: '13px', outline: 'none', boxSizing: 'border-box'
+                        }}
+                    />
+                </div>
+
                 {/* Sección Principal */}
                 <nav style={styles.navSection}>
                     <p style={styles.sectionLabel}>PRINCIPAL</p>
-                    <div style={styles.navItemActive}>📊 Vista General Analítica</div>
+                    {matchesSearch('Vista General Analítica') && <div style={styles.navItemActive}>📊 Vista General Analítica</div>}
                     
                     {/* Sprint 2: Agenda y Citas */}
-                    <div style={styles.navItem} onClick={() => navigate('/agenda')}>
-                        📅 Agenda Profesional
-                    </div>
-                    <div style={styles.navItem} onClick={() => navigate('/gestion-citas')}>
-                        🗓️ Gestión de Citas
-                    </div>
+                    {matchesSearch('Agenda Profesional') && (
+                        <div style={styles.navItem} onClick={() => navigate('/agenda')}>
+                            📅 Agenda Profesional
+                        </div>
+                    )}
+                    {matchesSearch('Gestión de Citas') && (
+                        <div style={styles.navItem} onClick={() => navigate('/gestion-citas')}>
+                            🗓️ Gestión de Citas
+                        </div>
+                    )}
                 </nav>
 
                 {/* Sección Clínica (Psicólogo + Admin) */}
                 {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
                     <nav style={styles.navSection}>
                         <p style={styles.sectionLabel}>CLÍNICA</p>
-                        <div style={styles.navItem} onClick={() => navigate('/registro-paciente')}>
-                            📋 Registro de Pacientes
-                        </div>
-                        <div style={styles.navItem} onClick={() => navigate('/historia-clinica')}>
-                            🏥 Historia Clínica + IA
-                        </div>
-                        <div style={styles.navItem} onClick={() => navigate('/lista-espera')}>
-                            ⏳ Lista de Espera
-                        </div>
-                        <div style={styles.navItem} onClick={() => navigate('/escaner-qr')}>
-                            📷 Escáner QR de Citas
-                        </div>
+                        {matchesSearch('Registro de Pacientes') && (
+                            <div style={styles.navItem} onClick={() => navigate('/registro-paciente')}>
+                                📋 Registro de Pacientes
+                            </div>
+                        )}
+                        {matchesSearch('Historia Clínica IA') && (
+                            <div style={styles.navItem} onClick={() => navigate('/historia-clinica')}>
+                                🏥 Historia Clínica + IA
+                            </div>
+                        )}
+                        {matchesSearch('Lista de Espera') && (
+                            <div style={styles.navItem} onClick={() => navigate('/lista-espera')}>
+                                ⏳ Lista de Espera
+                            </div>
+                        )}
+                        {matchesSearch('Escáner QR Citas') && (
+                            <div style={styles.navItem} onClick={() => navigate('/escaner-qr')}>
+                                📷 Escáner QR de Citas
+                            </div>
+                        )}
                     </nav>
                 )}
 
@@ -133,10 +173,12 @@ const Dashboard = () => {
                 {(userRole === 'PSICOLOGO' || userRole === 'ADMIN') && (
                     <nav style={styles.navSection}>
                         <p style={styles.sectionLabel}>FINANZAS</p>
-                        <div style={styles.navItem} onClick={() => navigate('/finanzas')}>
-                            💰 Módulo Financiero
-                        </div>
-                        {userRole === 'ADMIN' && (
+                        {matchesSearch('Módulo Financiero') && (
+                            <div style={styles.navItem} onClick={() => navigate('/finanzas')}>
+                                💰 Módulo Financiero
+                            </div>
+                        )}
+                        {userRole === 'ADMIN' && matchesSearch('Reportes Económicos') && (
                             <div style={styles.navItem} onClick={() => navigate('/reportes')}>
                                 📊 Reportes Económicos
                             </div>
@@ -148,15 +190,21 @@ const Dashboard = () => {
                 {userRole === 'ADMIN' && (
                     <nav style={styles.navSection}>
                         <p style={styles.sectionLabel}>ADMINISTRACIÓN</p>
-                        <div style={styles.navItem} onClick={() => navigate('/gestion-personal')}>
-                            👥 Gestión de Personal
-                        </div>
-                        <div style={styles.navItem} onClick={() => navigate('/configuracion-clinica')}>
-                            ⚙️ Configuración de Clínica
-                        </div>
-                        <div style={styles.navItem} onClick={() => navigate('/suscripcion')}>
-                            💎 Suscripción SaaS
-                        </div>
+                        {matchesSearch('Gestión de Personal') && (
+                            <div style={styles.navItem} onClick={() => navigate('/gestion-personal')}>
+                                👥 Gestión de Personal
+                            </div>
+                        )}
+                        {matchesSearch('Configuración Clínica') && (
+                            <div style={styles.navItem} onClick={() => navigate('/configuracion-clinica')}>
+                                ⚙️ Configuración de Clínica
+                            </div>
+                        )}
+                        {matchesSearch('Suscripción SaaS') && (
+                            <div style={styles.navItem} onClick={() => navigate('/suscripcion')}>
+                                💎 Suscripción SaaS
+                            </div>
+                        )}
                     </nav>
                 )}
 
@@ -190,8 +238,10 @@ const Dashboard = () => {
             {/* MAIN CONTENT */}
             <main style={styles.main}>
                 <header style={styles.header}>
-                    <div style={styles.headerPath}>Consola / Dashboard</div>
-                    <div style={{ ...styles.headerUser, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={styles.headerPath}>Consola / Dashboard</div>
+                    </div>
+                    <div className="header-user-info" style={{ ...styles.headerUser, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                         <span style={{ color: '#1e293b', fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>
                             🏥 {tenant?.nombre || "Cargando Clínica..."}
                         </span>
@@ -204,7 +254,7 @@ const Dashboard = () => {
 
                 <div style={styles.content}>
                     {/* KPIs */}
-                    <div style={styles.kpiGrid}>
+                    <div style={styles.kpiGrid} className="kpi-grid">
                         <div style={styles.kpiCard}>
                             <span style={styles.kpiLabel}>TOTAL PACIENTES</span>
                             <div style={styles.kpiValue}>{metrics.total_pacientes}</div>
@@ -225,7 +275,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Sprint 2 Quick Actions */}
-                    <div style={{
+                    <div className="quick-actions-grid" style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(5, 1fr)',
                         gap: '16px',

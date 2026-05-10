@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 
 import requests
 from apps.P1_Identidad_Acceso.models import DispositivoMovil
-from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA
+from apps.P1_Identidad_Acceso.permissions import HasClinicaAsignada, EsAdministrador, EsPsicologoOAdministrador, RequiresModuloContabilidad, RequiresModuloIA, RequiresModuloAuditoria
 from apps.P2_Gestion_Clinica.models import Paciente, EvolucionClinica
 from apps.P3_Logistica_Citas.models import Cita
 from .models import LogAuditoria, Transaccion, Comprobante
@@ -21,7 +21,7 @@ class LogAuditoriaAPIView(APIView):
     """
     Endpoint de bitácora exclusivo para el Administrador de la clínica.
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador]
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsAdministrador, RequiresModuloAuditoria]
 
     def get(self, request):
         clinica = request.user.clinica

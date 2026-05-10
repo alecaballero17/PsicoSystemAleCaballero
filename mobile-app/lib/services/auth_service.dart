@@ -77,4 +77,69 @@ class AuthService {
       throw Exception('Error de conexión al obtener los pacientes: $e');
     }
   }
+
+  // Obtener la lista pública de Clínicas
+  static Future<List<dynamic>> getClinicasPublicas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/clinicas/publicas/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(utf8.decode(response.bodyBytes));
+      } else {
+        throw Exception('Error al cargar clínicas (Código ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión al obtener las clínicas disponibles: $e');
+    }
+  }
+
+  // Actualizar Perfil
+  static Future<void> updateProfile(String token, String firstName, String lastName, String telefono) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/auth/me/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'first_name': firstName,
+          'last_name': lastName,
+          'telefono': telefono,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al actualizar el perfil (Código ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión al actualizar el perfil: $e');
+    }
+  }
+
+  // Cambiar Contraseña
+  static Future<void> changePassword(String token, String newPassword) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/auth/change_password/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'new_password': newPassword,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMsg = json.decode(response.body)['detail'] ?? 'Error desconocido';
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }

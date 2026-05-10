@@ -158,7 +158,7 @@ class ClinicaOnboardingSerializer(serializers.ModelSerializer):
 class AdminOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ["username", "email", "password"]
+        fields = ["username", "email", "password", "first_name", "last_name"]
         extra_kwargs = {'password': {'write_only': True}}
 
 class OnboardingSaaSSerializer(serializers.Serializer):

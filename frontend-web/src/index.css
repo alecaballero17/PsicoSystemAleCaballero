@@ -149,6 +149,10 @@ code {
   color: white;
 }
 
+.mobile-only-btn {
+  display: none;
+}
+
 /* ==============================================================================
    Responsive Layout (Mobile Fixes)
    ============================================================================== */
@@ -176,7 +180,11 @@ code {
   margin-bottom: 24px;
 }
 
+/* En móvil, no hay margen y se usa el sidebar colapsable */
 @media (max-width: 768px) {
+  body {
+    margin-left: 0 !important;
+  }
   .agenda-container {
     padding: 16px !important;
   }
@@ -195,6 +203,34 @@ code {
   }
   .rbc-calendar {
     height: 500px !important;
+  }
+
+  /* Ajustes globales de responsive */
+  .mobile-only-btn {
+    display: block !important;
+  }
+  
+  /* Arreglo para tablas que se salen de la pantalla */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Ajuste de los formularios o tarjetas */
+  div[style*="flexDirection: 'row'"] {
+    flex-direction: column !important;
+  }
+}
+
+/* En Desktop, si existe un nav global (el usuario está logueado), se puede usar este margen en el contenedor principal */
+.app-content-wrapper {
+  margin-left: 280px;
+  min-height: 100vh;
+}
+@media (max-width: 768px) {
+  .app-content-wrapper {
+    margin-left: 0;
   }
 }
 

@@ -1,94 +1,95 @@
-import os
+import random
+from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
-from apps.P1_Identidad_Acceso.models import Usuario, Clinica
+from django.contrib.auth.hashers import make_password
+from apps.P1_Identidad_Acceso.models import Clinica, Usuario
 from apps.P2_Gestion_Clinica.models import Paciente, HistoriaClinica
-from apps.P3_Logistica_Citas.models import Cita, ListaEspera
 
 class Command(BaseCommand):
-    help = 'Limpia la base de datos y crea usuarios usando el EMAIL como USERNAME para facilidad del tribunal.'
+    help = 'Puebla la base de datos con 3 clínicas de prueba (Basico, Profesional, Premium) y datos de ejemplo.'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write("Iniciando limpieza profunda...")
-        Cita.objects.all().delete()
-        ListaEspera.objects.all().delete()
-        HistoriaClinica.objects.all().delete()
-        Paciente.objects.all().delete()
-        Usuario.objects.all().delete()
-        Clinica.objects.all().delete()
-        
-        # 1. SUPERADMIN
-        admin_email = 'etsech67@gmail.com'
-        admin = Usuario.objects.create_superuser(username=admin_email, email=admin_email)
-        admin.set_password('Test12345')
-        admin.rol = 'ADMIN'
-        admin.debe_cambiar_password = False
-        admin.save()
+        self.stdout.write("Iniciando Data Seeding para Demostración SaaS...")
 
-        # 2. CLÍNICA 1
-        c1 = Clinica.objects.create(nombre="Centro Psicologico San Aurelio", nit="111111", direccion="Av. San Aurelio", plan_suscripcion="Premium")
-        
-        # Admin 1
-        email_a1 = 'ramosvargabrayan@gmail.com'
-        u1 = Usuario.objects.create_user(username=email_a1, email=email_a1)
-        u1.set_password('Test12345')
-        u1.rol = 'ADMIN'
-        u1.clinica = c1
-        u1.debe_cambiar_password = False
-        u1.save()
+        # 1. Crear Clínicas
+        planes = [
+            ("Basico", "Clínica Esperanza", "Av. Siempre Viva 123"),
+            ("Profesional", "Centro Médico Salud Mental", "Calle de la Paz 456"),
+            ("Premium", "Instituto Psiquiátrico Global", "Torre Empresarial, Piso 10")
+        ]
 
-        # Psico 1
-        email_p1 = 'joelramostrbj@gmail.com'
-        u2 = Usuario.objects.create_user(username=email_p1, email=email_p1)
-        u2.set_password('Test12345')
-        u2.rol = 'PSICOLOGO'
-        u2.clinica = c1
-        u2.especialidad = 'Terapia de Pareja'
-        u2.debe_cambiar_password = False
-        u2.save()
-        
-        # Pacientes Clínica 1
-        pac_email1 = 'xdreicarlos@gmail.com'
-        p1 = Paciente.objects.create(nombre="Carlos Dre", ci="888888", fecha_nacimiento="1995-01-01", telefono="7771111", clinica=c1)
-        up1 = Usuario.objects.create_user(username=pac_email1, email=pac_email1)
-        up1.set_password('Test12345')
-        up1.rol = 'PACIENTE'
-        up1.clinica = c1
-        up1.debe_cambiar_password = False
-        up1.save()
-        HistoriaClinica.objects.create(paciente=p1)
-        
-        # 3. CLÍNICA 2
-        c2 = Clinica.objects.create(nombre="Clinica Integral Mente Sana", nit="222222", direccion="Av. Bush", plan_suscripcion="Profesional")
-        
-        # Admin 2
-        email_a2 = 'si2psicologiaproy@gmail.com'
-        u3 = Usuario.objects.create_user(username=email_a2, email=email_a2)
-        u3.set_password('Test12345')
-        u3.rol = 'ADMIN'
-        u3.clinica = c2
-        u3.debe_cambiar_password = False
-        u3.save()
+        clinicas_creadas = []
+        for plan, nombre, dir in planes:
+            clinica, created = Clinica.objects.get_or_create(
+                nombre=nombre,
+                defaults={
+                    "nit": f"100200{random.randint(100, 999)}",
+                    "direccion": dir,
+                    "plan_suscripcion": plan
+                }
+            )
+            clinicas_creadas.append(clinica)
+            self.stdout.write(self.style.SUCCESS(f"Clínica {'creada' if created else 'existente'}: {nombre} ({plan})"))
 
-        # Psico 2
-        email_p2 = 'trabajodt1c0@gmail.com'
-        u4 = Usuario.objects.create_user(username=email_p2, email=email_p2)
-        u4.set_password('Test12345')
-        u4.rol = 'PSICOLOGO'
-        u4.clinica = c2
-        u4.especialidad = 'Ansiedad y Depresion'
-        u4.debe_cambiar_password = False
-        u4.save()
-        
-        # Pacientes Clínica 2
-        pac_email2 = 'fitgo61@gmail.com'
-        p3 = Paciente.objects.create(nombre="Fit Go", ci="555555", fecha_nacimiento="2000-10-10", telefono="7773333", clinica=c2)
-        up3 = Usuario.objects.create_user(username=pac_email2, email=pac_email2)
-        up3.set_password('Test12345')
-        up3.rol = 'PACIENTE'
-        up3.clinica = c2
-        up3.debe_cambiar_password = False
-        up3.save()
-        HistoriaClinica.objects.create(paciente=p3)
-        
-        self.stdout.write("✅ EXITO: Ahora puedes entrar usando tu EMAIL como USUARIO.")
-        self.stdout.write("Password: Test12345")
+        # 2. Crear Administradores, Psicólogos y Pacientes para cada Clínica
+        for clinica in clinicas_creadas:
+            plan = clinica.plan_suscripcion
+            prefijo = plan.lower()
+
+            # Administrador
+            admin_user, admin_created = Usuario.objects.get_or_create(
+                username=f"admin.{prefijo}",
+                defaults={
+                    "email": f"admin@{prefijo}.com",
+                    "password": make_password("Password123"),
+                    "first_name": "Gerente",
+                    "last_name": plan,
+                    "rol": "ADMIN",
+                    "clinica": clinica
+                }
+            )
+
+            # Psicólogos (Basico=1, Profesional=3, Premium=5)
+            num_psico = 1 if plan == "Basico" else 3 if plan == "Profesional" else 5
+            for i in range(num_psico):
+                Usuario.objects.get_or_create(
+                    username=f"psico{i+1}.{prefijo}",
+                    defaults={
+                        "email": f"psico{i+1}@{prefijo}.com",
+                        "password": make_password("Password123"),
+                        "first_name": f"Doctor {i+1}",
+                        "last_name": "Pérez",
+                        "rol": "PSICOLOGO",
+                        "clinica": clinica
+                    }
+                )
+
+            # Pacientes
+            num_pacientes = 2 if plan == "Basico" else 5
+            for i in range(num_pacientes):
+                paciente, pac_created = Paciente.objects.get_or_create(
+                    ci=f"{random.randint(1000000, 9999999)}",
+                    defaults={
+                        "nombre": f"Paciente de Prueba {i+1} ({plan})",
+                        "fecha_nacimiento": "1990-01-01",
+                        "telefono": f"7000000{i}",
+                        "clinica": clinica
+                    }
+                )
+                if pac_created:
+                    HistoriaClinica.objects.get_or_create(paciente=paciente)
+
+            # Paciente Usuario para la app móvil (solo 1 por clínica para probar el login)
+            Usuario.objects.get_or_create(
+                username=f"paciente@{prefijo}.com",
+                defaults={
+                    "email": f"paciente@{prefijo}.com",
+                    "password": make_password("Password123"),
+                    "first_name": "Paciente",
+                    "last_name": "Móvil",
+                    "rol": "PACIENTE",
+                    "clinica": clinica
+                }
+            )
+
+        self.stdout.write(self.style.SUCCESS("¡Seeding completado! Datos listos para la demostración."))
