@@ -194,6 +194,15 @@ class ClinicaCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ClinicaPublicListAPIView(APIView):
+    """GET público: devuelve lista básica de clínicas para el onboarding móvil."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        clinicas = Clinica.objects.all().values("id", "nombre")
+        return Response(list(clinicas), status=status.HTTP_200_OK)
+
+
 class UsuarioColaboradorListCreateAPIView(generics.ListCreateAPIView):
     """Lista psicólogos/usuarios de la misma clínica; POST crea colega (rol PSICOLOGO)."""
 

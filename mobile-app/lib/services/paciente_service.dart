@@ -30,6 +30,8 @@ class PacienteService {
     required String ci,
     required String email,
     required String password,
+    required String fechaNacimiento,
+    required String telefono,
   }) async {
     try {
       final response = await http.post(
@@ -41,6 +43,8 @@ class PacienteService {
           'ci': ci,
           'email': email,
           'password': password,
+          'fecha_nacimiento': fechaNacimiento,
+          'telefono': telefono,
         }),
       );
 

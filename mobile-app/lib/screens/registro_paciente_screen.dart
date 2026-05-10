@@ -27,6 +27,8 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
   final _ciCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _fechaNacimientoCtrl = TextEditingController();
+  final _telefonoCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -49,6 +51,8 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
     _ciCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _fechaNacimientoCtrl.dispose();
+    _telefonoCtrl.dispose();
     super.dispose();
   }
 
@@ -60,10 +64,13 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
 
     try {
       await PacienteService.registrarPacientePublico(
+        clinicaId: _selectedClinica,
         nombre: _nombreCtrl.text.trim(),
         ci: _ciCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
+        fechaNacimiento: _fechaNacimientoCtrl.text.trim(),
+        telefono: _telefonoCtrl.text.trim(),
       );
 
       if (!mounted) return;
@@ -144,6 +151,46 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                   validator: (v) => (v == null || !v.contains('@')) ? 'Correo inválido' : null,
                 ),
                 const SizedBox(height: 14),
+
+                _buildField(
+                  controller: _fechaNacimientoCtrl,
+                  label: 'Fecha de Nacimiento (YYYY-MM-DD)',
+                  icon: Icons.calendar_today,
+                  validator: (v) => (v == null || v.length < 10) ? 'Formato: YYYY-MM-DD' : null,
+                ),
+                const SizedBox(height: 14),
+
+                _buildField(
+                  controller: _telefonoCtrl,
+                  label: 'Teléfono',
+                  icon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                ),
+                const SizedBox(height: 14),
+
+                // Selector de clínica (Multi-tenant)
+                if (_clinicas.isNotEmpty) ...[
+                  _buildSectionTitle('CLÍNICA DE PREFERENCIA'),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _selectedClinica,
+                    decoration: _inputDecoration('Selecciona una clínica', Icons.local_hospital),
+                    items: _clinicas.map((clinica) {
+                      return DropdownMenuItem<int>(
+                        value: clinica['id'],
+                        child: Text(clinica['nombre']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedClinica = value;
+                      });
+                    },
+                    validator: (value) => value == null ? 'Selecciona una clínica' : null,
+                  ),
+                  const SizedBox(height: 14),
+                ],
 
                 // [RNF-03] Máscara de asteriscos para contraseña
                 _buildField(

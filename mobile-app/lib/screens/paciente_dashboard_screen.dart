@@ -71,7 +71,16 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
           PopupMenuButton<String>(
             icon: Icon(Icons.account_circle_outlined, color: darkBlue, size: 28),
             onSelected: (value) {
-              if (value == 'logout') _handleLogout(context);
+              if (value == 'logout') {
+                _handleLogout(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Abriendo $value...', style: GoogleFonts.outfit()),
+                    backgroundColor: primaryBlue,
+                  ),
+                );
+              }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
@@ -220,6 +229,10 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                             clinicaSeleccionada: nombre,
                           ),
                         ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: No se pudo cargar la información del usuario.', style: GoogleFonts.outfit()), backgroundColor: Colors.red),
                       );
                     }
                   },
