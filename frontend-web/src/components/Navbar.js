@@ -68,6 +68,21 @@ const Navbar = ({ onToggleSidebar }) => {
             
             {user && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* 🔔 CAMPANA DE NOTIFICACIONES (CU26) */}
+                    <button 
+                        onClick={() => navigate('/notificaciones')}
+                        style={{
+                            background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px',
+                            width: '40px', height: '40px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '18px', transition: 'all 0.2s',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                        }}
+                        title="Centro de Notificaciones (CU26)"
+                    >
+                        🔔
+                    </button>
+
                     <div style={{ position: 'relative' }}>
                         <button 
                             onClick={() => setShowDropdown(!showDropdown)}

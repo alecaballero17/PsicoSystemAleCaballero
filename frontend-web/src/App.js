@@ -29,6 +29,7 @@ import Finanzas from './pages/Finanzas';
 import ReportesFinancieros from './pages/ReportesFinancieros';
 import ListaEspera from './pages/ListaEspera';
 import EscanerQR from './pages/EscanerQR';
+import Notificaciones from './pages/Notificaciones';
 import GlobalSidebar from './components/GlobalSidebar';
 
 import MainLayout from './MainLayout';
@@ -50,6 +51,7 @@ function App() {
                     {/* === RUTAS PROTEGIDAS (Layout unificado) === */}
                     <Route element={<MainLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/notificaciones" element={<Notificaciones />} />
                     </Route>
 
                     <Route element={<MainLayout allowedRoles={['PSICOLOGO', 'ADMIN']} />}>
