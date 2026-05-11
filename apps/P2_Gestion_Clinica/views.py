@@ -102,3 +102,54 @@ class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
             usuario=self.request.user,
             accion=f"Actualizó paciente (API): {paciente.nombre}",
         )
+
+# ==============================================================================
+# T027: Búsqueda y Filtrado
+# ==============================================================================
+from django.db.models import Q
+
+class PacienteSearchAPIView(generics.ListAPIView):
+    serializer_class = PacienteSerializer
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get_queryset(self):
+        query = self.request.query_params.get('q', '')
+        return Paciente.objects.filter(
+            Q(clinica=self.request.user.clinica) &
+            (Q(nombre__icontains=query) | Q(ci__icontains=query))
+        )
+
+# ==============================================================================
+# T026: API de Expediente Clínico
+# ==============================================================================
+from rest_framework import viewsets
+from .models import ExpedienteClinico, NotaClinica, ArchivoAdjunto
+from .serializers import (
+    ExpedienteClinicoSerializer,
+    NotaClinicaSerializer,
+    ArchivoAdjuntoSerializer
+)
+
+class ExpedienteClinicoViewSet(viewsets.ModelViewSet):
+    serializer_class = ExpedienteClinicoSerializer
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return ExpedienteClinico.objects.filter(paciente__clinica=self.request.user.clinica)
+
+class NotaClinicaViewSet(viewsets.ModelViewSet):
+    serializer_class = NotaClinicaSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador]
+
+    def get_queryset(self):
+        return NotaClinica.objects.filter(expediente__paciente__clinica=self.request.user.clinica)
+
+    def perform_create(self, serializer):
+        serializer.save(psicologo=self.request.user)
+
+class ArchivoAdjuntoViewSet(viewsets.ModelViewSet):
+    serializer_class = ArchivoAdjuntoSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador]
+
+    def get_queryset(self):
+        return ArchivoAdjunto.objects.filter(expediente__paciente__clinica=self.request.user.clinica)

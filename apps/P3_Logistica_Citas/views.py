@@ -122,3 +122,61 @@ class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
             usuario=self.request.user,
             accion=f"Actualizó cita (API): id={cita.pk}",
         )
+
+# ==============================================================================
+# T029/T030/T032: Motor de Citas y Control de Asistencia
+# ==============================================================================
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import ListaEspera
+from .serializers import ListaEsperaSerializer
+
+class CitaViewSet(viewsets.ModelViewSet):
+    serializer_class = CitaSerializer
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return Cita.objects.filter(paciente__clinica=self.request.user.clinica)
+
+    def perform_create(self, serializer):
+        cita = serializer.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Programó cita (ViewSet): {cita.paciente} — {cita.fecha_hora}",
+        )
+
+    @action(detail=True, methods=['post'])
+    def enviar_recordatorio(self, request, pk=None):
+        """CU26: Enviar recordatorio de cita al paciente."""
+        cita = self.get_object()
+        paciente = cita.paciente
+        
+        # Simulación de envío de recordatorio (Email/SMS)
+        mensaje = f"Recordatorio: Tienes una cita con el psicólogo {cita.psicologo.get_full_name()} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')}."
+        
+        try:
+            # En entorno local esto imprimirá en la consola por la config de EMAIL_BACKEND
+            send_mail(
+                subject='Recordatorio de Cita - PsicoSystem',
+                message=mensaje,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[paciente.clinica.email_contacto or 'paciente@ejemplo.com'],
+                fail_silently=False,
+            )
+            
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion=f"Envió recordatorio de cita a {paciente.nombre}"
+            )
+            return Response({"status": "Recordatorio enviado correctamente."})
+        except Exception as e:
+            return Response({"error": f"No se pudo enviar el recordatorio: {str(e)}"}, status=500)
+
+class ListaEsperaViewSet(viewsets.ModelViewSet):
+    serializer_class = ListaEsperaSerializer
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get_queryset(self):
+        return ListaEspera.objects.filter(clinica=self.request.user.clinica)

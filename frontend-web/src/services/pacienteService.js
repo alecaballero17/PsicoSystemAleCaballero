@@ -12,7 +12,7 @@ const pacienteService = {
         // Nota de Arquitectura: Ya no verificamos el token ni los headers manualmente aquí.
         // El interceptor de apiClient (axiosConfig) se encarga de inyectar el JWT 
         // para el aislamiento Multi-tenant (RF-29).
-        const response = await apiClient.post('pacientes/registrar/', formData);
+        const response = await apiClient.post('pacientes/', formData);
         return response.data;
     }
 };

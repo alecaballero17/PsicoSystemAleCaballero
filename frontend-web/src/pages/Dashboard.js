@@ -105,15 +105,25 @@ const Dashboard = () => {
                 <nav style={styles.navSection}>
                     <p style={styles.sectionLabel}>PRINCIPAL</p>
                     <div style={styles.navItemActive}>Vista General Analítica</div>
-                    {/* [SEGURIDAD RNF-03] Aislamiento Frontend: Solo PSICOLOGO ve expedientes clínicos */}
-                    {userRole === 'PSICOLOGO' && (
-                        <div 
-                            style={styles.navItem} 
-                            onClick={() => navigate('/registro-paciente')}
-                        >
-                            Gestión de Expedientes
-                        </div>
-                    )}
+                    {/* [SPRINT 2] Gestión de Pacientes (CU13) */}
+                    <div style={styles.navItem} onClick={() => navigate('/pacientes')}>
+                        Gestión de Pacientes
+                    </div>
+
+                    {/* [SPRINT 2] Agenda de Citas (CU14/15) */}
+                    <div style={styles.navItem} onClick={() => navigate('/citas')}>
+                        Agenda de Citas
+                    </div>
+
+                    {/* [SPRINT 2] IA Predictiva */}
+                    <div style={styles.navItem} onClick={() => navigate('/ia')}>
+                        Asistente IA (Gemini)
+                    </div>
+
+                    {/* [SPRINT 2] Pagos y Recibos (CU11/12) */}
+                    <div style={styles.navItem} onClick={() => navigate('/pagos')}>
+                        Módulo Financiero
+                    </div>
                 </nav>
 
                 {userRole === 'ADMIN' && (

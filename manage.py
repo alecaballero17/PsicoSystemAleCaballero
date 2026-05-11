@@ -1,8 +1,23 @@
-#!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
 
+# Parche para evitar error de "drf_format_suffix already registered" en Django 5/6+
+try:
+    import django.urls
+    import django.urls.converters
+    _original_register_converter = django.urls.converters.register_converter
+    def _patched_register_converter(converter, type_name):
+        try:
+            _original_register_converter(converter, type_name)
+        except ValueError as e:
+            if "already registered" in str(e):
+                pass
+            else:
+                raise
+    django.urls.register_converter = _patched_register_converter
+    django.urls.converters.register_converter = _patched_register_converter
+except Exception:
+    pass
 
 def main():
     """Run administrative tasks."""

@@ -68,14 +68,34 @@ const RegistroClinica = () => {
             },
             plan_id: formData.plan_id
         };
-
+        try {
             // Envío público hacia el onboarding SaaS (Alineado con backend P1)
             await apiClient.post('onboarding/', atomicPayload);
             alert("ALTA EXITOSA: La clínica, la suscripción y tu usuario administrador se crearon correctamente.");
             navigate('/login');
         } catch (err) {
             console.error("Error en alta atómica", err.response?.data || err);
-            setError(err.response?.data?.detail || "No se pudo realizar el alta de la Clínica. Verifica los datos.");
+            
+            // Mejora: Extraer mensaje de error detallado del backend
+            let errorMessage = "No se pudo realizar el alta de la Clínica. Verifica los datos.";
+            const serverData = err.response?.data;
+            
+            if (serverData) {
+                if (serverData.detail) errorMessage = serverData.detail;
+                else if (serverData.clinica) {
+                    const clinicaErrors = serverData.clinica;
+                    errorMessage = typeof clinicaErrors === 'string' ? clinicaErrors : Object.values(clinicaErrors).flat().join(" ");
+                }
+                else if (serverData.admin) {
+                    const adminErrors = serverData.admin;
+                    errorMessage = typeof adminErrors === 'string' ? adminErrors : Object.values(adminErrors).flat().join(" ");
+                }
+                else if (typeof serverData === 'object') {
+                    errorMessage = Object.values(serverData).flat().join(" ");
+                }
+            }
+            
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

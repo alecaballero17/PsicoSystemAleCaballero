@@ -33,3 +33,7 @@ class Usuario(AbstractUser):
     rol = models.CharField(max_length=20, choices=ROLES, default='PSICOLOGO')
     especialidad = models.CharField(max_length=100, blank=True, default='')
     telefono = models.CharField(max_length=20, blank=True, default='')
+
+    # Seguridad: Requerimientos del docente
+    ultima_fecha_pass = models.DateTimeField(auto_now_add=True)
+    forzar_cambio_pass = models.BooleanField(default=False)

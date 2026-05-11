@@ -101,7 +101,7 @@ const Login = () => {
                             onClick={() => navigate('/')}
                             style={{ background: 'none', border: 'none', color: '#475569', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
                         >
-                            ← Volver al Portal Princial
+                            ← Volver al Portal Principal
                         </button>
                     </div>
                 </form>

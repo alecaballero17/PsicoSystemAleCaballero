@@ -25,6 +25,10 @@ import GestionPersonal from './pages/GestionPersonal';
 // [SPRINT 1 - T025] Interfaz de monitoreo de límites SaaS
 import SuscripcionInfo from './pages/SuscripcionInfo';
 import Landing from './pages/Landing'; // [CIERRE SPRINT 1] Landing Comercial B2B
+import GestionPacientes from './pages/GestionPacientes'; // [SPRINT 2] CU13
+import AgendaCitas from './pages/AgendaCitas'; // [SPRINT 2] CU14/15
+import ModuloFinanciero from './pages/ModuloFinanciero'; // [SPRINT 2] CU11/12
+import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
@@ -86,6 +90,34 @@ function App() {
                     <Route path="/registro-paciente" element={
                         <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
                             <RegistroPaciente />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 2] Gestión Completa de Pacientes (CU13) */}
+                    <Route path="/pacientes" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <GestionPacientes />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 2] Agenda de Citas (CU14/15/26) */}
+                    <Route path="/citas" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <AgendaCitas />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 2] Módulo Financiero (CU11/12) */}
+                    <Route path="/pagos" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <ModuloFinanciero />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 2] IA Predictiva con Gemini */}
+                    <Route path="/ia" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <DiagnosticoIA />
                         </PrivateRoute>
                     } />
 

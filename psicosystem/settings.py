@@ -8,6 +8,19 @@ import dj_database_url
 from decouple import config  # RNF-03: Seguridad de credenciales | SPRINT 0
 from django.core.exceptions import ImproperlyConfigured
 
+# Parche para evitar error de "drf_format_suffix already registered" en Django 5/6+
+from django.urls import converters
+_original_register_converter = converters.register_converter
+def _patched_register_converter(converter, type_name):
+    try:
+        _original_register_converter(converter, type_name)
+    except ValueError as e:
+        if "already registered" in str(e):
+            pass
+        else:
+            raise
+converters.register_converter = _patched_register_converter
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==============================================================================
@@ -131,11 +144,10 @@ WSGI_APPLICATION = "psicosystem.wsgi.application"
 # SECCIÓN: PERSISTENCIA (T004 | INFRAESTRUCTURA POSTGRESQL | SPRINT 0)
 # ==============================================================================
 DATABASES = {
-    # Lee DATABASE_URL si está en la nube, sino se conecta al Postgres local
     "default": dj_database_url.config(
         default=config(
             "DATABASE_URL",
-            default="postgres://postgres:1234@127.0.0.1:5432/db_psicosystem",
+            default="sqlite:///" + str(BASE_DIR / "db.sqlite3"),
         ),
         conn_max_age=600,
     )

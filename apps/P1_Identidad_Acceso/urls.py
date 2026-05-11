@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 from .views import (
     registrar_usuario_view,
     CustomTokenObtainPairView,
+    MeAPIView,
     RegistroPsicologoAPIView,
     MiClinicaRetrieveAPIView,
     ClinicaCreateAPIView,
@@ -26,6 +27,8 @@ urlpatterns = [
     path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/logout/", TokenBlacklistView.as_view(), name="api_logout_blacklist"),
+    # T009: Verificación de sesión JWT (Anti-huérfano)
+    path("api/auth/me/", MeAPIView.as_view(), name="api_auth_me"),
     path(
         "api/auth/registro/psicologo/",
         RegistroPsicologoAPIView.as_view(),
@@ -34,6 +37,7 @@ urlpatterns = [
     path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
     path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
     path("api/clinicas/mi/", MiClinicaRetrieveAPIView.as_view(), name="api_mi_clinica"),
+    path("api/clinica/me/", MiClinicaRetrieveAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
     path(
         "api/usuarios/",

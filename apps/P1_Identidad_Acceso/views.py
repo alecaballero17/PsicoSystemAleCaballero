@@ -30,6 +30,28 @@ logger = logging.getLogger(__name__)
 
 
 # ==========================================================================
+# Endpoint /api/auth/me/ — Verificación de sesión JWT (Anti-huérfano)
+# ==========================================================================
+class MeAPIView(APIView):
+    """GET: Devuelve los datos del usuario autenticado. Usado por el frontend para verificar sesión."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "id": user.pk,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "rol": user.rol,
+            "clinica_id": user.clinica_id,
+            "clinica_nombre": user.clinica.nombre if user.clinica else None,
+        }, status=status.HTTP_200_OK)
+
+
+
+# ==========================================================================
 # Login API con rate-limit y bloqueo por intentos fallidos (cache-based)
 # ==========================================================================
 MAX_LOGIN_ATTEMPTS = 5
