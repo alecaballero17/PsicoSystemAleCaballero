@@ -41,7 +41,7 @@ PsicoSystem es una solución integral diseñada para modernizar la gestión de c
 - Una API Key de Google AI Studio (Gemini).
 
 ### Configuración del Backend
-1. Clonar el repositorio: `git clone https://github.com/alecaballero17/PsicoSystem_SI2`
+1. Clonar el repositorio: `git clone https://github.com/alecaballero17/PsicoSystemAleCaballero`
 2. Crear entorno virtual: `python -m venv venv`
 3. Activar entorno: `venv\Scripts\activate`
 4. Instalar dependencias: `pip install -r requirements.txt`
