@@ -21,6 +21,8 @@ const Notificaciones = () => {
                 const filtradas = response.data.filter(log => 
                     log.accion.toLowerCase().includes('pago') || 
                     log.accion.toLowerCase().includes('cita') ||
+                    log.accion.toLowerCase().includes('sesión') ||
+                    log.accion.toLowerCase().includes('registró') ||
                     log.accion.toLowerCase().includes('notificación')
                 ).slice(0, 15); // Top 15 recientes
 
@@ -37,6 +39,8 @@ const Notificaciones = () => {
     const getIcon = (accion) => {
         if (accion.toLowerCase().includes('pago')) return '💰';
         if (accion.toLowerCase().includes('cita')) return '📅';
+        if (accion.toLowerCase().includes('sesión')) return '🔑';
+        if (accion.toLowerCase().includes('registró')) return '👤';
         if (accion.toLowerCase().includes('ia')) return '🤖';
         return '🔔';
     };
