@@ -21,3 +21,6 @@ django-extensions==3.2.3
 # IA: Google Gemini (Módulo de Diagnóstico Predictivo)
 google-generativeai==0.8.6
 
+# Documentación de API (Swagger)
+drf-spectacular==0.28.0
+

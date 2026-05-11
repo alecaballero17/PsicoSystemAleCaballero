@@ -73,7 +73,6 @@ def _get_gemini_client():
     from decouple import config as decouple_config
     api_key = decouple_config("GEMINI_API_KEY", default="")
     if not api_key:
-        print("DEBUG: GEMINI_API_KEY not found in config")
         return None
     try:
         import google.generativeai as genai

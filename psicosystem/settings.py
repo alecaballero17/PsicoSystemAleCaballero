@@ -103,8 +103,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",  # <--- AGREGAR ESTA LÍNEA
-    "django_extensions"
-    
+    "django_extensions",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -168,6 +168,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",  # RNF-03: Restricción de acceso global.
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -178,6 +179,16 @@ REST_FRAMEWORK = {
         "login": "5/minute",
         "registro": "3/minute",
     },
+}
+
+# Configuración de Documentación Profesional (drf-spectacular)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'PsicoSystem SI2 API',
+    'DESCRIPTION': 'Documentación técnica de la plataforma de gestión psicológica con IA.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_PATCH': True,
+    'COMPONENT_SPLIT_CREATABLE': True,
 }
 
 # RF-01: Parámetros del ciclo de vida del Token (Seguridad Stateless).

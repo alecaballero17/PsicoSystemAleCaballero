@@ -23,4 +23,10 @@ urlpatterns = [
     path("", include("apps.P2_Gestion_Clinica.urls")),
     path("", include("apps.P3_Logistica_Citas.urls")),
     path("", include("apps.P4_IA_Administracion.urls")),
+
+    # Documentación Profesional (Swagger/Redoc)
+    from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
