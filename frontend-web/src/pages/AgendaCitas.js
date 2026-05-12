@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosConfig';
 
 const AgendaCitas = () => {
+    const navigate = useNavigate();
     const [citas, setCitas] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,12 @@ const AgendaCitas = () => {
         <div style={styles.container}>
             <header style={styles.header}>
                 <h2 style={styles.title}>AGENDA DE CITAS (CU14/15)</h2>
-                <button style={styles.btnPrimary}>+ NUEVA CITA</button>
+                <button 
+                    style={styles.btnPrimary}
+                    onClick={() => navigate('/registro-cita')}
+                >
+                    + NUEVA CITA
+                </button>
             </header>
 
             {loading ? (

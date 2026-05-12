@@ -17,6 +17,7 @@ export const GestionPersonal = () => {
         username: '',
         email: '',
         password: '',
+        password_confirm: '',
         rol: 'PSICOLOGO',
         especialidad: '',
         horario_atencion: '',
@@ -185,6 +186,12 @@ export const GestionPersonal = () => {
                                 <label style={styles.label}>{formData.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}</label>
                                 <input required={!formData.id} type="password" name="password" value={formData.password} onChange={handleInputChange} style={styles.input} />
                             </div>
+                            {!formData.id && (
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>Confirmar Contraseña</label>
+                                    <input required type="password" name="password_confirm" value={formData.password_confirm} onChange={handleInputChange} style={styles.input} />
+                                </div>
+                            )}
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Rol en la Clínica</label>
                                 <select required name="rol" value={formData.rol} onChange={handleInputChange} style={styles.input}>

@@ -43,7 +43,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "id", "username", "email", "first_name", "last_name", 
-            "clinica", "rol", "especialidad", "telefono"
+            "clinica", "rol", "especialidad", "telefono", "horario_atencion"
         ]
 
 
@@ -60,6 +60,7 @@ class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
             "last_name",
             "especialidad",
             "telefono",
+            "horario_atencion",
             "password",
             "password_confirm",
         ]
@@ -197,7 +198,7 @@ class UsuarioAdminUpdateSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "first_name", "last_name", "email", "rol", "is_active", 
-            "especialidad", "telefono"
+            "especialidad", "telefono", "horario_atencion"
         ]
 
     def validate_rol(self, value):
@@ -227,7 +228,7 @@ class PsicologoCreateSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "username", "email", "first_name", "last_name",
-            "especialidad", "telefono", "password", "password_confirm",
+            "especialidad", "telefono", "horario_atencion", "password", "password_confirm",
         ]
 
     def validate(self, attrs):

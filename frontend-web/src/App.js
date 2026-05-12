@@ -29,6 +29,7 @@ import GestionPacientes from './pages/GestionPacientes'; // [SPRINT 2] CU13
 import AgendaCitas from './pages/AgendaCitas'; // [SPRINT 2] CU14/15
 import ModuloFinanciero from './pages/ModuloFinanciero'; // [SPRINT 2] CU11/12
 import AsistenteVoz from './pages/AsistenteVoz';
+import RegistroCita from './pages/RegistroCita';
 import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
 
 // ==============================================================================
@@ -140,6 +141,7 @@ function App() {
                     } />
 
                     <Route path="/reporte-voz" element={<PrivateRoute><AsistenteVoz /></PrivateRoute>} />
+                    <Route path="/registro-cita" element={<PrivateRoute><RegistroCita /></PrivateRoute>} />
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
