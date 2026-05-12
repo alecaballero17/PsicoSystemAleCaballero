@@ -298,3 +298,73 @@ class DescargarComprobantePDFAPIView(APIView):
         p.save()
         
         return response
+
+class VoiceQueryAPIView(APIView):
+    """
+    IA de Reportes por Voz (REQUERIMIENTO VIP):
+    Procesar consultas en lenguaje natural, filtrar datos y generar resumen narrado.
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def post(self, request):
+        query_text = request.data.get('query', '')
+        if not query_text:
+            return Response({"error": "No se recibió ninguna consulta de voz."}, status=400)
+
+        # 1. Usar Gemini para extraer parámetros (Fechas y Entidad)
+        prompt = f"""
+        Actúa como un analista de datos para un centro psicológico. 
+        De la siguiente frase en español: "{query_text}", extrae los siguientes parámetros en formato JSON puro:
+        - start_date (YYYY-MM-DD)
+        - end_date (YYYY-MM-DD)
+        - entidad (citas, pacientes, finanzas)
+        
+        Si no se menciona año, usa 2026. Si dice 'primera semana de mayo', usa 2026-05-01 al 2026-05-07.
+        Solo devuelve el JSON, nada más.
+        """
+        
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            response = model.generate_content(prompt)
+            # Limpiar respuesta para JSON
+            raw_json = response.text.strip().replace('```json', '').replace('```', '')
+            params = json.loads(raw_json)
+            
+            # 2. Consultar Base de Datos
+            start = params.get('start_date')
+            end = params.get('end_date')
+            entidad = params.get('entidad', 'citas')
+
+            data_summary = ""
+            results = []
+
+            if entidad == 'citas':
+                citas = Cita.objects.filter(
+                    clinica=request.user.clinica,
+                    fecha_hora__date__range=[start, end]
+                )
+                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m'), "estado": c.estado} for c in citas]
+                data_summary = f"Se encontraron {citas.count()} citas entre el {start} y el {end}."
+            
+            elif entidad == 'finanzas':
+                trans = Transaccion.objects.filter(
+                    clinica=request.user.clinica,
+                    fecha__date__range=[start, end]
+                )
+                total = sum(t.monto for t in trans)
+                data_summary = f"El total recaudado en el periodo solicitado es de {total} bolivianos, con un total de {trans.count()} transacciones."
+                results = [{"monto": str(t.monto), "concepto": t.concepto} for t in trans]
+
+            # 3. Generar Narrativa para Voz
+            narrative_prompt = f"Genera un saludo ejecutivo corto (máximo 2 líneas) resumiendo esto: {data_summary}. Empieza con 'Señor Director...'"
+            narrative_response = model.generate_content(narrative_prompt)
+            narrative_text = narrative_response.text.strip()
+
+            return Response({
+                "params": params,
+                "results": results,
+                "summary": narrative_text
+            })
+
+        except Exception as e:
+            return Response({"error": f"Error procesando consulta de voz: {str(e)}"}, status=500)

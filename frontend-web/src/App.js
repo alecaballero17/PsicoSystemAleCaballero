@@ -28,6 +28,7 @@ import Landing from './pages/Landing'; // [CIERRE SPRINT 1] Landing Comercial B2
 import GestionPacientes from './pages/GestionPacientes'; // [SPRINT 2] CU13
 import AgendaCitas from './pages/AgendaCitas'; // [SPRINT 2] CU14/15
 import ModuloFinanciero from './pages/ModuloFinanciero'; // [SPRINT 2] CU11/12
+import AsistenteVoz from './pages/AsistenteVoz';
 import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
 
 // ==============================================================================
@@ -108,11 +109,7 @@ function App() {
                     } />
 
                     {/* [SPRINT 2] Módulo Financiero (CU11/12) */}
-                    <Route path="/pagos" element={
-                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
-                            <ModuloFinanciero />
-                        </PrivateRoute>
-                    } />
+                    <Route path="/pagos" element={<PrivateRoute><ModuloFinanciero /></PrivateRoute>} />
 
                     {/* [SPRINT 2] IA Predictiva con Gemini */}
                     <Route path="/ia" element={
@@ -141,6 +138,8 @@ function App() {
                             <SuscripcionInfo />
                         </PrivateRoute>
                     } />
+
+                    <Route path="/reporte-voz" element={<PrivateRoute><AsistenteVoz /></PrivateRoute>} />
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

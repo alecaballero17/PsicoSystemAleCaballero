@@ -13,6 +13,7 @@ const Dashboard = () => {
     // [ALINEACIÓN RF-29] - Visualización dinámica de identidad del Tenant: El sistema refleja los metadatos institucionales actualizados mediante T024.    
     // ESTADOS DE UI
     const [pacientes, setPacientes] = useState([]);
+    const [citasHoy, setCitasHoy] = useState([]);
     const [metrics, setMetrics] = useState({ total_pacientes: 0, citas_hoy: 0 });
     const [cargando, setCargando] = useState(true);
     
@@ -20,6 +21,7 @@ const Dashboard = () => {
     const userName = user?.name || 'USUARIO';
     const userRole = user?.role || 'ADMIN';
     const token = user?.token;
+    const apiClient = authService.apiClient;
 
     // FUNCIÓN DE CARGA DE DATOS (CONEXIÓN CENTRALIZADA)
     const fetchData = useCallback(async () => {
@@ -32,12 +34,20 @@ const Dashboard = () => {
             setCargando(true);
             
             // RNF-01: Peticiones paralelas usando los servicios centralizados
-            const [listaPacientes, metricasData] = await Promise.all([
+            const [listaPacientes, metricasData, listaCitas] = await Promise.all([
                 pacienteService.getPacientes(), 
-                dashboardService.getMetrics() 
+                dashboardService.getMetrics(),
+                apiClient.get('logistica/citas/')
             ]);
             
             setPacientes(Array.isArray(listaPacientes) ? listaPacientes : []);
+            
+            // Filtrar citas de hoy
+            const hoyStr = new Date().toISOString().split('T')[0];
+            const citasDeHoy = (Array.isArray(listaCitas.data) ? listaCitas.data : []).filter(c => 
+                c.fecha_hora.startsWith(hoyStr) && c.estado !== 'CANCELADA'
+            );
+            setCitasHoy(citasDeHoy);
             
             // --- APLICAMOS EL MAPEO DE DATOS AQUÍ ---
             const datosCrudos = metricasData.metricas || metricasData;
@@ -123,6 +133,11 @@ const Dashboard = () => {
                     {/* [SPRINT 2] Pagos y Recibos (CU11/12) */}
                     <div style={styles.navItem} onClick={() => navigate('/pagos')}>
                         Módulo Financiero
+                    </div>
+
+                    {/* [VIP] Reportes por Voz para el Jefe */}
+                    <div style={{ ...styles.navItem, color: '#f59e0b', fontWeight: 'bold' }} onClick={() => navigate('/reporte-voz')}>
+                        🎙️ Reportes por Voz
                     </div>
                 </nav>
 
@@ -219,6 +234,52 @@ const Dashboard = () => {
                     </div>
 
                     {/* PANEL DE TABLA */}
+                    <div style={styles.panelSection}>
+                        <div style={styles.panelHeader}>
+                            <h3 style={styles.panelTitle}>PANEL DE TRABAJO DIARIO - CITAS HOY</h3>
+                            <button 
+                                onClick={() => navigate('/citas')} 
+                                style={styles.mainActionBtn}
+                            >
+                                IR A AGENDA
+                            </button>
+                        </div>
+                        
+                        <div style={styles.tableContainer}>
+                            <table style={styles.table}>
+                                <thead>
+                                    <tr style={styles.tableHeader}>
+                                        <th style={styles.th}>HORA</th>
+                                        <th style={styles.th}>PACIENTE</th>
+                                        <th style={styles.th}>MOTIVO</th>
+                                        <th style={styles.th}>ESTADO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {citasHoy.length > 0 ? (
+                                        citasHoy.map((c) => (
+                                            <tr key={c.id} style={styles.tableRow}>
+                                                <td style={styles.tdBold}>{new Date(c.fecha_hora).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                                                <td style={styles.td}>{c.paciente_nombre}</td>
+                                                <td style={styles.td}>{c.motivo || 'Sesión General'}</td>
+                                                <td style={styles.td}>
+                                                    <span style={styles.statusActive}>{c.estado}</span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" style={{padding: '40px', textAlign: 'center', color: '#64748b'}}>
+                                                No tienes citas programadas para hoy.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* PANEL DE PACIENTES RECIENTES */}
                     <div style={styles.panelSection}>
                         <div style={styles.panelHeader}>
                             <h3 style={styles.panelTitle}>EXPEDIENTES RECIENTES (TRAZABILIDAD T014)</h3>

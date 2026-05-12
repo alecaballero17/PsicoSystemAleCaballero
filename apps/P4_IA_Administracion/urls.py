@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView
+from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView, VoiceQueryAPIView
 
 urlpatterns = [
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('api/ia/diagnostico/', PredictiveDiagnosisAPIView.as_view(), name='ia_diagnostico'),
     path('api/finanzas/transacciones/', TransaccionListCreateAPIView.as_view(), name='transacciones_list_create'),
     path('api/finanzas/transacciones/<int:transaccion_id>/pdf/', DescargarComprobantePDFAPIView.as_view(), name='descargar_recibo_pdf'),
+    path('api/ia/voz-reporte/', VoiceQueryAPIView.as_view(), name='ia_voz_reporte'),
 ]
