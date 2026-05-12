@@ -403,4 +403,10 @@ class VoiceQueryAPIView(APIView):
             })
 
         except Exception as e:
-            return Response({"error": f"Error procesando consulta de voz: {str(e)}"}, status=500)
+            import traceback
+            traceback.print_exc() # Para que lo veas en la consola
+            return Response({
+                "error": "Error procesando consulta de voz",
+                "details": str(e),
+                "summary": "Señor Director, hubo un inconveniente técnico al procesar los datos, pero ya estamos trabajando en ello."
+            }, status=200) # Devolvemos 200 con mensaje de error para que la UI no muera

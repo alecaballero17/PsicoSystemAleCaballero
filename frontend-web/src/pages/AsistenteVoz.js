@@ -75,7 +75,7 @@ const AsistenteVoz = () => {
 
             {loading && <div style={styles.loading}>Procesando con Gemini...</div>}
 
-            {result && (
+            {result && result.params && (
                 <div style={styles.resultCard}>
                     <div style={styles.summaryBox}>
                         <h3>🔊 Resumen Narrado:</h3>
@@ -95,7 +95,7 @@ const AsistenteVoz = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {result.results.map((item, i) => (
+                                {result.results && result.results.map((item, i) => (
                                     <tr key={i}>
                                         {result.params.entidad === 'citas' ? (
                                             <><td>{item.paciente}</td><td>{item.fecha}</td><td>{item.estado}</td></>
@@ -106,6 +106,15 @@ const AsistenteVoz = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {result && !result.params && (
+                <div style={styles.resultCard}>
+                     <div style={{...styles.summaryBox, backgroundColor: '#fee2e2', borderLeft: '5px solid #ef4444'}}>
+                        <h3>⚠️ Nota del Asistente:</h3>
+                        <p>{result.summary}</p>
                     </div>
                 </div>
             )}
