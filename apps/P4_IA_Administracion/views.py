@@ -3,7 +3,9 @@ P4_IA_Administracion — Vistas de Administración, Auditoría e IA Predictiva.
 Integración con Google Gemini para diagnóstico asistido por inteligencia artificial.
 """
 import logging
+import json
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -338,36 +340,56 @@ class VoiceQueryAPIView(APIView):
         """
         
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            model = _get_gemini_client()
+            if not model:
+                return Response({"error": "Gemini API Key no configurada."}, status=503)
+            
             response = model.generate_content(prompt)
-            # Limpiar respuesta para JSON
-            raw_json = response.text.strip().replace('```json', '').replace('```', '')
+            # Limpiar respuesta para JSON (Más robusto)
+            import re
+            match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            if not match:
+                raise ValueError(f"No se encontró JSON en la respuesta: {response.text}")
+            
+            raw_json = match.group(0)
             params = json.loads(raw_json)
             
-            # 2. Consultar Base de Datos
-            start = params.get('start_date')
-            end = params.get('end_date')
-            entidad = params.get('entidad', 'citas')
+            # 2. Consultar Base de Datos (Lógica robusta de matching)
+            from datetime import date
+            hoy = date.today().strftime('%Y-%m-%d')
+            start = params.get('start_date', hoy)
+            end = params.get('end_date', hoy)
+            entidad_raw = str(params.get('entidad', 'citas')).lower()
+            
+            # Normalización de entidad para evitar errores como 'citaspacientes'
+            if 'cita' in entidad_raw:
+                entidad = 'citas'
+            elif 'finanza' in entidad_raw or 'pago' in entidad_raw or 'dinero' in entidad_raw:
+                entidad = 'finanzas'
+            else:
+                entidad = 'citas'
 
             data_summary = ""
             results = []
 
             if entidad == 'citas':
                 citas = Cita.objects.filter(
-                    clinica=request.user.clinica,
+                    paciente__clinica=request.user.clinica,
                     fecha_hora__date__range=[start, end]
                 )
-                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m'), "estado": c.estado} for c in citas]
-                data_summary = f"Se encontraron {citas.count()} citas entre el {start} y el {end}."
+                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m %H:%M'), "estado": c.estado} for c in citas]
+                data_summary = f"Se encontraron {citas.count()} citas programadas entre el {start} y el {end}."
+                params['entidad'] = 'citas' # Asegurar para el frontend
             
             elif entidad == 'finanzas':
                 trans = Transaccion.objects.filter(
-                    clinica=request.user.clinica,
+                    paciente__clinica=request.user.clinica,
                     fecha__date__range=[start, end]
                 )
                 total = sum(t.monto for t in trans)
-                data_summary = f"El total recaudado en el periodo solicitado es de {total} bolivianos, con un total de {trans.count()} transacciones."
+                data_summary = f"En el periodo de {start} a {end}, se recaudó un total de {total} bolivianos a través de {trans.count()} transacciones financieras."
                 results = [{"monto": str(t.monto), "concepto": t.concepto} for t in trans]
+                params['entidad'] = 'finanzas'
 
             # 3. Generar Narrativa para Voz
             narrative_prompt = f"Genera un saludo ejecutivo corto (máximo 2 líneas) resumiendo esto: {data_summary}. Empieza con 'Señor Director...'"

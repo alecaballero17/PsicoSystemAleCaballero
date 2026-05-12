@@ -1,67 +1,64 @@
 # 🏥 PsicoSystem SI2 — Plataforma SaaS de Gestión Clínica Asistida por IA
 
-PsicoSystem es una solución integral diseñada para modernizar la gestión de centros psicológicos, integrando analítica avanzada y diagnósticos predictivos mediante Inteligencia Artificial (Google Gemini 2.0).
+PsicoSystem es una solución integral diseñada para modernizar la gestión de centros psicológicos, integrando analítica avanzada y diagnósticos predictivos mediante Inteligencia Artificial (Google Gemini).
 
 ---
 
-## 🚀 Características Principales
+## 🚀 Innovaciones del Sprint 2 (The "WOW" Factor)
 
-### 💎 Arquitectura Multi-tenant (SaaS)
-- **Aislamiento Total:** Cada clínica posee su propio entorno de datos seguro y aislado (RF-29).
-- **Onboarding Automático:** Registro atómico de clínicas, planes de suscripción y usuarios administradores.
-- **Seguridad RBAC:** Control de acceso basado en roles (Admin, Psicólogo, Paciente).
+### 🎙️ IA de Reportes por Voz (REQUERIMIENTO VIP)
+Implementación de un asistente ejecutivo basado en **Gemini 1.5 Flash**. El administrador puede solicitar resúmenes de datos mediante lenguaje natural.
+- **Procesamiento:** Conversión de voz a texto -> Extracción de entidades (Regex/NLP) -> Consulta SQL -> Generación de narrativa ejecutiva.
+- **Síntesis:** La IA no solo muestra los datos, sino que genera un resumen narrado por voz.
 
-### 🤖 Módulo de IA Predictiva (Sprint 2)
-- **Diagnóstico Asistido:** Integración con **Google Gemini** para el análisis de notas clínicas.
-- **Base Ética:** Sugerencias diagnósticas basadas en los estándares **DSM-5-TR** y **CIE-11**.
-- **Historial de IA:** Trazabilidad completa de análisis realizados por paciente.
+### 📅 Agenda con Blindaje de Colisiones (CU15/T030)
+Motor de validación lógica que impide el agendamiento duplicado para un mismo profesional.
+- **Validación RNF-05:** Precisión temporal en milisegundos para evitar traslapes.
+- **Estado Dinámico:** Gestión de estados (Pendiente, Asistió, Cancelada) con actualización en tiempo real.
 
-### 📅 Logística y Gestión Clínica
-- **Agenda Inteligente:** Control de citas con motor de validación de colisiones de horarios (T030).
-- **Expediente Clínico Digital:** Gestión centralizada de pacientes, notas de sesión y adjuntos.
-- **Módulo Financiero:** Registro de pagos y generación automática de recibos digitales (CU11/12).
+### 💎 Arquitectura Multi-tenant Hardened (SaaS)
+Aislamiento total de datos a nivel de base de datos (Query filtering por `clinica_id`).
+- **Seguridad RBAC:** Roles de Administrador (Gestión total) y Psicólogo (Gestión clínica).
+- **Onboarding Atómico:** Flujo de registro que vincula automáticamente la clínica con su primer administrador.
+
+---
+
+## 🛠️ Arquitectura de Módulos
+
+| Módulo | Descripción | Estado |
+| :--- | :--- | :--- |
+| **P1: Identidad y Acceso** | Gestión SaaS, Multi-tenancy y seguridad JWT. | ✅ 100% |
+| **P2: Gestión Clínica** | Expediente digital, registro de pacientes y notas. | ✅ 100% |
+| **P3: Logística de Citas** | Agenda inteligente, validación de horarios y lista de espera. | ✅ 100% |
+| **P4: IA y Administración** | Reportes Gemini, Bitácora de Auditoría y Finanzas. | ✅ 100% |
+
+---
+
+## 🛡️ Seguridad y Auditoría (Requerimientos Docente)
+El sistema cumple con estándares rigurosos de auditoría:
+- **Bitácora de Sucesos:** Registro automático de acciones críticas (Logins, Diagnósticos, Pagos).
+- **Validación de Passwords:** Políticas de complejidad y requerimiento de cambio periódico.
+- **Persistencia Segura:** Encriptación PBKDF2 para credenciales de acceso.
 
 ---
 
 ## 🛠️ Stack Tecnológico
-
-- **Backend:** Python 3.12 + Django 6.0 + Django REST Framework.
-- **Frontend:** React 19 + Axios + React Router v7.
-- **Base de Datos:** SQLite (Desarrollo) / PostgreSQL (Producción).
-- **IA:** Google Generative AI SDK (Gemini Flash Latest).
-- **Seguridad:** JWT (JSON Web Tokens) para autenticación sin estado.
+- **Backend:** Python 3.12 + Django 6.0 + DRF.
+- **Frontend:** React 19 + Axios (Interceptors) + Modern CSS.
+- **IA:** Google Generative AI (Gemini Flash SDK).
+- **Reportes:** ReportLab (Generación de PDF on-the-fly).
 
 ---
 
-## 📦 Instalación y Despliegue
-
-### Requisitos Previos
-- Python 3.10+
-- Node.js 18+
-- Una API Key de Google AI Studio (Gemini).
-
-### Configuración del Backend
-1. Clonar el repositorio: `git clone https://github.com/alecaballero17/PsicoSystemAleCaballero`
-2. Crear entorno virtual: `python -m venv venv`
-3. Activar entorno: `venv\Scripts\activate`
-4. Instalar dependencias: `pip install -r requirements.txt`
-5. Configurar `.env` (Ver `.env.example`):
-   ```env
-   SECRET_KEY='tu_secret_key'
-   GEMINI_API_KEY='tu_google_gemini_key'
-   ```
-6. Migrar base de datos: `python manage.py migrate`
-7. Iniciar servidor: `python manage.py runserver`
-
-### Configuración del Frontend
-1. Entrar a la carpeta: `cd frontend-web`
-2. Instalar paquetes: `npm install`
-3. Iniciar aplicación: `npm start`
+## 📦 Instalación Rápida
+1. **Backend:** 
+   - `pip install -r requirements.txt`
+   - Configurar `GEMINI_API_KEY` en `.env`.
+   - `python manage.py migrate` && `python manage.py runserver`
+2. **Frontend:** 
+   - `cd frontend-web`
+   - `npm install` && `npm start`
 
 ---
 
-## 🛡️ Auditoría y Seguridad
-El sistema incluye un módulo de **Log de Auditoría** que registra todas las acciones críticas (logins, diagnósticos IA, registros de pagos), garantizando la transparencia y el cumplimiento normativo en el manejo de datos sensibles de salud mental.
-
----
-*Desarrollado para la defensa del Sprint 2 de Sistemas de Información II.*
+*Desarrollado para la defensa final del Sprint 2 — PsicoSystem redefine la salud mental digital.*
