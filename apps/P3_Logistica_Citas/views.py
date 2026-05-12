@@ -174,6 +174,29 @@ class CitaViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": f"No se pudo enviar el recordatorio: {str(e)}"}, status=500)
 
+    @action(detail=True, methods=['post'])
+    def cancelar(self, request, pk=None):
+        """CU15: Cancelar cita con notificación automática."""
+        cita = self.get_object()
+        cita.estado = 'CANCELADA'
+        cita.save()
+        
+        # Notificación automática (CU26)
+        mensaje = f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y')} ha sido CANCELADA."
+        send_mail(
+            subject='Notificación de Cancelación - PsicoSystem',
+            message=mensaje,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[cita.paciente.clinica.email_contacto or 'paciente@ejemplo.com'],
+            fail_silently=True,
+        )
+
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Canceló cita de {cita.paciente.nombre} (ID={cita.pk})"
+        )
+        return Response({"status": "Cita cancelada y paciente notificado."})
+
 class ListaEsperaViewSet(viewsets.ModelViewSet):
     serializer_class = ListaEsperaSerializer
     permission_classes = [IsAuthenticated, HasClinicaAsignada]

@@ -14,6 +14,10 @@ from apps.P2_Gestion_Clinica.models import Paciente
 from apps.P3_Logistica_Citas.models import Cita
 from .models import LogAuditoria, DiagnosticoIA, Transaccion, Comprobante
 from .serializers import TransaccionSerializer, ComprobanteSerializer
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 
 logger = logging.getLogger(__name__)
 
@@ -252,3 +256,45 @@ class TransaccionListCreateAPIView(APIView):
                 "mensaje": "Pago registrado y comprobante generado."
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DescargarComprobantePDFAPIView(APIView):
+    """
+    Generar y descargar el recibo en PDF (CU11).
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get(self, request, transaccion_id):
+        transaccion = get_object_or_404(Transaccion, pk=transaccion_id, clinica=request.user.clinica)
+        comprobante = get_object_or_404(Comprobante, transaccion=transaccion)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Recibo_{comprobante.nro_comprobante}.pdf"'
+
+        # Crear PDF
+        p = canvas.Canvas(response, pagesize=letter)
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(100, 750, f"RECIBO DE PAGO - {request.user.clinica.nombre}")
+        
+        p.setFont("Helvetica", 12)
+        p.line(100, 740, 500, 740)
+        
+        p.drawString(100, 710, f"Nro. Comprobante: {comprobante.nro_comprobante}")
+        p.drawString(100, 690, f"Fecha: {transaccion.fecha.strftime('%d/%m/%Y %H:%M')}")
+        p.drawString(100, 670, f"Paciente: {transaccion.paciente.nombre}")
+        p.drawString(100, 650, f"CI: {transaccion.paciente.ci}")
+        
+        p.line(100, 630, 500, 630)
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(100, 600, f"Concepto: {transaccion.concepto}")
+        p.drawString(100, 580, f"Monto Total: {transaccion.monto} BS")
+        p.setFont("Helvetica", 12)
+        p.drawString(100, 560, f"Método de Pago: {transaccion.get_metodo_pago_display()}")
+        
+        p.line(100, 540, 500, 540)
+        p.setFont("Helvetica-Oblique", 10)
+        p.drawString(100, 520, "Gracias por confiar en PsicoSystem.")
+        
+        p.showPage()
+        p.save()
+        
+        return response

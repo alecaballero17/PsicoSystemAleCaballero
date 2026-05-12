@@ -29,6 +29,18 @@ const AgendaCitas = () => {
         }
     };
 
+    const handleCancelar = async (citaId) => {
+        if (window.confirm("¿Está seguro de cancelar esta cita? Se enviará una notificación al paciente.")) {
+            try {
+                await apiClient.post(`logistica/gestion/${citaId}/cancelar/`);
+                alert("Cita cancelada correctamente.");
+                fetchCitas();
+            } catch (err) {
+                alert("Error al cancelar la cita.");
+            }
+        }
+    };
+
     return (
         <div style={styles.container}>
             <header style={styles.header}>
@@ -55,6 +67,13 @@ const AgendaCitas = () => {
                                 >
                                     🔔 RECORDATORIO
                                 </button>
+                                <button 
+                                    style={styles.btnCancel}
+                                    onClick={() => handleCancelar(cita.id)}
+                                    disabled={cita.estado === 'CANCELADA'}
+                                >
+                                    ❌ CANCELAR
+                                </button>
                                 <span style={styles.estado}>{cita.estado}</span>
                             </div>
                         </div>
@@ -78,8 +97,9 @@ const styles = {
     hora: { fontSize: '12px', color: '#2563eb', fontWeight: 'bold' },
     paciente: { margin: '10px 0', fontSize: '18px', color: '#1e293b' },
     motivo: { fontSize: '14px', color: '#475569', marginBottom: '20px' },
-    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' },
     btnReminder: { padding: '8px 12px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
+    btnCancel: { padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
     estado: { fontSize: '11px', color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase' }
 };
 

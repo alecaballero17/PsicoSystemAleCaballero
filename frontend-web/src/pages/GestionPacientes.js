@@ -25,7 +25,8 @@ const GestionPacientes = () => {
 
     const pacientesFiltrados = pacientes.filter(p => 
         p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
-        p.ci.includes(busqueda)
+        p.ci.includes(busqueda) ||
+        (p.motivo_consulta && p.motivo_consulta.toLowerCase().includes(busqueda.toLowerCase()))
     );
 
     return (

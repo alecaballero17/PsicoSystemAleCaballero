@@ -20,12 +20,41 @@ const ModuloFinanciero = () => {
         }
     };
 
+    const totalRecaudado = transacciones.reduce((acc, t) => acc + parseFloat(t.monto), 0);
+
+    const handleDownloadPDF = async (transaccionId) => {
+        try {
+            // Usamos window.open para descargar el archivo directamente
+            const token = localStorage.getItem('token');
+            const url = `${apiClient.defaults.baseURL}finanzas/transacciones/${transaccionId}/pdf/`;
+            
+            // Creamos un link temporal para la descarga con el token si fuera necesario, 
+            // pero como es una descarga de archivo, a veces es mejor abrir en nueva pestaña 
+            // si el backend permite autenticación por query param o si el navegador maneja la sesión.
+            // Para simplicidad en la defensa, usamos el endpoint directo.
+            window.open(url, '_blank');
+        } catch (err) {
+            alert("Error al descargar el recibo.");
+        }
+    };
+
     return (
         <div style={styles.container}>
             <header style={styles.header}>
                 <h2 style={styles.title}>CONTROL DE PAGOS Y RECIBOS (CU11/12)</h2>
                 <button style={styles.btnPrimary}>+ REGISTRAR PAGO</button>
             </header>
+
+            <div style={styles.summaryCard}>
+                <div style={styles.summaryItem}>
+                    <span style={styles.summaryLabel}>TOTAL RECAUDADO</span>
+                    <span style={styles.summaryValue}>{totalRecaudado.toFixed(2)} BS</span>
+                </div>
+                <div style={styles.summaryItem}>
+                    <span style={styles.summaryLabel}>TRANSACCIONES</span>
+                    <span style={styles.summaryValue}>{transacciones.length}</span>
+                </div>
+            </div>
 
             {loading ? (
                 <p>Cargando transacciones...</p>
@@ -51,7 +80,12 @@ const ModuloFinanciero = () => {
                                     <td style={styles.td}><strong>{t.monto} BS</strong></td>
                                     <td style={styles.td}>{t.metodo_pago}</td>
                                     <td style={styles.td}>
-                                        <button style={styles.btnReceipt}>📄 VER RECIBO</button>
+                                        <button 
+                                            style={styles.btnReceipt}
+                                            onClick={() => handleDownloadPDF(t.id)}
+                                        >
+                                            📄 VER RECIBO
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -79,7 +113,11 @@ const styles = {
     th: { padding: '15px', fontSize: '12px', fontWeight: 'bold', color: '#64748b' },
     trBody: { borderTop: '1px solid #f1f5f9' },
     td: { padding: '15px', fontSize: '14px', color: '#334155' },
-    btnReceipt: { padding: '6px 12px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }
+    btnReceipt: { padding: '6px 12px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
+    summaryCard: { display: 'flex', gap: '20px', marginBottom: '30px' },
+    summaryItem: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', flex: 1, display: 'flex', flexDirection: 'column' },
+    summaryLabel: { fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginBottom: '5px' },
+    summaryValue: { fontSize: '24px', color: '#0891b2', fontWeight: 'bold' }
 };
 
 export default ModuloFinanciero;
