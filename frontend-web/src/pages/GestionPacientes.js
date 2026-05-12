@@ -23,6 +23,18 @@ const GestionPacientes = () => {
         }
     };
 
+    const handleEliminar = async (pacienteId) => {
+        if (window.confirm("¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
+            try {
+                await apiClient.delete(`gestion/pacientes/${pacienteId}/`);
+                alert("Paciente eliminado correctamente.");
+                fetchPacientes();
+            } catch (err) {
+                alert("Error al eliminar el paciente.");
+            }
+        }
+    };
+
     const pacientesFiltrados = pacientes.filter(p => 
         p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
         p.ci.includes(busqueda) ||
@@ -55,29 +67,41 @@ const GestionPacientes = () => {
                 <p>Cargando pacientes...</p>
             ) : (
                 <div style={styles.tableCard}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.trHead}>
-                                <th style={styles.th}>NOMBRE</th>
-                                <th style={styles.th}>CI / IDENTIFICACIÓN</th>
-                                <th style={styles.th}>TELÉFONO</th>
-                                <th style={styles.th}>ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pacientesFiltrados.map(p => (
-                                <tr key={p.id} style={styles.trBody}>
-                                    <td style={styles.td}>{p.nombre}</td>
-                                    <td style={styles.td}>{p.ci}</td>
-                                    <td style={styles.td}>{p.telefono}</td>
-                                    <td style={styles.td}>
-                                        <button style={styles.btnAction} onClick={() => navigate(`/ia?paciente=${p.id}`)}>Diagnóstico IA</button>
-                                        <button style={styles.btnActionSecondary}>Editar</button>
-                                    </td>
+                    {pacientesFiltrados.length > 0 ? (
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.trHead}>
+                                    <th style={styles.th}>NOMBRE</th>
+                                    <th style={styles.th}>CI / IDENTIFICACIÓN</th>
+                                    <th style={styles.th}>TELÉFONO</th>
+                                    <th style={styles.th}>ACCIONES</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {pacientesFiltrados.map(p => (
+                                    <tr key={p.id} style={styles.trBody}>
+                                        <td style={styles.td}>{p.nombre}</td>
+                                        <td style={styles.td}>{p.ci}</td>
+                                        <td style={styles.td}>{p.telefono}</td>
+                                        <td style={styles.td}>
+                                            <button style={styles.btnAction} onClick={() => navigate(`/ia?paciente=${p.id}`)}>Diagnóstico IA</button>
+                                            <button style={styles.btnActionSecondary}>Editar</button>
+                                            <button 
+                                                style={styles.btnDelete} 
+                                                onClick={() => handleEliminar(p.id)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div style={styles.noResults}>
+                            <p>🔍 No se encontraron coincidencias para "{busqueda}"</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -98,7 +122,9 @@ const styles = {
     trBody: { borderTop: '1px solid #f1f5f9' },
     td: { padding: '15px', fontSize: '14px', color: '#334155' },
     btnAction: { marginRight: '10px', padding: '6px 12px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
-    btnActionSecondary: { padding: '6px 12px', backgroundColor: '#94a3b8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }
+    btnActionSecondary: { marginRight: '10px', padding: '6px 12px', backgroundColor: '#94a3b8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
+    btnDelete: { padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
+    noResults: { textAlign: 'center', padding: '40px', color: '#64748b', fontSize: '16px' }
 };
 
 export default GestionPacientes;
