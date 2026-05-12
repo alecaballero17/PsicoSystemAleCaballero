@@ -25,13 +25,9 @@ const ModuloFinanciero = () => {
     const handleDownloadPDF = async (transaccionId) => {
         try {
             // Usamos window.open para descargar el archivo directamente
-            const token = localStorage.getItem('token');
-            const url = `${apiClient.defaults.baseURL}finanzas/transacciones/${transaccionId}/pdf/`;
+            const token = localStorage.getItem('userToken');
+            const url = `${apiClient.defaults.baseURL}finanzas/transacciones/${transaccionId}/pdf/?token=${token}`;
             
-            // Creamos un link temporal para la descarga con el token si fuera necesario, 
-            // pero como es una descarga de archivo, a veces es mejor abrir en nueva pestaña 
-            // si el backend permite autenticación por query param o si el navegador maneja la sesión.
-            // Para simplicidad en la defensa, usamos el endpoint directo.
             window.open(url, '_blank');
         } catch (err) {
             alert("Error al descargar el recibo.");

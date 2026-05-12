@@ -264,6 +264,20 @@ class DescargarComprobantePDFAPIView(APIView):
     permission_classes = [IsAuthenticated, HasClinicaAsignada]
 
     def get(self, request, transaccion_id):
+        # Permitir autenticación por query param para descargas directas (window.open)
+        token = request.query_params.get('token')
+        if not request.user.is_authenticated and token:
+            from rest_framework_simplejwt.authentication import JWTAuthentication
+            try:
+                validated_token = JWTAuthentication().get_validated_token(token)
+                user = JWTAuthentication().get_user(validated_token)
+                request.user = user
+            except:
+                return Response({"error": "Token inválido para descarga."}, status=403)
+
+        if not request.user.is_authenticated:
+            return Response({"error": "No autenticado."}, status=401)
+
         transaccion = get_object_or_404(Transaccion, pk=transaccion_id, clinica=request.user.clinica)
         comprobante = get_object_or_404(Comprobante, transaccion=transaccion)
 
