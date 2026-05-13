@@ -44,10 +44,11 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # Paquetes de la arquitectura
-    path("", include("apps.P1_Identidad_Acceso.urls")),
-    path("", include("apps.P2_Gestion_Clinica.urls")),
-    path("", include("apps.P3_Logistica_Citas.urls")),
-    path("", include("apps.P4_IA_Administracion.urls")),
+    # TEMPORARILY COMMENTED OUT to isolate URL import errors — re-enable once the broken app is identified
+    # path("", include("apps.P1_Identidad_Acceso.urls")),
+    # path("", include("apps.P2_Gestion_Clinica.urls")),
+    # path("", include("apps.P3_Logistica_Citas.urls")),
+    # path("", include("apps.P4_IA_Administracion.urls")),
 
     # Documentación Profesional (Swagger/Redoc)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
