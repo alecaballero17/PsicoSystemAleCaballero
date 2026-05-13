@@ -41,25 +41,13 @@ if not SECRET_KEY:
             "La variable de entorno SECRET_KEY es obligatoria en producción."
         )
 
-# Hosts permitidos: en Render conviene definir ALLOWED_HOSTS en el panel o usar .onrender.com
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in config(
-        "ALLOWED_HOSTS",
-        default="localhost,127.0.0.1,psicosystem-app.onrender.com",
-    ).split(",")
-    if h.strip()
-]
+ALLOWED_HOSTS = ["*"]
 
+# Detección de entorno
 _render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if _render_host and _render_host not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(_render_host)
+_railway_static_url = os.environ.get("RAILWAY_STATIC_URL")
 
-# En el servicio web de Render suele existir RENDER=true
-if os.environ.get("RENDER") and ".onrender.com" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(".onrender.com")
-
-# Detrás del proxy HTTPS de Render, sin esto las cookies/CSRF suelen fallar (login “no avanza”)
+# Detrás del proxy HTTPS de Render
 if os.environ.get("RENDER"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
