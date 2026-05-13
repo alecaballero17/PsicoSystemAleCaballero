@@ -1,6 +1,8 @@
 """
 Configuración principal de PsicoSystem SI2.
 """
+print("[settings] START: beginning settings.py import")
+
 from pathlib import Path
 from datetime import timedelta
 import os
@@ -8,18 +10,7 @@ import dj_database_url
 from decouple import config  # RNF-03: Seguridad de credenciales | SPRINT 0
 from django.core.exceptions import ImproperlyConfigured
 
-# Parche para evitar error de "drf_format_suffix already registered" en Django 5/6+
-from django.urls import converters
-_original_register_converter = converters.register_converter
-def _patched_register_converter(converter, type_name):
-    try:
-        _original_register_converter(converter, type_name)
-    except ValueError as e:
-        if "already registered" in str(e):
-            pass
-        else:
-            raise
-converters.register_converter = _patched_register_converter
+print("[settings] imports OK")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,31 +32,9 @@ if not SECRET_KEY:
             "La variable de entorno SECRET_KEY es obligatoria en producción."
         )
 
-# Hosts permitidos: Detección automática para Railway y Render
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in config(
-        "ALLOWED_HOSTS",
-        default="localhost,127.0.0.1",
-    ).split(",")
-    if h.strip()
-]
-
-# Detección de Railway
-_railway_static_url = os.environ.get("RAILWAY_STATIC_URL")
-if _railway_static_url:
-    ALLOWED_HOSTS.append(_railway_static_url)
-    ALLOWED_HOSTS.append(".railway.app")
-
-# Detección de Render
-_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if _render_host:
-    ALLOWED_HOSTS.append(_render_host)
-    ALLOWED_HOSTS.append(".onrender.com")
-
-# Detrás del proxy HTTPS de Render, sin esto las cookies/CSRF suelen fallar (login “no avanza”)
-if os.environ.get("RENDER"):
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Hosts permitidos: acepta todo para simplificar el diagnóstico
+ALLOWED_HOSTS = ["*"]
+print("[settings] ALLOWED_HOSTS OK")
 
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=not DEBUG, cast=bool)
 SESSION_COOKIE_SECURE = not DEBUG
@@ -82,16 +51,12 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# Orígenes explícitos para el token CSRF en HTTPS (Django 4+)
+# Orígenes CSRF: leer de variable de entorno o dejar vacío
 _csrf_origins = config("CSRF_TRUSTED_ORIGINS", default="").strip()
-if _csrf_origins:
-    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
-else:
-    CSRF_TRUSTED_ORIGINS = []
-    if _render_host:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{_render_host}")
-    if _railway_static_url:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{_railway_static_url}")
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
+print("[settings] security settings OK")
+
+
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
@@ -114,6 +79,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "drf_spectacular",
 ]
+print("[settings] INSTALLED_APPS OK")
 
 MIDDLEWARE = [
     # "corsheaders.middleware.CorsMiddleware",  # TEMP DISABLED: isolating middleware failure
@@ -128,6 +94,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+print("[settings] MIDDLEWARE OK")
 
 ROOT_URLCONF = "psicosystem.urls"
 
@@ -147,6 +114,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "psicosystem.wsgi.application"
+print("[settings] WSGI_APPLICATION OK")
 
 # ==============================================================================
 # SECCIÓN: PERSISTENCIA (T004 | INFRAESTRUCTURA POSTGRESQL | SPRINT 0)
@@ -164,6 +132,7 @@ DATABASES = {
 # En desarrollo local, se permite un DB_PASSWORD por defecto; en producción siempre defínelo.
 if not os.environ.get("DATABASE_URL"):
     DATABASES["default"]["PASSWORD"] = config("DB_PASSWORD", default="1234")
+print("[settings] DATABASES OK")
 
 # ==============================================================================
 # SECCIÓN: CONFIGURACIÓN API REST Y JWT (RF-01 | T011 | T008 | SPRINT 1)
@@ -208,6 +177,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "TOKEN_OBTAIN_SERIALIZER": "apps.P1_Identidad_Acceso.serializers.CustomTokenObtainPairSerializer",
 }
+print("[settings] REST_FRAMEWORK / SIMPLE_JWT OK")
 
 # ==============================================================================
 # SECCIÓN: GESTIÓN DE IDENTIDAD (RF-28 | ROLES | SPRINT 0)
@@ -223,8 +193,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+print("[settings] AUTH / identity OK")
 
 # ==============================================================================
+
 # SECCIÓN: LOCALIZACIÓN (ESTÁNDARES BOLIVIA - UAGRM | SPRINT 0)
 # ==============================================================================
 LANGUAGE_CODE = "es-bo"
@@ -234,6 +206,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles" # Requerido por WhiteNoise en Producción
+print("[settings] localization / static OK")
 
 # ==============================================================================
 # SECCIÓN: REDIRECCIONES DE FLUJO (SOLUCIÓN T007 | SPRINT 0)
@@ -244,16 +217,10 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
 
-# Configuración de CORS para Interoperabilidad (RNF)
-# En producción se recomienda definir explícitamente los orígenes permitidos.
-CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=DEBUG, cast=bool)
-_cors_origins = config("CORS_ALLOWED_ORIGINS", default="").strip()
-if _cors_origins:
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
-elif _render_host:
-    CORS_ALLOWED_ORIGINS = [f"https://{_render_host}"]
-
+# Configuración de CORS simplificada para diagnóstico
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+print("[settings] CORS OK")
 
 # ============================================================================== 
 # SECCIÓN: COMUNICACIONES (T019, T020 | Recuperación de Contraseña)
@@ -272,3 +239,5 @@ DEFAULT_FROM_EMAIL = config(
     "DEFAULT_FROM_EMAIL",
     default=EMAIL_HOST_USER or "noreply@psicosystem.local",
 )
+print("[settings] email OK")
+print("[settings] DONE: settings.py fully loaded")
