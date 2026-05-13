@@ -377,6 +377,7 @@ class VoiceQueryAPIView(APIView):
             
             # 2. Consultar Base de Datos (Lógica robusta de matching)
             from datetime import date
+            clinica = request.user.clinica
             hoy = date.today().strftime('%Y-%m-%d')
             start = params.get('start_date', hoy)
             end = params.get('end_date', hoy)
@@ -405,12 +406,10 @@ class VoiceQueryAPIView(APIView):
                 citas = Cita.objects.filter(paciente__clinica=clinica).order_by('-fecha_hora')[:10]
             # ---------------------------
 
-            # FALLBACK: Si no hay citas en ese rango, traer las últimas 10 (para que no salga vacío en la defensa)
-            if not citas.exists():
-                citas = Cita.objects.filter(paciente__clinica=clinica).order_by('-fecha_hora')[:10]
+            if entidad == 'citas':
                 results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m %H:%M'), "estado": c.estado} for c in citas]
-                data_summary = f"Se encontraron {citas.count()} citas programadas entre el {start} y el {end}."
-                params['entidad'] = 'citas' # Asegurar para el frontend
+                data_summary = f"Se encontraron {citas.count()} citas programadas. Los pacientes incluyen a {', '.join([c.paciente.nombre for c in citas[:3]])}."
+                params['entidad'] = 'citas'
             
             elif entidad == 'finanzas':
                 trans = Transaccion.objects.filter(

@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }) => {
                 if (!validUser) {
                     await authService.logout(); 
                     setUser(null);
+                    setTenant({ nombre: 'PsicoSystem', logo: '' });
                 } else {
                     // [ALINEACIÓN RF-29] Carga inicial de metadatos del Tenant
                     try {
@@ -41,12 +42,14 @@ export const AuthProvider = ({ children }) => {
                         console.error("Error cargando identidad del Tenant:", e);
                     }
                 }
+            } else {
+                setTenant({ nombre: 'PsicoSystem', logo: '' });
             }
         };
 
         verifySession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [user?.token]);
 
     const updateTenant = (newInfo) => {
         setTenant({
@@ -62,6 +65,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         await authService.logout(); 
         setUser(null); 
+        setTenant({ nombre: 'PsicoSystem', logo: '' });
     };
 
     return (
