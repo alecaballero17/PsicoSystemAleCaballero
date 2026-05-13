@@ -116,9 +116,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # <--- DEBE IR AQUÍ (PRIMERO O SEGUNDO)
+    # "corsheaders.middleware.CorsMiddleware",  # TEMP DISABLED: isolating middleware failure
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware", # Servidor óptimo de estáticos para la nube
+    # "whitenoise.middleware.WhiteNoiseMiddleware",  # TEMP DISABLED: may fail on missing staticfiles
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # RNF-03: Seguridad contra ataques CSRF.
