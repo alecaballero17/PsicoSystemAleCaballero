@@ -55,13 +55,8 @@ def application(environ, start_response):
 
         # Return a plain 500 so the client gets a proper HTTP response
         # instead of a connection reset / "Application failed to respond".
-        try:
-            start_response(
-                "500 Internal Server Error",
-                [("Content-Type", "text/plain; charset=utf-8")],
-                sys.exc_info(),
-            )
-        except Exception:
-            # start_response may raise if headers were already sent; ignore.
-            pass
+        start_response(
+            "500 Internal Server Error",
+            [("Content-Type", "text/plain; charset=utf-8")],
+        )
         return [b"Internal Server Error\n"]
