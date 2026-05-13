@@ -24,3 +24,8 @@ google-generativeai==0.8.6
 # Documentación de API (Swagger)
 drf-spectacular==0.28.0
 
+# Generación de Reportes PDF y IA de Voz
+reportlab==4.1.0
+gTTS==2.5.1
+typer==0.16.0
+click==8.1.8
