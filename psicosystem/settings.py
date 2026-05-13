@@ -41,22 +41,26 @@ if not SECRET_KEY:
             "La variable de entorno SECRET_KEY es obligatoria en producción."
         )
 
-# Hosts permitidos: en Render conviene definir ALLOWED_HOSTS en el panel o usar .onrender.com
+# Hosts permitidos: Detección automática para Railway y Render
 ALLOWED_HOSTS = [
     h.strip()
     for h in config(
         "ALLOWED_HOSTS",
-        default="localhost,127.0.0.1,psicosystem-app.onrender.com",
+        default="localhost,127.0.0.1",
     ).split(",")
     if h.strip()
 ]
 
-_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if _render_host and _render_host not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(_render_host)
+# Detección de Railway
+_railway_static_url = os.environ.get("RAILWAY_STATIC_URL")
+if _railway_static_url:
+    ALLOWED_HOSTS.append(_railway_static_url)
+    ALLOWED_HOSTS.append(".railway.app")
 
-# En el servicio web de Render suele existir RENDER=true
-if os.environ.get("RENDER") and ".onrender.com" not in ALLOWED_HOSTS:
+# Detección de Render
+_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if _render_host:
+    ALLOWED_HOSTS.append(_render_host)
     ALLOWED_HOSTS.append(".onrender.com")
 
 # Detrás del proxy HTTPS de Render, sin esto las cookies/CSRF suelen fallar (login “no avanza”)
@@ -82,8 +86,12 @@ if not DEBUG:
 _csrf_origins = config("CSRF_TRUSTED_ORIGINS", default="").strip()
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
-elif _render_host:
-    CSRF_TRUSTED_ORIGINS = [f"https://{_render_host}"]
+else:
+    CSRF_TRUSTED_ORIGINS = []
+    if _render_host:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_render_host}")
+    if _railway_static_url:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_railway_static_url}")
 
 # ==============================================================================
 # SECCIÓN: DEFINICIÓN DE APLICACIONES (T001, T002 | SPRINT 0)
