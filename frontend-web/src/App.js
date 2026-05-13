@@ -31,6 +31,8 @@ import ModuloFinanciero from './pages/ModuloFinanciero'; // [SPRINT 2] CU11/12
 import AsistenteVoz from './pages/AsistenteVoz';
 import RegistroCita from './pages/RegistroCita';
 import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
+import AdminReportes from './pages/AdminReportes';
+import Bitacora from './pages/Bitacora';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
@@ -141,6 +143,16 @@ function App() {
                     } />
 
                     <Route path="/reporte-voz" element={<PrivateRoute><AsistenteVoz /></PrivateRoute>} />
+                    <Route path="/admin-reportes" element={
+                        <PrivateRoute allowedRoles={['ADMIN']}>
+                            <AdminReportes />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/admin/auditoria" element={
+                        <PrivateRoute allowedRoles={['ADMIN']}>
+                            <Bitacora />
+                        </PrivateRoute>
+                    } />
                     <Route path="/registro-cita" element={<PrivateRoute><RegistroCita /></PrivateRoute>} />
 
                     <Route path="*" element={<Navigate to="/" />} />

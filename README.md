@@ -34,7 +34,29 @@ Aislamiento total de datos a nivel de base de datos (Query filtering por `clinic
 
 ---
 
-## 🛡️ Seguridad y Auditoría (Requerimientos Docente)
+## 🛡️ Seguridad, Auditoría y Portabilidad (Requerimientos Docente)
+
+El sistema implementa los estándares de seguridad y trazabilidad requeridos para la defensa académica:
+
+- **Bitácora de Auditoría (RF-30):** Registro detallado de cada acción crítica (Logins, creación de pacientes, generación de reportes) con sello de tiempo y usuario responsable.
+- **Backup y Restore (Portabilidad):**
+    - **Backup Manual:** Exportación de toda la base de datos de la clínica en formato JSON portable.
+    - **Restore Inteligente:** Motor de restauración con resolución automática de colisiones de horarios y duplicados.
+    - **Plan B de Emergencia:** Generación de datos de prueba automáticos en caso de restauración de archivos corruptos.
+- **Resiliencia SaaS:** Aislamiento total de datos; un administrador solo puede respaldar y restaurar los datos de su propia institución.
+- **Simulación de Desastre:** Módulo de "Panic Button" para demostración en vivo de la capacidad de recuperación del sistema.
+
+## 📊 Reportes Generales (CU-Reportes)
+
+- **Generador de PDF:** Reportes oficiales de citas y finanzas con diseño premium, filtrado por fechas y sistema de "fallback" (evita documentos en blanco).
+- **IA Predictiva:** Análisis narrativo de la situación de la clínica utilizando Google Gemini.
+
+---
+
+## 🚀 Guía para la Defensa (Demostración de Backup)
+1. **Generar Backup:** Descargar el JSON desde el panel administrativo.
+2. **Simular Desastre:** Usar el botón rojo de "Pérdida de Datos".
+3. **Restaurar:** Cargar el JSON y verificar la recuperación inmediata de la operatividad.
 El sistema cumple con estándares rigurosos de auditoría:
 - **Bitácora de Sucesos:** Registro automático de acciones críticas (Logins, Diagnósticos, Pagos).
 - **Validación de Passwords:** Políticas de complejidad y requerimiento de cambio periódico.

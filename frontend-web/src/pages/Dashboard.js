@@ -160,6 +160,15 @@ const Dashboard = () => {
                             </div>
                         )}
 
+                        {userRole === 'ADMIN' && (
+                            <div 
+                                style={{ ...styles.navItem, borderLeft: '3px solid #1e40af', backgroundColor: 'rgba(30, 64, 175, 0.05)' }} 
+                                onClick={() => navigate('/admin-reportes')}
+                            >
+                                📊 Reportes y Auditoría
+                            </div>
+                        )}
+
                         {/* [SPRINT 1 - T025] Interfaz de monitoreo de límites SaaS. */}
                         {userRole === 'ADMIN' && (
                             <div 
