@@ -110,6 +110,19 @@ def _get_gemini_client():
         logger.error("Error al inicializar Gemini: %s", e)
         return None
 
+def _get_groq_client():
+    """Inicializa el cliente de Groq (Llama 3) para NLP ultra-rápido."""
+    from decouple import config as decouple_config
+    api_key = decouple_config("GROQ_API_KEY", default="")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+        client = Groq(api_key=api_key)
+        return client
+    except Exception as e:
+        logger.error("Error al inicializar Groq: %s", e)
+        return None
 
 SYSTEM_PROMPT_PSICOLOGIA = """Eres un asistente de inteligencia artificial especializado en psicología clínica. 
 Tu rol es APOYAR al profesional de salud mental analizando notas clínicas y sugiriendo posibles 
@@ -370,16 +383,27 @@ class VoiceQueryAPIView(APIView):
         """
         
         try:
-            model = _get_gemini_client()
-            if not model:
-                return Response({"error": "Gemini API Key no configurada."}, status=503)
+            client = _get_groq_client()
+            if not client:
+                return Response({"error": "Groq API Key no configurada."}, status=503)
             
-            response = model.generate_content(prompt)
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                model="llama3-8b-8192",
+                temperature=0,
+            )
+            response_text = chat_completion.choices[0].message.content
+            
             # Limpiar respuesta para JSON (Más robusto)
             import re
-            match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if not match:
-                raise ValueError(f"No se encontró JSON en la respuesta: {response.text}")
+                raise ValueError(f"No se encontró JSON en la respuesta: {response_text}")
             
             raw_json = match.group(0)
             params = json.loads(raw_json)
@@ -432,8 +456,18 @@ class VoiceQueryAPIView(APIView):
 
             # 3. Generar Narrativa para Voz
             narrative_prompt = f"Genera un saludo ejecutivo corto (máximo 2 líneas) resumiendo esto: {data_summary}. Empieza con 'Señor Director...'"
-            narrative_response = model.generate_content(narrative_prompt)
-            narrative_text = narrative_response.text.strip()
+            
+            narrative_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": narrative_prompt,
+                    }
+                ],
+                model="llama3-8b-8192",
+                temperature=0.7,
+            )
+            narrative_text = narrative_completion.choices[0].message.content.strip()
 
             return Response({
                 "params": params,

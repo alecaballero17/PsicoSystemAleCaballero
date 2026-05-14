@@ -79,6 +79,18 @@ const DiagnosticoIA = () => {
         });
     };
 
+    const btnAiStyle = {
+        width: '100%', 
+        padding: '15px', 
+        backgroundColor: (loading || notas.trim().length === 0) ? '#cbd5e1' : '#8b5cf6', 
+        color: 'white', 
+        border: 'none', 
+        borderRadius: '8px', 
+        fontWeight: 'bold', 
+        cursor: (loading || notas.trim().length === 0) ? 'not-allowed' : 'pointer',
+        transition: 'background-color 0.3s'
+    };
+
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>DIAGNÓSTICO ASISTIDO POR IA (GEMINI 2.0)</h2>
@@ -109,8 +121,8 @@ const DiagnosticoIA = () => {
                         </div>
                         <button 
                             type="submit" 
-                            style={styles.btnAi} 
-                            disabled={loading || notas.length < 20}
+                            style={btnAiStyle} 
+                            disabled={loading || notas.trim().length === 0}
                         >
                             {loading ? 'PROCESANDO CON GEMINI...' : '✨ GENERAR DIAGNÓSTICO'}
                         </button>
@@ -154,7 +166,6 @@ const styles = {
     label: { display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' },
     input: { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' },
     textarea: { width: '100%', minHeight: '150px', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontFamily: 'inherit' },
-    btnAi: { width: '100%', padding: '15px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' },
     resultBox: { marginTop: '25px', padding: '20px', backgroundColor: '#f5f3ff', borderRadius: '10px', border: '1px solid #ddd6fe' },
     resultTitle: { marginTop: 0, color: '#5b21b6', fontSize: '14px' },
     resultText: { fontSize: '14px', color: '#4c1d95', whiteSpace: 'pre-wrap', lineHeight: '1.6' },

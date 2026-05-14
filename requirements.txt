@@ -18,8 +18,9 @@ django-cors-headers==4.7.0
 # Development Helpers
 django-extensions==3.2.3
 
-# IA: Google Gemini (Módulo de Diagnóstico Predictivo)
+# IA: Google Gemini y Groq (Llama 3)
 google-generativeai==0.8.6
+groq==0.15.0
 
 # Documentación de API (Swagger)
 drf-spectacular==0.28.0
