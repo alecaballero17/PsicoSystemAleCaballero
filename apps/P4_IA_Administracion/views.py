@@ -145,11 +145,7 @@ class PredictiveDiagnosisAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if len(notas) < 20:
-            return Response(
-                {"detail": "Las notas clínicas deben tener al menos 20 caracteres para un análisis significativo."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+
 
         # Validar que el paciente pertenece a la clínica del usuario
         paciente = None
