@@ -33,6 +33,7 @@ const RegistroCita = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return; // Prevención estricta de doble clic
         setLoading(true);
         try {
             await apiClient.post('logistica/gestion/', formData);
