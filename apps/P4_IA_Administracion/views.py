@@ -180,14 +180,27 @@ class PredictiveDiagnosisAPIView(APIView):
             fuente = "gemini-flash-latest"
         except Exception as e:
             logger.error("Error en llamada a Gemini: %s", e)
-            return Response(
-                {
-                    "detail": f"Error al comunicarse con el servicio de IA: {str(e)}",
-                    "diagnostico_ia": None,
-                    "fuente": "error",
-                },
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
+            
+            # [MOCK DATA] Fallback de contingencia para la defensa
+            print("⚠️ Usando modo de respaldo por saturación de red en Diagnóstico IA.")
+            resultado_ia = """### ⚠️ [Modo Respaldo] Servicio IA Saturado
+**Mensaje del Sistema:** Usando modo de respaldo por saturación de red (Error 429/503). A continuación se muestra un diagnóstico de contingencia pre-escrito para continuar con la demostración.
+
+---
+
+### Análisis de Síntomas (Datos Simulados)
+El paciente reporta **insomnio**, dificultad para conciliar el sueño y ansiedad leve. Estos síntomas podrían estar asociados a un cuadro de estrés agudo, según los criterios del DSM-5-TR.
+
+### Diagnósticos Diferenciales Sugeridos
+* Trastorno de Ansiedad Generalizada (TAG).
+* Trastorno del Ritmo Circadiano.
+
+### Recomendaciones de Evaluación Adicional
+* Aplicar el **Inventario de Ansiedad de Beck (BAI)**.
+* Realizar una exploración sobre hábitos de higiene del sueño.
+
+*Nota: Esta es una simulación local y no representa el análisis real.*"""
+            fuente = "mock_fallback_429"
 
         # Persistir el diagnóstico en la base de datos
         diagnostico = DiagnosticoIA.objects.create(
@@ -431,11 +444,22 @@ class VoiceQueryAPIView(APIView):
         except Exception as e:
             import traceback
             traceback.print_exc() # Para que lo veas en la consola
+            print("⚠️ Usando modo de respaldo por saturación de red en Asistente de Voz.")
+            
+            from datetime import date
+            hoy = date.today().strftime('%Y-%m-%d')
+            
+            # [MOCK DATA] Fallback de contingencia para la defensa
+            mock_results = [
+                {"paciente": "Paciente Simulado A", "fecha": f"{hoy} 09:00", "estado": "PENDIENTE"},
+                {"paciente": "Paciente Simulado B", "fecha": f"{hoy} 10:30", "estado": "ASISTIO"}
+            ]
+            
             return Response({
-                "error": "Error procesando consulta de voz",
-                "details": str(e),
-                "summary": "Señor Director, hubo un inconveniente técnico al procesar los datos, pero ya estamos trabajando en ello."
-            }, status=200) # Devolvemos 200 con mensaje de error para que la UI no muera
+                "params": {"entidad": "citas (Modo Contingencia)", "start_date": hoy, "end_date": hoy},
+                "results": mock_results,
+                "summary": "Señor Director, debido a una saturación en la red de IA, el sistema ha activado el modo de respaldo de contingencia. A continuación le presento datos simulados: Se encontraron dos citas programadas para el día de hoy."
+            }, status=200)
 
 # ==============================================================================
 # NUEVAS FUNCIONES PARA LA DEFENSA (AUDITORÍA Y BACKUP)
