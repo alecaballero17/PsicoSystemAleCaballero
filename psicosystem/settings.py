@@ -48,8 +48,10 @@ _render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 _railway_static_url = os.environ.get("RAILWAY_STATIC_URL")
 
 # Detrás del proxy HTTPS de Render
-if os.environ.get("RENDER"):
+# Detrás del proxy HTTPS de Render/Railway, sin esto ocurren bucles de redirección (Error 301)
+if not DEBUG or os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=not DEBUG, cast=bool)
 SESSION_COOKIE_SECURE = not DEBUG
