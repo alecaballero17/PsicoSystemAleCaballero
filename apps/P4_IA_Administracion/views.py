@@ -174,30 +174,45 @@ class PredictiveDiagnosisAPIView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-        # Intentar llamar a Gemini
-        model = _get_gemini_client()
-        if model is None:
-            return Response(
-                {
-                    "detail": "El servicio de IA no está configurado. Contacte al administrador para configurar la GEMINI_API_KEY.",
-                    "diagnostico_ia": None,
-                    "fuente": "sin_configurar",
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+        # ARQUITECTURA DE TRES NIVELES (Primary: Gemini -> Backup: Groq -> Contingency: Mock Data)
+        prompt = f"{SYSTEM_PROMPT_PSICOLOGIA}\n\n--- NOTAS CLÍNICAS DEL PACIENTE ---\n{notas}\n--- FIN DE NOTAS ---"
+        resultado_ia = None
+        fuente = None
 
-        try:
-            prompt = f"{SYSTEM_PROMPT_PSICOLOGIA}\n\n--- NOTAS CLÍNICAS DEL PACIENTE ---\n{notas}\n--- FIN DE NOTAS ---"
-            response = model.generate_content(prompt)
-            resultado_ia = response.text
-            fuente = "gemini-flash-latest"
-        except Exception as e:
-            logger.error("Error en llamada a Gemini: %s", e)
-            
-            # [MOCK DATA] Fallback de contingencia para la defensa
-            print("⚠️ Usando modo de respaldo por saturación de red en Diagnóstico IA.")
-            resultado_ia = """### ⚠️ [Modo Respaldo] Servicio IA Saturado
-**Mensaje del Sistema:** Usando modo de respaldo por saturación de red (Error 429/503). A continuación se muestra un diagnóstico de contingencia pre-escrito para continuar con la demostración.
+        # 1er Intento: Gemini (Especialista Médico)
+        model = _get_gemini_client()
+        if model:
+            try:
+                response = model.generate_content(prompt)
+                resultado_ia = response.text
+                fuente = "gemini-flash-latest"
+            except Exception as e:
+                logger.warning(f"Fallo en Gemini (Primary): {e}")
+        
+        # 2do Intento: Groq Llama 3 (Respaldo IA) si Gemini falló o no está configurado
+        if not resultado_ia:
+            client = _get_groq_client()
+            if client:
+                try:
+                    print("⚠️ Gemini falló. Usando Groq (Llama 3) de respaldo en Diagnóstico IA.")
+                    chat_completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT_PSICOLOGIA},
+                            {"role": "user", "content": f"Analiza las siguientes notas clínicas y genera un diagnóstico profesional:\n\n{notas}"}
+                        ],
+                        model="llama-3.3-70b-versatile",
+                        temperature=0.4,
+                    )
+                    resultado_ia = chat_completion.choices[0].message.content
+                    fuente = "groq-llama-3.3-70b"
+                except Exception as e:
+                    logger.warning(f"Fallo en Groq (Backup): {e}")
+
+        # 3er Intento: Mock Data (Contingencia Extrema) si ambos fallaron
+        if not resultado_ia:
+            print("🛑 Ambos servicios de IA fallaron. Usando Mock Data de contingencia.")
+            resultado_ia = """### ⚠️ [Modo Respaldo] Servicios de IA Saturados
+**Mensaje del Sistema:** Usando modo de respaldo local por saturación de red (Error 429/503 en múltiples APIs). A continuación se muestra un diagnóstico de contingencia pre-escrito para continuar con la demostración.
 
 ---
 

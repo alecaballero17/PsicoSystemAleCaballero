@@ -93,7 +93,7 @@ const DiagnosticoIA = () => {
 
     return (
         <div style={styles.container}>
-            <h2 style={styles.title}>DIAGNÓSTICO ASISTIDO POR IA (GEMINI 2.0)</h2>
+            <h2 style={styles.title}>DIAGNÓSTICO ASISTIDO POR IA (GEMINI / GROQ)</h2>
             
             <div style={styles.grid}>
                 {/* Panel de Entrada */}
@@ -124,7 +124,7 @@ const DiagnosticoIA = () => {
                             style={btnAiStyle} 
                             disabled={loading || notas.trim().length === 0}
                         >
-                            {loading ? 'PROCESANDO CON GEMINI...' : '✨ GENERAR DIAGNÓSTICO'}
+                            {loading ? 'PROCESANDO CON IA...' : '✨ GENERAR DIAGNÓSTICO'}
                         </button>
                     </form>
 
