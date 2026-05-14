@@ -1,83 +1,59 @@
 # 🏥 PsicoSystem SI2 — Plataforma SaaS de Gestión Clínica Asistida por IA
 
 <div align="center">
-  <i>PsicoSystem redefine la salud mental digital mediante la integración de analítica avanzada, resiliencia empresarial y diagnósticos predictivos potenciados por Inteligencia Artificial (Google Gemini).</i>
+  <img src="https://img.shields.io/badge/Status-Defensa_Final-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI-Gemini_%26_Groq-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Author-Alejandro_Caballero-blue?style=for-the-badge" />
 </div>
 
 ---
 
-## 🚀 Innovaciones y Características "WOW" (Sprint 2)
+## 🚀 Innovaciones y Arquitectura de Resiliencia (The "WOW" Factor)
 
-### 🤖 IA Resiliente con Degradación Elegante (Graceful Degradation)
-Implementación de arquitectura a prueba de fallos para los servicios de Inteligencia Artificial (Google Gemini 1.5 Flash).
-- **Diagnóstico Clínico Asistido:** Análisis probabilístico basado en DSM-5-TR a partir de notas clínicas sin longitud mínima requerida.
-- **Asistente Ejecutivo por Voz:** Extracción de entidades por NLP y generación de narrativa ejecutiva hablada.
-- **Contingencia Automática (Mock Data):** Si la API de Google falla (Error 429/503 por saturación), el sistema detecta la caída y automáticamente inyecta *Mock Data* predefinido, garantizando un 100% de uptime visual durante demostraciones en vivo.
+### 🎙️ IA de Reportes por Voz (REQUERIMIENTO VIP)
+Implementación de un asistente ejecutivo de alto rendimiento para la toma de decisiones.
+- **Motor:** **Groq Llama 3.1 (8B)** — Elegido por su latencia ultra-baja (LPUs).
+- **Funcionalidad:** Conversión de voz a texto -> Extracción de entidades por NLP -> Consulta dinámica de base de datos -> Narrativa ejecutiva personalizada.
+- **Resiliencia:** Si la API de Groq falla, el sistema cuenta con un modo de contingencia local que garantiza la continuidad de la demostración.
 
-### 🔔 Web Push Notifications Nativas
-Integración directa con la API de Notificaciones del Sistema Operativo.
-- Alertas en tiempo real para agendamientos de citas, cancelaciones y resultados de diagnósticos IA.
-- Gestión inteligente de permisos (Request Permission Flow) adaptada para entornos de producción (Vercel/Render).
+### 🧠 Diagnóstico Clínico de 3 Niveles (Tiered AI Architecture)
+Un motor de diagnóstico único que combina lo mejor de múltiples nubes para asegurar un 100% de disponibilidad:
+1. **Primario (Gemini 1.5 Flash):** Análisis clínico profundo basado en el DSM-5-TR.
+2. **Respaldo (Groq Llama 3.3 70B):** Entra en acción automáticamente si Gemini excede su cuota de peticiones.
+3. **Contingencia (Mock Data):** Generación de diagnósticos locales si ambos servicios externos no están disponibles.
 
-### 📅 Motor Logístico de Citas Blindado
-Algoritmo estricto para evitar colisiones de agenda y proteger la consistencia de los datos.
-- **Prevención de Carrera (Race Conditions):** Bloqueo reactivo de UI para evitar el "doble clic" que genera falsos positivos en colisiones.
-- **Filtro Multi-tenant:** Los pacientes solo pueden ser agendados con psicólogos que pertenezcan a su misma clínica.
-
-### 💎 Arquitectura Multi-tenant Hardened (SaaS)
-Aislamiento total de datos a nivel de base de datos (Query filtering por `clinica_id`).
-- **Seguridad RBAC:** Roles de Administrador (Gestión total) y Psicólogo (Gestión clínica).
-- **Onboarding Atómico:** Flujo de registro que vincula automáticamente la clínica con su primer administrador.
+### 🔔 Notificaciones Push Nativas y Anti-Colisión
+- **Web Push API:** Notificaciones del sistema operativo para agendamientos y resultados de IA.
+- **Validación Lógica:** Blindaje contra "Doble Clic" y condiciones de carrera (Race Conditions) para evitar citas duplicadas.
 
 ---
 
-## 🛡️ Seguridad, Auditoría y Portabilidad
-
-El sistema implementa los estándares de seguridad y trazabilidad más rigurosos, listos para auditoría:
-
-- **Bitácora de Auditoría (RF-30):** Registro inmutable de cada acción crítica (Logins, creación de pacientes, reportes, IA) con timestamp y usuario responsable.
-- **Portabilidad y Continuidad de Negocio (Backup/Restore):**
-    - **Exportación Manual:** Volcado de toda la base de datos de la clínica en formato JSON portable.
-    - **Restauración Inteligente:** Regeneración automática del tenant y sus relaciones de base de datos a partir del JSON.
-    - **Botón del Pánico:** Endpoint de destrucción controlada (`DestruccionControladaAPIView`) para purga total operativa y demostración de recuperación de desastres (Disaster Recovery).
+## 🛠️ Stack Tecnológico
+- **Backend:** Python 3.12 + Django 6.0 + DRF (Autenticación JWT estricta).
+- **Base de Datos:** PostgreSQL con aislamiento Multi-tenant (Tenancy isolation).
+- **Frontend:** React 19 + Axios Interceptors + Modern UX/UI.
+- **IA:** Integración Híbrida Gemini (Google) y Groq (Meta Llama 3).
+- **Reportes:** ReportLab para la generación dinámica de comprobantes en PDF.
 
 ---
 
-## 🛠️ Arquitectura de Módulos
-
-| Módulo | Descripción | Estado |
-| :--- | :--- | :--- |
-| **P1: Identidad y Acceso** | Gestión SaaS, Multi-tenancy y seguridad JWT estricta. | ✅ 100% |
-| **P2: Gestión Clínica** | Expediente digital, CRUD de pacientes (incluye borrado lógico). | ✅ 100% |
-| **P3: Logística de Citas** | Agenda inteligente, notificaciones Push y validación Anti-Choque. | ✅ 100% |
-| **P4: IA y Administración** | Reportes Gemini, Bitácora, Finanzas y Resiliencia Mock Data. | ✅ 100% |
+## 🛡️ Seguridad y Auditoría (Ready for Audit)
+- **Bitácora de Sucesos (RF-30):** Registro inmutable de cada acción crítica realizada en el sistema.
+- **Backup & Disaster Recovery:** Sistema de volcado JSON y restauración inteligente con resolución de conflictos.
+- **Panic Button:** Módulo de purga operativa controlada para demostración de recuperación de desastres.
 
 ---
 
-## 📊 Módulo de Reportes Financieros
-- **Generador de PDF:** Reportes oficiales de pagos y transacciones utilizando `ReportLab`.
-- **Comprobantes:** Emisión automática de recibos en PDF con diseño institucional premium para descarga directa por el paciente.
-
----
-
-## 💻 Stack Tecnológico
-- **Backend:** Python 3.12 + Django 6.0 + Django REST Framework.
-- **Base de Datos:** PostgreSQL (Producción en Render) / SQLite (Desarrollo).
-- **Frontend:** React 19 + Axios (Interceptors) + Vercel Deployment.
-- **Integraciones:** Google Generative AI (Gemini Flash SDK) + Web Notification API.
-
----
-
-## 📦 Instalación Rápida
-1. **Backend:** 
-   - `pip install -r requirements.txt`
-   - Configurar `GEMINI_API_KEY` en `.env`.
-   - `python manage.py migrate` && `python manage.py runserver`
-2. **Frontend:** 
-   - `cd frontend-web`
-   - `npm install` && `npm start`
+## 👤 Desarrollado por
+<div align="left">
+  <img src="https://github.com/alecaballero17.png" width="100px" style="border-radius:50%" />
+  <br>
+  <strong>Alejandro Caballero</strong><br>
+  <i>Ingeniería de Sistemas — UAGRM</i><br>
+  <a href="https://github.com/alecaballero17">@alecaballero17</a>
+</div>
 
 ---
 <div align="center">
-  <i>Desarrollado para la defensa final de Sistemas de Información II</i>
+  <i>PsicoSystem SI2 — Redefiniendo la salud mental digital con resiliencia y precisión.</i>
 </div>
