@@ -394,7 +394,7 @@ class VoiceQueryAPIView(APIView):
                         "content": prompt,
                     }
                 ],
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
                 temperature=0,
             )
             response_text = chat_completion.choices[0].message.content
@@ -464,7 +464,7 @@ class VoiceQueryAPIView(APIView):
                         "content": narrative_prompt,
                     }
                 ],
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
                 temperature=0.7,
             )
             narrative_text = narrative_completion.choices[0].message.content.strip()
@@ -490,9 +490,9 @@ class VoiceQueryAPIView(APIView):
             ]
             
             return Response({
-                "params": {"entidad": "citas (Modo Contingencia)", "start_date": hoy, "end_date": hoy},
+                "params": {"entidad": "citas", "start_date": hoy, "end_date": hoy},
                 "results": mock_results,
-                "summary": "Señor Director, debido a una saturación en la red de IA, el sistema ha activado el modo de respaldo de contingencia. A continuación le presento datos simulados: Se encontraron dos citas programadas para el día de hoy."
+                "summary": "Señor Director, debido a una saturación en la red de IA, el sistema ha activado el modo de respaldo de contingencia. A continuación le presento datos simulados de citas para el día de hoy."
             }, status=200)
 
 # ==============================================================================

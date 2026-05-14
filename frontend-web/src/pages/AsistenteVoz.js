@@ -73,7 +73,7 @@ const AsistenteVoz = () => {
                 <p style={styles.hint}>Prueba: "Dime las citas de la primera semana de mayo"</p>
             </div>
 
-            {loading && <div style={styles.loading}>Procesando con Gemini...</div>}
+            {loading && <div style={styles.loading}>Procesando con Groq (Llama 3)...</div>}
 
             {result && result.params && (
                 <div style={styles.resultCard}>
