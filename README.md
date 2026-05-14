@@ -1,20 +1,28 @@
 # 🏥 PsicoSystem SI2 — Plataforma SaaS de Gestión Clínica Asistida por IA
 
-PsicoSystem es una solución integral diseñada para modernizar la gestión de centros psicológicos, integrando analítica avanzada y diagnósticos predictivos mediante Inteligencia Artificial (Google Gemini).
+<div align="center">
+  <i>PsicoSystem redefine la salud mental digital mediante la integración de analítica avanzada, resiliencia empresarial y diagnósticos predictivos potenciados por Inteligencia Artificial (Google Gemini).</i>
+</div>
 
 ---
 
-## 🚀 Innovaciones del Sprint 2 (The "WOW" Factor)
+## 🚀 Innovaciones y Características "WOW" (Sprint 2)
 
-### 🎙️ IA de Reportes por Voz (REQUERIMIENTO VIP)
-Implementación de un asistente ejecutivo basado en **Gemini 1.5 Flash**. El administrador puede solicitar resúmenes de datos mediante lenguaje natural.
-- **Procesamiento:** Conversión de voz a texto -> Extracción de entidades (Regex/NLP) -> Consulta SQL -> Generación de narrativa ejecutiva.
-- **Síntesis:** La IA no solo muestra los datos, sino que genera un resumen narrado por voz.
+### 🤖 IA Resiliente con Degradación Elegante (Graceful Degradation)
+Implementación de arquitectura a prueba de fallos para los servicios de Inteligencia Artificial (Google Gemini 1.5 Flash).
+- **Diagnóstico Clínico Asistido:** Análisis probabilístico basado en DSM-5-TR a partir de notas clínicas sin longitud mínima requerida.
+- **Asistente Ejecutivo por Voz:** Extracción de entidades por NLP y generación de narrativa ejecutiva hablada.
+- **Contingencia Automática (Mock Data):** Si la API de Google falla (Error 429/503 por saturación), el sistema detecta la caída y automáticamente inyecta *Mock Data* predefinido, garantizando un 100% de uptime visual durante demostraciones en vivo.
 
-### 📅 Agenda con Blindaje de Colisiones (CU15/T030)
-Motor de validación lógica que impide el agendamiento duplicado para un mismo profesional.
-- **Validación RNF-05:** Precisión temporal en milisegundos para evitar traslapes.
-- **Estado Dinámico:** Gestión de estados (Pendiente, Asistió, Cancelada) con actualización en tiempo real.
+### 🔔 Web Push Notifications Nativas
+Integración directa con la API de Notificaciones del Sistema Operativo.
+- Alertas en tiempo real para agendamientos de citas, cancelaciones y resultados de diagnósticos IA.
+- Gestión inteligente de permisos (Request Permission Flow) adaptada para entornos de producción (Vercel/Render).
+
+### 📅 Motor Logístico de Citas Blindado
+Algoritmo estricto para evitar colisiones de agenda y proteger la consistencia de los datos.
+- **Prevención de Carrera (Race Conditions):** Bloqueo reactivo de UI para evitar el "doble clic" que genera falsos positivos en colisiones.
+- **Filtro Multi-tenant:** Los pacientes solo pueden ser agendados con psicólogos que pertenezcan a su misma clínica.
 
 ### 💎 Arquitectura Multi-tenant Hardened (SaaS)
 Aislamiento total de datos a nivel de base de datos (Query filtering por `clinica_id`).
@@ -23,52 +31,40 @@ Aislamiento total de datos a nivel de base de datos (Query filtering por `clinic
 
 ---
 
+## 🛡️ Seguridad, Auditoría y Portabilidad
+
+El sistema implementa los estándares de seguridad y trazabilidad más rigurosos, listos para auditoría:
+
+- **Bitácora de Auditoría (RF-30):** Registro inmutable de cada acción crítica (Logins, creación de pacientes, reportes, IA) con timestamp y usuario responsable.
+- **Portabilidad y Continuidad de Negocio (Backup/Restore):**
+    - **Exportación Manual:** Volcado de toda la base de datos de la clínica en formato JSON portable.
+    - **Restauración Inteligente:** Regeneración automática del tenant y sus relaciones de base de datos a partir del JSON.
+    - **Botón del Pánico:** Endpoint de destrucción controlada (`DestruccionControladaAPIView`) para purga total operativa y demostración de recuperación de desastres (Disaster Recovery).
+
+---
+
 ## 🛠️ Arquitectura de Módulos
 
 | Módulo | Descripción | Estado |
 | :--- | :--- | :--- |
-| **P1: Identidad y Acceso** | Gestión SaaS, Multi-tenancy y seguridad JWT. | ✅ 100% |
-| **P2: Gestión Clínica** | Expediente digital, registro de pacientes y notas. | ✅ 100% |
-| **P3: Logística de Citas** | Agenda inteligente, validación de horarios y lista de espera. | ✅ 100% |
-| **P4: IA y Administración** | Reportes Gemini, Bitácora de Auditoría y Finanzas. | ✅ 100% |
+| **P1: Identidad y Acceso** | Gestión SaaS, Multi-tenancy y seguridad JWT estricta. | ✅ 100% |
+| **P2: Gestión Clínica** | Expediente digital, CRUD de pacientes (incluye borrado lógico). | ✅ 100% |
+| **P3: Logística de Citas** | Agenda inteligente, notificaciones Push y validación Anti-Choque. | ✅ 100% |
+| **P4: IA y Administración** | Reportes Gemini, Bitácora, Finanzas y Resiliencia Mock Data. | ✅ 100% |
 
 ---
 
-## 🛡️ Seguridad, Auditoría y Portabilidad (Requerimientos Docente)
-
-El sistema implementa los estándares de seguridad y trazabilidad requeridos para la defensa académica:
-
-- **Bitácora de Auditoría (RF-30):** Registro detallado de cada acción crítica (Logins, creación de pacientes, generación de reportes) con sello de tiempo y usuario responsable.
-- **Backup y Restore (Portabilidad):**
-    - **Backup Manual:** Exportación de toda la base de datos de la clínica en formato JSON portable.
-    - **Restore Inteligente:** Motor de restauración con resolución automática de colisiones de horarios y duplicados.
-    - **Plan B de Emergencia:** Generación de datos de prueba automáticos en caso de restauración de archivos corruptos.
-- **Resiliencia SaaS:** Aislamiento total de datos; un administrador solo puede respaldar y restaurar los datos de su propia institución.
-- **Simulación de Desastre:** Módulo de "Panic Button" para demostración en vivo de la capacidad de recuperación del sistema.
-
-## 📊 Reportes Generales (CU-Reportes)
-
-- **Generador de PDF:** Reportes oficiales de citas y finanzas con diseño premium, filtrado por fechas y sistema de "fallback" (evita documentos en blanco).
-- **IA Predictiva:** Análisis narrativo de la situación de la clínica utilizando Google Gemini.
+## 📊 Módulo de Reportes Financieros
+- **Generador de PDF:** Reportes oficiales de pagos y transacciones utilizando `ReportLab`.
+- **Comprobantes:** Emisión automática de recibos en PDF con diseño institucional premium para descarga directa por el paciente.
 
 ---
 
-## 🚀 Guía para la Defensa (Demostración de Backup)
-1. **Generar Backup:** Descargar el JSON desde el panel administrativo.
-2. **Simular Desastre:** Usar el botón rojo de "Pérdida de Datos".
-3. **Restaurar:** Cargar el JSON y verificar la recuperación inmediata de la operatividad.
-El sistema cumple con estándares rigurosos de auditoría:
-- **Bitácora de Sucesos:** Registro automático de acciones críticas (Logins, Diagnósticos, Pagos).
-- **Validación de Passwords:** Políticas de complejidad y requerimiento de cambio periódico.
-- **Persistencia Segura:** Encriptación PBKDF2 para credenciales de acceso.
-
----
-
-## 🛠️ Stack Tecnológico
-- **Backend:** Python 3.12 + Django 6.0 + DRF.
-- **Frontend:** React 19 + Axios (Interceptors) + Modern CSS.
-- **IA:** Google Generative AI (Gemini Flash SDK).
-- **Reportes:** ReportLab (Generación de PDF on-the-fly).
+## 💻 Stack Tecnológico
+- **Backend:** Python 3.12 + Django 6.0 + Django REST Framework.
+- **Base de Datos:** PostgreSQL (Producción en Render) / SQLite (Desarrollo).
+- **Frontend:** React 19 + Axios (Interceptors) + Vercel Deployment.
+- **Integraciones:** Google Generative AI (Gemini Flash SDK) + Web Notification API.
 
 ---
 
@@ -82,5 +78,6 @@ El sistema cumple con estándares rigurosos de auditoría:
    - `npm install` && `npm start`
 
 ---
-
-*Desarrollado para la defensa final del Sprint 2 — PsicoSystem redefine la salud mental digital.*
+<div align="center">
+  <i>Desarrollado para la defensa final de Sistemas de Información II</i>
+</div>
