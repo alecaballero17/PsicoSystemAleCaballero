@@ -16,6 +16,12 @@ const RegistroPaciente = () => {
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     new Notification("PsicoSystem Clínico", { body: "¡Expediente de paciente creado con éxito!", icon: "/favicon.ico" });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("PsicoSystem Clínico", { body: "¡Expediente de paciente creado con éxito!", icon: "/favicon.ico" });
+                        }
+                    });
                 }
             }
             alert("¡Paciente guardado exitosamente!");

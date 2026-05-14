@@ -37,6 +37,12 @@ const DiagnosticoIA = () => {
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     new Notification("Gemini AI", { body: "El diagnóstico clínico ha sido generado con éxito.", icon: "/favicon.ico" });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("Gemini AI", { body: "El diagnóstico clínico ha sido generado con éxito.", icon: "/favicon.ico" });
+                        }
+                    });
                 }
             }
             

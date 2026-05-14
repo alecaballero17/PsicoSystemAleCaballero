@@ -28,6 +28,12 @@ const AgendaCitas = () => {
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     new Notification("PsicoSystem Recordatorio", { body: "Se ha enviado un correo de recordatorio al paciente.", icon: "/favicon.ico" });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("PsicoSystem Recordatorio", { body: "Se ha enviado un correo de recordatorio al paciente.", icon: "/favicon.ico" });
+                        }
+                    });
                 }
             }
             alert("Recordatorio enviado correctamente al paciente.");
@@ -43,6 +49,12 @@ const AgendaCitas = () => {
                 if ("Notification" in window) {
                     if (Notification.permission === "granted") {
                         new Notification("PsicoSystem Alerta", { body: "La cita ha sido cancelada exitosamente.", icon: "/favicon.ico" });
+                    } else if (Notification.permission !== "denied") {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                new Notification("PsicoSystem Alerta", { body: "La cita ha sido cancelada exitosamente.", icon: "/favicon.ico" });
+                            }
+                        });
                     }
                 }
                 alert("Cita cancelada correctamente.");
