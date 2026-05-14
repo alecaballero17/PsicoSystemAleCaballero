@@ -461,7 +461,6 @@ class VoiceQueryAPIView(APIView):
                 params['entidad'] = 'citas'
             
             elif entidad == 'pacientes':
-                from apps.P1_Pacientes_Expedientes.models import Paciente
                 qs = Paciente.objects.filter(clinica=clinica).order_by('-id')[:10]
                 results = [{"paciente": p.nombre, "fecha": "N/A", "estado": p.ci} for p in qs] # Reutilizamos columnas para no romper el front
                 data_summary = f"Actualmente la clínica tiene {Paciente.objects.filter(clinica=clinica).count()} pacientes registrados. Los últimos son {', '.join([p.nombre for p in qs[:3]])}."
