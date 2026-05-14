@@ -46,9 +46,10 @@ if _render_host and _render_host not in ALLOWED_HOSTS:
 if os.environ.get("RENDER") and ".onrender.com" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(".onrender.com")
 
-# Detrás del proxy HTTPS de Render, sin esto las cookies/CSRF suelen fallar (login “no avanza”)
-if os.environ.get("RENDER"):
+# Detrás del proxy HTTPS de Render/Railway, sin esto ocurren bucles de redirección (Error 301)
+if not DEBUG or os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=not DEBUG, cast=bool)
 SESSION_COOKIE_SECURE = not DEBUG
