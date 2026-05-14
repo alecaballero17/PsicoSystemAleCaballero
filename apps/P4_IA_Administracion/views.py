@@ -42,7 +42,7 @@ class LogAuditoriaAPIView(APIView):
         
         data = [
             {
-                "fecha": log.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+                "fecha": timezone.localtime(log.fecha).strftime("%Y-%m-%d %H:%M:%S"),
                 "usuario": getattr(log.usuario, "username", "Desconocido") if log.usuario else "Desconocido",
                 "accion": log.accion
             }
@@ -456,7 +456,7 @@ class VoiceQueryAPIView(APIView):
                 else:
                     data_summary = f"Para el periodo {start} al {end}, se encontraron {qs.count()} citas. "
                 
-                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m %H:%M'), "estado": c.estado} for c in qs]
+                results = [{"paciente": c.paciente.nombre, "fecha": timezone.localtime(c.fecha_hora).strftime('%d/%m %H:%M'), "estado": c.estado} for c in qs]
                 data_summary += f"Pacientes: {', '.join([c.paciente.nombre for c in qs[:3]])}."
                 params['entidad'] = 'citas'
             
@@ -605,7 +605,7 @@ class ReporteGeneralPDFAPIView(APIView):
             for c in citas:
                 if y < 100: p.showPage(); y = 750 # Nueva página si se acaba el espacio
                 p.drawString(50, y, c.paciente.nombre[:30])
-                p.drawString(250, y, c.fecha_hora.strftime('%d/%m/%Y %H:%M'))
+                p.drawString(250, y, timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M'))
                 p.drawString(450, y, c.estado)
                 y -= 15
         else:
