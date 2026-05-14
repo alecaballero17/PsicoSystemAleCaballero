@@ -49,7 +49,7 @@ Un motor de diagnóstico único que combina lo mejor de múltiples nubes para as
   <img src="https://github.com/alecaballero17.png" width="100px" style="border-radius:50%" />
   <br>
   <strong>Alejandro Caballero</strong><br>
-  <i>Ingeniería de Sistemas — UAGRM</i><br>
+  <i>Ingeniería Informática — UAGRM</i><br>
   <a href="https://github.com/alecaballero17">@alecaballero17</a>
 </div>
 
