@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from apps.P1_Identidad_Acceso.permissions import (
     HasClinicaAsignada,
@@ -146,6 +147,16 @@ class CitaViewSet(viewsets.ModelViewSet):
             usuario=self.request.user,
             accion=f"Programó cita (ViewSet): {cita.paciente} — {cita.fecha_hora}",
         )
+        
+        # Notificación por Email
+        mensaje = f"Se ha programado una nueva cita para {cita.paciente.nombre} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')} con el profesional {cita.psicologo.get_full_name()}."
+        send_mail(
+            subject='Nueva Cita Programada - PsicoSystem',
+            message=mensaje,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.request.user.email or 'admin@psicosystem.com'],
+            fail_silently=True,
+        )
 
     @action(detail=True, methods=['post'])
     def enviar_recordatorio(self, request, pk=None):
@@ -162,7 +173,7 @@ class CitaViewSet(viewsets.ModelViewSet):
                 subject='Recordatorio de Cita - PsicoSystem',
                 message=mensaje,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[paciente.clinica.email_contacto or 'paciente@ejemplo.com'],
+                recipient_list=[request.user.email or 'paciente@ejemplo.com'],
                 fail_silently=False,
             )
             
@@ -187,7 +198,7 @@ class CitaViewSet(viewsets.ModelViewSet):
             subject='Notificación de Cancelación - PsicoSystem',
             message=mensaje,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[cita.paciente.clinica.email_contacto or 'paciente@ejemplo.com'],
+            recipient_list=[request.user.email or 'paciente@ejemplo.com'],
             fail_silently=True,
         )
 

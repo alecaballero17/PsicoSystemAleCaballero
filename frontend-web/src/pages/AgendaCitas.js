@@ -25,6 +25,11 @@ const AgendaCitas = () => {
     const enviarRecordatorio = async (citaId) => {
         try {
             await apiClient.post(`logistica/gestion/${citaId}/enviar_recordatorio/`);
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification("PsicoSystem Recordatorio", { body: "Se ha enviado un correo de recordatorio al paciente.", icon: "/favicon.ico" });
+                }
+            }
             alert("Recordatorio enviado correctamente al paciente.");
         } catch (err) {
             alert("Error al enviar recordatorio.");
@@ -35,6 +40,11 @@ const AgendaCitas = () => {
         if (window.confirm("¿Está seguro de cancelar esta cita? Se enviará una notificación al paciente.")) {
             try {
                 await apiClient.post(`logistica/gestion/${citaId}/cancelar/`);
+                if ("Notification" in window) {
+                    if (Notification.permission === "granted") {
+                        new Notification("PsicoSystem Alerta", { body: "La cita ha sido cancelada exitosamente.", icon: "/favicon.ico" });
+                    }
+                }
                 alert("Cita cancelada correctamente.");
                 fetchCitas();
             } catch (err) {

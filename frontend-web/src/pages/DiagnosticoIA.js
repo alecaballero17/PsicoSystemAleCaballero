@@ -33,12 +33,44 @@ const DiagnosticoIA = () => {
             };
             const response = await apiClient.post('ia/diagnostico/', payload);
             setResultado(response.data.diagnostico_ia);
+            
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification("Gemini AI", { body: "El diagnóstico clínico ha sido generado con éxito.", icon: "/favicon.ico" });
+                }
+            }
+            
             fetchHistorial();
         } catch (err) {
             alert("Error al procesar con IA: " + (err.response?.data?.detail || err.message));
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatMarkdown = (text) => {
+        if (!text) return null;
+        return text.split('\n').map((line, index) => {
+            if (line.trim() === '') return <br key={index} />;
+            
+            // Títulos H3
+            if (line.startsWith('### ')) {
+                return <h4 key={index} style={{ color: '#4c1d95', margin: '15px 0 5px 0', borderBottom: '1px solid #ddd6fe', paddingBottom: '5px' }}>{line.replace('### ', '')}</h4>;
+            }
+            
+            // Negritas
+            const parts = line.split(/(\*\*.*?\*\*)/g);
+            return (
+                <div key={index} style={{ marginBottom: '8px' }}>
+                    {parts.map((part, i) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={i} style={{ color: '#312e81' }}>{part.slice(2, -2)}</strong>;
+                        }
+                        return part;
+                    })}
+                </div>
+            );
+        });
     };
 
     return (
@@ -81,7 +113,7 @@ const DiagnosticoIA = () => {
                     {resultado && (
                         <div style={styles.resultBox}>
                             <h4 style={styles.resultTitle}>Análisis Sugerido:</h4>
-                            <div style={styles.resultText}>{resultado}</div>
+                            <div style={styles.resultText}>{formatMarkdown(resultado)}</div>
                         </div>
                     )}
                 </div>

@@ -85,7 +85,7 @@ class PacienteListCreateAPIView(generics.ListCreateAPIView):
         )
 
 
-class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PacienteSerializer
     permission_classes = [
         IsAuthenticated,

@@ -13,6 +13,11 @@ const RegistroPaciente = () => {
         setLoading(true);
         try {
             await pacienteService.registrarPaciente(formData);
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification("PsicoSystem Clínico", { body: "¡Expediente de paciente creado con éxito!", icon: "/favicon.ico" });
+                }
+            }
             alert("¡Paciente guardado exitosamente!");
             navigate('/dashboard');
         } catch (error) {

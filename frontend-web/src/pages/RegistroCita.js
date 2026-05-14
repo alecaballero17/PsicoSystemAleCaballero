@@ -36,6 +36,20 @@ const RegistroCita = () => {
         setLoading(true);
         try {
             await apiClient.post('logistica/gestion/', formData);
+            
+            // Web Push Notification Nativa
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification("PsicoSystem", { body: "¡Nueva Cita programada con éxito!", icon: "/favicon.ico" });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("PsicoSystem", { body: "¡Nueva Cita programada con éxito!", icon: "/favicon.ico" });
+                        }
+                    });
+                }
+            }
+            
             alert("¡Cita programada con éxito!");
             navigate('/citas');
         } catch (err) {
