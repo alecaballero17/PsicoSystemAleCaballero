@@ -385,15 +385,21 @@ class VoiceQueryAPIView(APIView):
         if not query_text:
             return Response({"error": "No se recibió ninguna consulta de voz."}, status=400)
 
-        # 1. Usar Gemini para extraer parámetros (Fechas y Entidad)
+        # 1. Usar Groq para extraer parámetros (Fechas y Entidad)
+        from datetime import date
+        hoy_obj = date.today()
+        hoy_str = hoy_obj.strftime('%Y-%m-%d')
+        
         prompt = f"""
         Actúa como un analista de datos para un centro psicológico. 
-        De la siguiente frase en español: "{query_text}", extrae los siguientes parámetros en formato JSON puro:
+        Hoy es {hoy_str}.
+        De la siguiente frase en español: "{query_text}", extrae los parámetros en JSON puro:
         - start_date (YYYY-MM-DD)
         - end_date (YYYY-MM-DD)
         - entidad (citas, pacientes, finanzas)
         
-        Si no se menciona año, usa 2026. Si dice 'primera semana de mayo', usa 2026-05-01 al 2026-05-07.
+        Si dice 'mañana', usa {hoy_obj}. Si dice 'ayer', usa {hoy_obj}. 
+        Si no se menciona fecha, usa {hoy_str}.
         Solo devuelve el JSON, nada más.
         """
         
@@ -414,7 +420,7 @@ class VoiceQueryAPIView(APIView):
             )
             response_text = chat_completion.choices[0].message.content
             
-            # Limpiar respuesta para JSON (Más robusto)
+            # Limpiar respuesta para JSON
             import re
             match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if not match:
@@ -423,17 +429,17 @@ class VoiceQueryAPIView(APIView):
             raw_json = match.group(0)
             params = json.loads(raw_json)
             
-            # 2. Consultar Base de Datos (Lógica robusta de matching)
-            from datetime import date
+            # 2. Consultar Base de Datos
             clinica = request.user.clinica
-            hoy = date.today().strftime('%Y-%m-%d')
-            start = params.get('start_date', hoy)
-            end = params.get('end_date', hoy)
+            start = params.get('start_date', hoy_str)
+            end = params.get('end_date', hoy_str)
             entidad_raw = str(params.get('entidad', 'citas')).lower()
             
-            # Normalización de entidad para evitar errores como 'citaspacientes'
+            # Normalización de entidad
             if 'cita' in entidad_raw:
                 entidad = 'citas'
+            elif 'paciente' in entidad_raw:
+                entidad = 'pacientes'
             elif 'finanza' in entidad_raw or 'pago' in entidad_raw or 'dinero' in entidad_raw:
                 entidad = 'finanzas'
             else:
@@ -442,30 +448,29 @@ class VoiceQueryAPIView(APIView):
             data_summary = ""
             results = []
 
-            # Obtener citas
-            citas = Cita.objects.filter(
-                paciente__clinica=clinica, 
-                fecha_hora__date__range=[start, end]
-            ).order_by('fecha_hora')
-
-            # --- BLINDAJE DE DEFENSA ---
-            # Si no hay citas en el rango, traer las últimas 10 de la clínica
-            if not citas.exists():
-                citas = Cita.objects.filter(paciente__clinica=clinica).order_by('-fecha_hora')[:10]
-            # ---------------------------
-
             if entidad == 'citas':
-                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m %H:%M'), "estado": c.estado} for c in citas]
-                data_summary = f"Se encontraron {citas.count()} citas programadas. Los pacientes incluyen a {', '.join([c.paciente.nombre for c in citas[:3]])}."
+                qs = Cita.objects.filter(paciente__clinica=clinica, fecha_hora__date__range=[start, end]).order_by('fecha_hora')
+                if not qs.exists() and start == hoy_str: # Solo blindaje si es hoy y está vacío
+                    qs = Cita.objects.filter(paciente__clinica=clinica).order_by('-fecha_hora')[:5]
+                    data_summary = "No hay citas próximas, pero estas son las últimas registradas: "
+                else:
+                    data_summary = f"Para el periodo {start} al {end}, se encontraron {qs.count()} citas. "
+                
+                results = [{"paciente": c.paciente.nombre, "fecha": c.fecha_hora.strftime('%d/%m %H:%M'), "estado": c.estado} for c in qs]
+                data_summary += f"Pacientes: {', '.join([c.paciente.nombre for c in qs[:3]])}."
                 params['entidad'] = 'citas'
             
+            elif entidad == 'pacientes':
+                from apps.P1_Pacientes_Expedientes.models import Paciente
+                qs = Paciente.objects.filter(clinica=clinica).order_by('-id')[:10]
+                results = [{"paciente": p.nombre, "fecha": "N/A", "estado": p.ci} for p in qs] # Reutilizamos columnas para no romper el front
+                data_summary = f"Actualmente la clínica tiene {Paciente.objects.filter(clinica=clinica).count()} pacientes registrados. Los últimos son {', '.join([p.nombre for p in qs[:3]])}."
+                params['entidad'] = 'citas' # Engañamos al front para que use la tabla de citas pero con datos de pacientes
+            
             elif entidad == 'finanzas':
-                trans = Transaccion.objects.filter(
-                    paciente__clinica=request.user.clinica,
-                    fecha__date__range=[start, end]
-                )
+                trans = Transaccion.objects.filter(paciente__clinica=clinica, fecha__date__range=[start, end])
                 total = sum(t.monto for t in trans)
-                data_summary = f"En el periodo de {start} a {end}, se recaudó un total de {total} bolivianos a través de {trans.count()} transacciones financieras."
+                data_summary = f"En finanzas para {start} a {end}, el total es de {total} BS en {trans.count()} movimientos."
                 results = [{"monto": str(t.monto), "concepto": t.concepto} for t in trans]
                 params['entidad'] = 'finanzas'
 
