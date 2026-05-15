@@ -44,6 +44,34 @@ Un motor de diagnóstico único que combina lo mejor de múltiples nubes para as
 
 ---
 
+## 💻 Guía de Ejecución Local (Localhost)
+
+Para levantar el proyecto en tu entorno local durante la defensa o desarrollo, sigue estos pasos abriendo **dos terminales** en tu editor (ej. VS Code):
+
+### 1. Servidor Backend (Django)
+Abre una terminal en la carpeta raíz del proyecto (`PsicoSystem_SI2`):
+```powershell
+# 1. Activar el entorno virtual
+.\venv\Scripts\activate
+
+# 2. Iniciar el servidor de desarrollo
+python manage.py runserver
+```
+El backend estará disponible en: `http://127.0.0.1:8000/`
+
+### 2. Servidor Frontend (React)
+Abre una **segunda terminal** y navega a la carpeta del frontend web:
+```powershell
+# 1. Entrar al directorio del frontend
+cd frontend-web
+
+# 2. Iniciar la aplicación de React
+npm start
+```
+El frontend se abrirá automáticamente en tu navegador en: `http://localhost:3000/`
+
+---
+
 ## 👤 Desarrollado por
 <div align="left">
   <img src="https://github.com/alecaballero17.png" width="100px" style="border-radius:50%" />
