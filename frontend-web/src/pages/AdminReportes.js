@@ -56,6 +56,33 @@ const AdminReportes = () => {
         }
     };
 
+    // Función para generar el Excel (CSV) de forma segura
+    const handleGenerateCSV = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('userToken');
+            const response = await fetch(`${authService.apiClient.defaults.baseURL}ia/reporte-csv/?tipo=${tipoReporte}&start=${fechaInicio}&end=${fechaFin}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error("Error en el servidor");
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_${tipoReporte}_${fechaInicio}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (error) {
+            console.error("Error:", error);
+            alert("⚠️ No se pudo generar el Excel (CSV). Verifique su conexión o permisos.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div style={styles.layout}>
             {/* Sidebar Reutilizado (Simplificado para brevedad) */}
@@ -117,13 +144,22 @@ const AdminReportes = () => {
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={handleGeneratePDF}
-                                    disabled={loading}
-                                    style={{ ...styles.mainActionBtn, width: '100%', marginTop: '10px', padding: '15px', opacity: loading ? 0.7 : 1 }}
-                                >
-                                    {loading ? '⏳ GENERANDO DOCUMENTO...' : '📄 GENERAR REPORTE PDF'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                    <button 
+                                        onClick={handleGeneratePDF}
+                                        disabled={loading}
+                                        style={{ ...styles.mainActionBtn, flex: 1, padding: '15px 5px', opacity: loading ? 0.7 : 1, fontSize: '13px' }}
+                                    >
+                                        {loading ? '⏳ GENERANDO...' : '📄 REPORTE PDF'}
+                                    </button>
+                                    <button 
+                                        onClick={handleGenerateCSV}
+                                        disabled={loading}
+                                        style={{ ...styles.mainActionBtn, flex: 1, padding: '15px 5px', opacity: loading ? 0.7 : 1, backgroundColor: '#10b981', fontSize: '13px' }}
+                                    >
+                                        {loading ? '⏳ GENERANDO...' : '🟢 REPORTE EXCEL'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

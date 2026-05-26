@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView, VoiceQueryAPIView, BackupDatabaseAPIView, ReporteGeneralPDFAPIView, RestoreDatabaseAPIView, DestruccionControladaAPIView
+from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView, VoiceQueryAPIView, BackupDatabaseAPIView, ReporteGeneralPDFAPIView, ReporteGeneralCSVAPIView, RestoreDatabaseAPIView, DestruccionControladaAPIView
 
 urlpatterns = [
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/ia/voz-reporte/', VoiceQueryAPIView.as_view(), name='ia_voz_reporte'),
     path('api/ia/backup/', BackupDatabaseAPIView.as_view(), name='ia_backup'),
     path('api/ia/reporte-pdf/', ReporteGeneralPDFAPIView.as_view(), name='ia_reporte_pdf'),
+    path('api/ia/reporte-csv/', ReporteGeneralCSVAPIView.as_view(), name='ia_reporte_csv'),
     path('api/ia/restore/', RestoreDatabaseAPIView.as_view(), name='ia_restore'),
     path('api/ia/panic-button/', DestruccionControladaAPIView.as_view(), name='panic-button'),
 ]

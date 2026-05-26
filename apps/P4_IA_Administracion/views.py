@@ -4,6 +4,7 @@ Integración con Google Gemini para diagnóstico asistido por inteligencia artif
 """
 import logging
 import json
+import csv
 from datetime import date
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -631,6 +632,52 @@ class ReporteGeneralPDFAPIView(APIView):
         LogAuditoria.objects.create(
             usuario=request.user,
             accion=f"Generó reporte PDF de {tipo} del {start} al {end}."
+        )
+        
+        return response
+
+class ReporteGeneralCSVAPIView(APIView):
+    """
+    Genera un reporte CSV compatible con Excel, filtrado por fechas (CU-Reportes).
+    """
+    permission_classes = [IsAuthenticated, EsAdministrador, HasClinicaAsignada]
+
+    def get(self, request):
+        tipo = request.query_params.get('tipo', 'citas')
+        start = request.query_params.get('start', date.today().strftime('%Y-%m-%d'))
+        end = request.query_params.get('end', date.today().strftime('%Y-%m-%d'))
+        
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="Reporte_{tipo}_{start}.csv"'
+        
+        # Escribir el BOM (Byte Order Mark) de UTF-8 para que Excel detecte correctamente la codificación UTF-8
+        response.write(b'\xef\xbb\xbf')
+        
+        writer = csv.writer(response, delimiter=';') # El punto y coma es mejor para configuración regional de Excel en español
+        
+        if tipo == 'citas':
+            citas = Cita.objects.filter(paciente__clinica=request.user.clinica, fecha_hora__date__range=[start, end])
+            if not citas.exists():
+                citas = Cita.objects.filter(paciente__clinica=request.user.clinica).order_by('-fecha_hora')[:10]
+            
+            writer.writerow(["ID Cita", "Paciente", "Fecha / Hora", "Estado", "Motivo"])
+            for c in citas:
+                fecha_local = timezone.localtime(c.fecha_hora).strftime('%Y-%m-%d %H:%M')
+                writer.writerow([c.pk, c.paciente.nombre, fecha_local, c.estado, c.motivo])
+        else:
+            trans = Transaccion.objects.filter(clinica=request.user.clinica, fecha__date__range=[start, end])
+            if not trans.exists():
+                trans = Transaccion.objects.filter(clinica=request.user.clinica).order_by('-fecha')[:10]
+                
+            writer.writerow(["ID Transaccion", "Paciente", "Concepto", "Monto (BS)", "Método de Pago", "Fecha"])
+            for t in trans:
+                fecha_local = timezone.localtime(t.fecha).strftime('%Y-%m-%d %H:%M')
+                writer.writerow([t.pk, t.paciente.nombre, t.concepto, t.monto, t.get_metodo_pago_display(), fecha_local])
+                
+        # Auditoría
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Generó reporte CSV (Excel) de {tipo} del {start} al {end}."
         )
         
         return response
