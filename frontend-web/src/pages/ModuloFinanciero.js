@@ -43,12 +43,14 @@ const ModuloFinanciero = () => {
 
     const handleDownloadPDF = async (transaccionId) => {
         try {
-            // Usamos window.open para descargar el archivo directamente
-            const token = localStorage.getItem('userToken');
-            const url = `${apiClient.defaults.baseURL}finanzas/transacciones/${transaccionId}/pdf/?token=${token}`;
-            
+            const response = await apiClient.get(`finanzas/transacciones/${transaccionId}/pdf/`, {
+                responseType: 'blob'
+            });
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
         } catch (err) {
+            console.error("Error al descargar el recibo", err);
             alert("Error al descargar el recibo.");
         }
     };

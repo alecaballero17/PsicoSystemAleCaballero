@@ -10,7 +10,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
 from apps.P1_Identidad_Acceso.models import Usuario
@@ -322,12 +322,12 @@ class DescargarComprobantePDFAPIView(APIView):
     """
     Generar y descargar el recibo en PDF (CU11).
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+    permission_classes = [AllowAny]
 
     def get(self, request, transaccion_id):
         # Permitir autenticación por query param para descargas directas (window.open)
         token = request.query_params.get('token')
-        if not request.user.is_authenticated and token:
+        if (not request.user or not request.user.is_authenticated) and token:
             from rest_framework_simplejwt.authentication import JWTAuthentication
             try:
                 validated_token = JWTAuthentication().get_validated_token(token)
@@ -336,14 +336,17 @@ class DescargarComprobantePDFAPIView(APIView):
             except:
                 return Response({"error": "Token inválido para descarga."}, status=403)
 
-        if not request.user.is_authenticated:
+        if not request.user or not request.user.is_authenticated:
             return Response({"error": "No autenticado."}, status=401)
+
+        if getattr(request.user, "clinica_id", None) is None:
+            return Response({"error": "Tu cuenta no tiene clínica asignada."}, status=403)
 
         transaccion = get_object_or_404(Transaccion, pk=transaccion_id, clinica=request.user.clinica)
         comprobante = get_object_or_404(Comprobante, transaccion=transaccion)
 
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="Recibo_{comprobante.nro_comprobante}.pdf"'
+        response['Content-Disposition'] = f'inline; filename="Recibo_{comprobante.nro_comprobante}.pdf"'
 
         # Crear PDF
         p = canvas.Canvas(response, pagesize=letter)
