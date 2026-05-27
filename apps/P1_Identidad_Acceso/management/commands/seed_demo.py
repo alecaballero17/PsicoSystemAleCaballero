@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
 from apps.P1_Identidad_Acceso.models import Clinica, Usuario
-from apps.P2_Gestion_Clinica.models import Paciente, HistoriaClinica
+from apps.P2_Gestion_Clinica.models import Paciente, ExpedienteClinico
 from apps.P4_IA_Administracion.models import LogAuditoria
-from apps.P1_Identidad_Acceso.models import TransaccionClinica
 from apps.P3_Logistica_Citas.models import Cita
 
 class Command(BaseCommand):
@@ -29,8 +28,6 @@ class Command(BaseCommand):
                 defaults={
                     "nit": f"100200{random.randint(100, 999)}",
                     "direccion": direccion,
-                    "telefono": f"2222{random.randint(1000, 9999)}",
-                    "email_contacto": f"contacto@{nombre.replace(' ', '').lower()}.com",
                     "plan_suscripcion": plan
                 }
             )
@@ -51,8 +48,7 @@ class Command(BaseCommand):
                     "first_name": "Gerente",
                     "last_name": clinica.nombre,
                     "rol": "ADMIN",
-                    "clinica": clinica,
-                    "ci": f"{random.randint(1000000, 9999999)}"
+                    "clinica": clinica
                 }
             )
 
@@ -66,8 +62,7 @@ class Command(BaseCommand):
                         "first_name": f"Doctor {j+1}",
                         "last_name": "Pérez",
                         "rol": "PSICOLOGO",
-                        "clinica": clinica,
-                        "ci": f"{random.randint(1000000, 9999999)}"
+                        "clinica": clinica
                     }
                 )
 
@@ -84,7 +79,7 @@ class Command(BaseCommand):
                     }
                 )
                 if pac_created:
-                    HistoriaClinica.objects.get_or_create(paciente=paciente)
+                    ExpedienteClinico.objects.get_or_create(paciente=paciente)
 
             # Paciente Usuario para la app móvil
             if num_psico > 0:
@@ -100,20 +95,11 @@ class Command(BaseCommand):
                     }
                 )
 
-            # Auditoría
+            # Auditoría simple
             LogAuditoria.objects.get_or_create(
-                clinica=clinica, usuario=admin_user, 
-                accion="Configuración inicial del sistema completada.",
-                defaults={"ip_address": "192.168.1.1", "user_agent": "Chrome / Windows 11"}
+                usuario=admin_user, 
+                accion="Configuración inicial del sistema completada."
             )
-
-            # Facturación SaaS
-            TransaccionClinica.objects.get_or_create(
-                clinica=clinica, tipo='CARGA', monto=1000.00,
-                defaults={"descripcion": "Carga inicial de bienvenida PsicoSystem", "metodo_pago": "SISTEMA"}
-            )
-            clinica.saldo = 1000.00
-            clinica.save()
 
             # Citas aleatorias
             psicologos = Usuario.objects.filter(clinica=clinica, rol="PSICOLOGO")
