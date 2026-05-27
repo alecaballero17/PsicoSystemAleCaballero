@@ -266,10 +266,10 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
       // Mostrar notificación push local REAL de la cita
       final _localNotifications = FlutterLocalNotificationsPlugin();
       await _localNotifications.show(
-        id: DateTime.now().millisecond,
-        title: 'Cita Programada',
-        body: 'Dr(a). ${_selectedPsicologo!.split(' - ').last} | ${DateFormat('yyyy-MM-dd HH:mm').format(dateTime)}',
-        notificationDetails: const NotificationDetails(
+        DateTime.now().millisecond,
+        'Cita Programada',
+        'Dr(a). ${_selectedPsicologo!.split(' - ').last} | ${DateFormat('yyyy-MM-dd HH:mm').format(dateTime)}',
+        const NotificationDetails(
           android: AndroidNotificationDetails(
             'high_importance_channel',
             'High Importance Notifications',

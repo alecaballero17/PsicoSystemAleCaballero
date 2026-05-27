@@ -205,10 +205,10 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
       
       final _localNotifications = FlutterLocalNotificationsPlugin();
       await _localNotifications.show(
-        id: DateTime.now().millisecond,
-        title: 'Reporte Listo',
-        body: 'Aquí está tu reporte generado ($filename)',
-        notificationDetails: const NotificationDetails(
+        DateTime.now().millisecond,
+        'Reporte Listo',
+        'Aquí está tu reporte generado ($filename)',
+        const NotificationDetails(
           android: AndroidNotificationDetails(
             'high_importance_channel',
             'High Importance Notifications',
