@@ -199,7 +199,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
     try {
       final bytes = base64.decode(base64Str);
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('\${dir.path}/\$filename');
+      final file = File('${dir.path}/$filename');
       await file.writeAsBytes(bytes);
       await OpenFilex.open(file.path);
     } catch (e) {
