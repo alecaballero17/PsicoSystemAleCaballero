@@ -68,7 +68,6 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isSubmitting = false;
           _loadingPsicologos = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -98,7 +97,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Nueva Cita Programada\nDr(a). ${_selectedPsicologo!['first_name']} | $fechaStr',
+                'Nueva Cita Programada\nDr(a). ${_selectedPsicologo!.split(' - ').last} | $fechaStr',
                 style: const TextStyle(fontWeight: FontWeight.bold)
               ),
             ),
@@ -159,7 +158,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   Future<void> _loadDisponibilidad() async {
     setState(() => _isLoading = true);
     try {
-      final psicologoUsername = _selectedPsicologo['username'];
+      final psicologoUsername = _selectedPsicologo!.split(' - ').first;
       final fechaStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       final ocupadas = await CitaPagoService.getDisponibilidad(
         token: widget.token,
@@ -202,7 +201,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
         token: widget.token,
         fechaHora: dateTime,
         motivo: _motivoCtrl.text.trim(),
-        psicologoUsername: _selectedPsicologo['username'],
+        psicologoUsername: _selectedPsicologo!.split(' - ').first,
         clinicaId: widget.clinicaId,
       );
       
