@@ -163,7 +163,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
     } catch (e) {
       setState(() => _isProcessingVoice = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al generar: \$e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error al generar: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -204,7 +204,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
       await OpenFilex.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al abrir el archivo: \$e')),
+        SnackBar(content: Text('Error al abrir el archivo: $e')),
       );
     }
   }

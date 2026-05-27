@@ -996,49 +996,49 @@ Usa {hoy_str} si no se menciona fecha."""
                         p.showPage()
                         y = 750
 
-                p.showPage()
-                p.save()
-                pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
-                pdf_buffer.close()
+            p.showPage()
+            p.save()
+            pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
+            pdf_buffer.close()
 
-                # 2. Generar Excel (CSV en memoria)
-                import csv
-                csv_buffer = io.StringIO()
-                writer = csv.writer(csv_buffer)
-                writer.writerow(["Reporte Global de Pagos y Citas", f"Paciente: {full_name}", f"Periodo: {start} al {end}"])
-                writer.writerow([])
+            # 2. Generar Excel (CSV en memoria)
+            import csv
+            csv_buffer = io.StringIO()
+            writer = csv.writer(csv_buffer)
+            writer.writerow(["Reporte Global de Pagos y Citas", f"Paciente: {full_name}", f"Periodo: {start} al {end}"])
+            writer.writerow([])
 
-                if not clinicas_a_reportar:
-                    writer.writerow(["El paciente no tiene clínicas asociadas."])
-                else:
-                    for clinica_actual in clinicas_a_reportar:
-                        writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
-                        qs = Cita.objects.filter(
-                            paciente__ci=identificador, 
-                            paciente__clinica=clinica_actual,
-                            fecha_hora__date__range=[start, end]
-                        ).order_by('fecha_hora')
+            if not clinicas_a_reportar:
+                writer.writerow(["El paciente no tiene clínicas asociadas."])
+            else:
+                for clinica_actual in clinicas_a_reportar:
+                    writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
+                    qs = Cita.objects.filter(
+                        paciente__ci=identificador, 
+                        paciente__clinica=clinica_actual,
+                        fecha_hora__date__range=[start, end]
+                    ).order_by('fecha_hora')
 
-                        if not qs.exists():
-                            writer.writerow(["No hubo reporte para esta clínica ya que no hubo pagos.", "", "", "", ""])
-                        else:
-                            writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
-                            for c in qs:
-                                fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
-                                psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
-                                monto = getattr(c, 'monto', '120.00')
-                                writer.writerow([fecha, psi, c.motivo, c.estado, f"${monto}"])
-                        writer.writerow([]) # Fila en blanco
-            
-                csv_bytes = csv_buffer.getvalue().encode('utf-8-sig') # UTF-8 with BOM for Excel
-                excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
-                csv_buffer.close()
+                    if not qs.exists():
+                        writer.writerow(["No hubo reporte para esta clínica ya que no hubo pagos.", "", "", "", ""])
+                    else:
+                        writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
+                        for c in qs:
+                            fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
+                            psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
+                            monto = getattr(c, 'monto', '120.00')
+                            writer.writerow([fecha, psi, c.motivo, c.estado, f"${monto}"])
+                    writer.writerow([]) # Fila en blanco
+        
+            csv_bytes = csv_buffer.getvalue().encode('utf-8-sig') # UTF-8 with BOM for Excel
+            excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
+            csv_buffer.close()
 
-                return Response({
-                    "mensaje": "Reportes generados exitosamente",
-                    "pdf_base64": pdf_base64,
-                    "excel_base64": excel_base64
-                }, status=200)
+            return Response({
+                "mensaje": "Reportes generados exitosamente",
+                "pdf_base64": pdf_base64,
+                "excel_base64": excel_base64
+            }, status=200)
             
         except Exception as e:
             logger.error(f"Error generando PDF/Excel: {e}")
