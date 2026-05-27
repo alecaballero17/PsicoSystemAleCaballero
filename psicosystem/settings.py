@@ -142,6 +142,11 @@ DATABASES = {
     )
 }
 
+# Patch hostname if we are using Render internal hostname but DNS resolution fails
+_db_host = DATABASES["default"].get("HOST", "")
+if _db_host and _db_host.startswith("dpg-") and not _db_host.endswith(".render.com"):
+    DATABASES["default"]["HOST"] = f"{_db_host}.oregon-postgres.render.com"
+
 # En desarrollo local, se permite un DB_PASSWORD por defecto; en producción siempre defínelo.
 if not os.environ.get("DATABASE_URL"):
     DATABASES["default"]["PASSWORD"] = config("DB_PASSWORD", default="1234")
