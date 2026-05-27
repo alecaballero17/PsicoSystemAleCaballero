@@ -864,7 +864,7 @@ class GenerarReporteMobileAPIView(APIView):
     Endpoint para generar reportes en PDF y Excel desde la App Móvil usando transcripción de voz.
     Soporta reportes 'generales' (múltiples clínicas del paciente) y 'específicos'.
     """
-    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         transcript = request.data.get('transcript', '')
