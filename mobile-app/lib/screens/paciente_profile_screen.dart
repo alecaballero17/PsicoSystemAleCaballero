@@ -122,6 +122,20 @@ class _PacienteProfileScreenState extends State<PacienteProfileScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
+            const SizedBox(height: 16),
+            
+            // Campo de solo lectura para la Clínica
+            TextField(
+              controller: TextEditingController(text: widget.user.clinicaNombre),
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: 'Clínica Registrada (No editable)',
+                prefixIcon: const Icon(Icons.local_hospital_outlined, color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey.shade200,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
             
             const SizedBox(height: 40),
             SizedBox(

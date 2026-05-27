@@ -44,6 +44,38 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
     } catch (_) {}
   }
 
+  Future<void> _borrarTodas() async {
+    try {
+      await NotificacionService.deleteAllNotificaciones(widget.token);
+      setState(() {
+        _notificaciones.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Todas las notificaciones borradas.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al borrar: $e')),
+      );
+    }
+  }
+
+  Future<void> _borrarUna(int id, int index) async {
+    try {
+      await NotificacionService.deleteNotificacion(widget.token, id);
+      setState(() {
+        _notificaciones.removeAt(index);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notificación borrada.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al borrar: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +85,32 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
         title: Text('Notificaciones', style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+        actions: [
+          if (_notificaciones.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear_all, color: Colors.redAccent),
+              tooltip: 'Borrar Todas',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Borrar todas las notificaciones'),
+                    content: const Text('¿Estás seguro que deseas eliminar todas las notificaciones?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _borrarTodas();
+                        },
+                        child: const Text('Borrar', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
@@ -118,6 +176,12 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
                                     ),
                                   ],
                                 ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                onPressed: () {
+                                  _borrarUna(notif['id'], index);
+                                },
                               ),
                             ],
                           ),

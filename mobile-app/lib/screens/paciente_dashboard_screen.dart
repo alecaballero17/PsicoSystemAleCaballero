@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/auth_service.dart';
+import '../services/notificacion_service.dart';
 import 'login_screen.dart';
 import 'agendar_cita_stepper_screen.dart';
 import '../models/user_model.dart';
@@ -36,6 +38,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
   bool _isLoading = true;
   User? _user;
   List<dynamic> _clinicas = [];
+  int _unreadNotifications = 0;
 
   final Color primaryBlue = const Color(0xFF2563EB);
   final Color darkBlue = const Color(0xFF0F172A);
@@ -60,6 +63,36 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
     WidgetsBinding.instance.addObserver(this);
     _lastInteractionTime = DateTime.now();
     _loadInitialData();
+
+    // [RF-15] Listener para notificaciones en primer plano (estilo WhatsApp emergente)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (mounted) {
+        setState(() {
+          _unreadNotifications++;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text('${message.notification?.title ?? "Nueva Notificación"}\n${message.notification?.body ?? ""}', style: const TextStyle(fontWeight: FontWeight.bold))),
+              ],
+            ),
+            backgroundColor: primaryBlue,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height - 180,
+              left: 16,
+              right: 16,
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            dismissDirection: DismissDirection.horizontal,
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -105,14 +138,24 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
     try {
       final userData = await AuthService.getCurrentUser(widget.token);
       final clinicasData = await AuthService.getClinicasPublicas();
-      setState(() {
-        _user = userData;
-        _clinicas = clinicasData;
-        _isLoading = false;
-      });
+      
+      int unreadCount = 0;
+      try {
+        final notificacionesData = await NotificacionService.getNotificaciones(widget.token);
+        unreadCount = notificacionesData.where((n) => n['leido'] == false).length;
+      } catch (_) {} // Ignore si falla la carga de notificaciones para no bloquear la pantalla
+
+      if (mounted) {
+        setState(() {
+          _user = userData;
+          _clinicas = clinicasData;
+          _unreadNotifications = unreadCount;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      debugPrint("Error loading data: \$e");
-      setState(() => _isLoading = false);
+      debugPrint("Error loading data: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -179,17 +222,48 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
               style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 20),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_active_outlined),
-                color: darkBlue,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NotificacionesScreen(token: widget.token),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_active_outlined),
+                    color: darkBlue,
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NotificacionesScreen(token: widget.token),
+                        ),
+                      );
+                      _loadInitialData(); // Recargar datos al volver
+                    },
+                  ),
+                  if (_unreadNotifications > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$_unreadNotifications',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
-                  );
-                },
+                ],
               ),
               PopupMenuButton<String>(
                 icon: Icon(Icons.account_circle_outlined, color: darkBlue, size: 28),
@@ -249,8 +323,12 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
           ),
           body: _isLoading
               ? Center(child: CircularProgressIndicator(color: primaryBlue))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
+              : RefreshIndicator(
+                  onRefresh: _loadInitialData,
+                  color: primaryBlue,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -311,6 +389,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
                     ],
                   ),
                 ),
+              ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               Navigator.push(

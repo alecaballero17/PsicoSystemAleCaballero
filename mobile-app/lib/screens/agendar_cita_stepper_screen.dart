@@ -68,11 +68,54 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
+          _isSubmitting = false;
           _loadingPsicologos = false;
         });
-        _showError('No se pudieron cargar los especialistas.');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
+  }
+
+  void _mostrarNotificacionPushSimulada() {
+    if (!mounted) return;
+    
+    // Formatear la fecha
+    final fechaStr = DateFormat('dd MMM, HH:mm').format(
+      DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        int.parse(_selectedTime!.split(':')[0]),
+        int.parse(_selectedTime!.split(':')[1]),
+      )
+    );
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.event_available, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Nueva Cita Programada\nDr(a). ${_selectedPsicologo!['first_name']} | $fechaStr',
+                style: const TextStyle(fontWeight: FontWeight.bold)
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2563EB), // primaryBlue
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height - 180,
+          left: 16,
+          right: 16,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        dismissDirection: DismissDirection.horizontal,
+      ),
+    );
   }
 
   @override
@@ -116,7 +159,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   Future<void> _loadDisponibilidad() async {
     setState(() => _isLoading = true);
     try {
-      final psicologoUsername = (_selectedPsicologo ?? '').split(' - ').first;
+      final psicologoUsername = _selectedPsicologo['username'];
       final fechaStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       final ocupadas = await CitaPagoService.getDisponibilidad(
         token: widget.token,
@@ -148,26 +191,31 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
     setState(() => _isLoading = true);
     try {
       final parts = (_selectedTime ?? '08:30').split(':');
-      final fechaHora = DateTime(
+      final dateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
         int.parse(parts[0]),
         int.parse(parts[1]),
       );
-      final psicologoUsername = (_selectedPsicologo ?? 'drmario').split(' - ').first;
       final cita = await CitaPagoService.crearCita(
         token: widget.token,
-        fechaHora: fechaHora,
+        fechaHora: dateTime,
         motivo: _motivoCtrl.text.trim(),
-        psicologoUsername: psicologoUsername,
+        psicologoUsername: _selectedPsicologo['username'],
         clinicaId: widget.clinicaId,
       );
-      setState(() {
-        _isLoading = false;
-        _createdCitaId = cita['id'];
-        _currentStep = 4;
-      });
+      
+      // Mostrar notificación emergente de la cita
+      _mostrarNotificacionPushSimulada();
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _createdCitaId = cita['id'];
+          _currentStep = 4;
+        });
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       _showError(e.toString().replaceAll('Exception: ', ''));

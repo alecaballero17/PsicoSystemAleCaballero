@@ -45,6 +45,7 @@ class MeAPIView(APIView):
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
+            "ci": user.ci,
             "rol": user.rol,
             "clinica_id": user.clinica_id,
             "clinica_nombre": user.clinica.nombre if user.clinica else None,

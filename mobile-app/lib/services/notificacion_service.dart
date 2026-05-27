@@ -31,4 +31,31 @@ class NotificacionService {
       throw Exception('Error al marcar como leídas.');
     }
   }
+  static Future<void> deleteNotificacion(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/mobile/notificaciones/?id=$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al borrar la notificación.');
+    }
+  }
+
+  static Future<void> deleteAllNotificaciones(String token) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/mobile/notificaciones/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al borrar todas las notificaciones.');
+    }
+  }
 }

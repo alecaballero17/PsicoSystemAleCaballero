@@ -775,3 +775,87 @@ class DestruccionControladaAPIView(APIView):
             accion="[EMERGENCIA] Se ha ejecutado una purga total de datos operativos (Simulación de Desastre)."
         )
         return Response({"message": "Clínica vaciada con éxito. Simulación de desastre completada."}, status=200)
+
+class ChatbotMobileAPIView(APIView):
+    """
+    Endpoint para el Chatbot móvil 'Chatsito'.
+    Puede recibir contexto global, de clínica o de cita según la URL.
+    """
+    permission_classes = [AllowAny] # Para que funcione sin problemas de token si expiró, aunque usualmente IsAuthenticated.
+
+    def post(self, request, context_type="global", context_id=None):
+        mensaje = request.data.get('mensaje', '')
+        if not mensaje:
+            return Response({"respuesta": "¡Hola! Soy Chatsito 🤖. ¿En qué puedo ayudarte hoy?"}, status=200)
+
+        try:
+            client = _get_groq_client()
+            if not client:
+                return Response({"respuesta": "Lo siento, mis servidores de IA están en mantenimiento en este momento 🛠️."}, status=200)
+
+            context_info = ""
+            if context_type == "clinica" and context_id:
+                try:
+                    from apps.P1_Identidad_Acceso.models import Clinica
+                    c = Clinica.objects.get(pk=context_id)
+                    context_info = f"El usuario está preguntando sobre la clínica '{c.nombre}'. Especialidades: {c.especialidades}. Horarios: {c.horarios_atencion}."
+                except:
+                    pass
+            elif context_type == "cita" and context_id:
+                context_info = f"El usuario está preguntando sobre su cita #{context_id}."
+
+            prompt = f"""
+            Eres "Chatsito", el asistente virtual amigable y experto de PsicoSystem (un sistema de gestión de clínicas psicológicas).
+            Tu objetivo es ayudar al paciente a entender la app, resolver dudas sobre salud mental básica (SIN dar diagnósticos médicos) o dar información sobre la clínica.
+            Usa emojis. Sé conversacional, cálido y breve (máximo 2 párrafos cortos).
+            {context_info}
+            
+            Mensaje del paciente: "{mensaje}"
+            """
+            
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "system", "content": prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.6,
+            )
+            respuesta = chat_completion.choices[0].message.content.strip()
+            return Response({"respuesta": respuesta}, status=200)
+        except Exception as e:
+            logger.error(f"Error en ChatbotMobileAPIView: {e}")
+            return Response({"respuesta": "Uy, me dio un pequeño dolor de cabeza cibernético 🤕. ¿Podrías intentar de nuevo?"}, status=200)
+
+class TranscribeAudioMobileAPIView(APIView):
+    """
+    Endpoint para recibir un archivo de audio (.m4a, .wav) desde el móvil
+    y transcribirlo usando Groq Whisper.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        if 'audio' not in request.FILES:
+            return Response({"error": "No se proporcionó ningún archivo de audio."}, status=400)
+            
+        audio_file = request.FILES['audio']
+        
+        try:
+            client = _get_groq_client()
+            if not client:
+                return Response({"transcription": "Error: IA deshabilitada localmente."}, status=200)
+
+            # Groq Whisper requiere el archivo y su contenido
+            file_data = audio_file.read()
+            # Usar un nombre de archivo falso con extensión mp3 para asegurar que Groq lo procese
+            file_tuple = ("audio.mp3", file_data)
+
+            transcription = client.audio.transcriptions.create(
+              file=file_tuple,
+              model="whisper-large-v3-turbo",
+              prompt="El audio es una solicitud médica en español.",
+              language="es",
+            )
+            return Response({"transcription": transcription.text}, status=200)
+        except Exception as e:
+            logger.error(f"Error transcribiendo audio: {e}")
+            return Response({"error": f"Error transcribiendo: {str(e)}"}, status=500)
+
+

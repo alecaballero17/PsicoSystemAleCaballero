@@ -88,7 +88,9 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
             email=email,
             password=make_password(raw_password),
             rol='PACIENTE',
-            clinica=clinica
+            clinica=clinica,
+            ci=ci,
+            first_name=nombre
         )
 
         # Crear Paciente asociado

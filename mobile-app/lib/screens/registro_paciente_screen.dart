@@ -3,7 +3,9 @@
 // [RF-29] Aislamiento SaaS: El paciente selecciona su clínica en on-boarding.
 // [CU-02] Registro de Paciente (Autogestión).
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../services/paciente_service.dart';
 
 // ==============================================================================
@@ -19,6 +21,7 @@ class RegistroPacienteScreen extends StatefulWidget {
 class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   // Controladores de campos
   final _nombreCtrl = TextEditingController();
@@ -32,6 +35,8 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
   void initState() {
     super.initState();
   }
+
+
 
   @override
   void dispose() {
@@ -57,7 +62,7 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
         telefono: _telefonoCtrl.text.trim(),
-        // clinicaId y fechaNacimiento son ahora opcionales en el backend
+        clinicaId: null,
       );
 
       if (!mounted) return;
@@ -150,20 +155,16 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
                   validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu teléfono' : null,
                 ),
                 const SizedBox(height: 16),
+                
 
-                _buildField(
-                  controller: _passwordCtrl,
-                  label: 'Contraseña de Acceso',
-                  icon: Icons.lock,
-                  obscureText: true,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Campo obligatorio';
-                    if (v.length < 8) return 'Mínimo 8 caracteres';
-                    if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$').hasMatch(v)) {
-                      return 'Usa 1 mayúscula, 1 minúscula y 1 número';
-                    }
-                    return null;
-                  },
+
+                _buildPasswordField(),
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0, left: 12.0),
+                  child: Text(
+                    'Mínimo 8 caracteres, 1 mayúscula, 1 minúscula y 1 número.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748b)),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -215,16 +216,52 @@ class _RegistroPacienteScreenState extends State<RegistroPacienteScreen> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      obscureText: obscureText,
       validator: validator,
       decoration: _inputDecoration(label, icon),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordCtrl,
+      obscureText: _obscurePassword,
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Campo obligatorio';
+        if (v.length < 8) return 'Mínimo 8 caracteres';
+        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$').hasMatch(v)) {
+          return 'Usa 1 mayúscula, 1 minúscula y 1 número';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: 'Contraseña de Acceso',
+        prefixIcon: const Icon(Icons.lock, color: Color(0xFF64748b), size: 20),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: const Color(0xFF64748b),
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFcbd5e1))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFcbd5e1))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2563eb), width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent)),
+        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748b)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
     );
   }
 }
