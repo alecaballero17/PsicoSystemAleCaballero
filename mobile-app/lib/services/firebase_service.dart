@@ -32,11 +32,11 @@ class FirebaseService {
     // 3. Configurar Notificaciones Locales (para que suenen/vibren en Foreground)
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initSettings = InitializationSettings(android: androidSettings);
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(initializationSettings: initSettings);
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'high_importance_channel', // id
-      'High Importance Notifications', // title
+      'High Importance Notifications', // name
       description: 'Este canal es usado para notificaciones importantes.',
       importance: Importance.max,
       playSound: true,
@@ -65,10 +65,10 @@ class FirebaseService {
 
       if (notification != null && android != null) {
         _localNotifications.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
+          id: notification.hashCode,
+          title: notification.title,
+          body: notification.body,
+          notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               channel.id,
               channel.name,
