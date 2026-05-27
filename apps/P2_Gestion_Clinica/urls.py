@@ -7,6 +7,8 @@ from .views import (
     ExpedienteClinicoViewSet,
     NotaClinicaViewSet,
     ArchivoAdjuntoViewSet,
+    PacienteRegistroPublicoAPIView,
+    AssociateClinicAPIView,
 )
 
 router = DefaultRouter()
@@ -22,5 +24,18 @@ urlpatterns = [
         name="api_pacientes_detalle",
     ),
     path("api/pacientes/buscar/", PacienteSearchAPIView.as_view(), name="api_pacientes_buscar"),
+    
+    # Endpoints Públicos / App Móvil
+    path(
+        "api/pacientes/registro-publico/",
+        PacienteRegistroPublicoAPIView.as_view(),
+        name="api_pacientes_registro_publico",
+    ),
+    path(
+        "api/pacientes/me/associate_clinic/",
+        AssociateClinicAPIView.as_view(),
+        name="api_paciente_associate_clinic",
+    ),
+
     path("api/clinica/", include(router.urls)),
 ]
