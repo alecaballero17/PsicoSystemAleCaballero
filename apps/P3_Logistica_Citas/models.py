@@ -25,6 +25,19 @@ class Cita(models.Model):
     duracion_minutos = models.PositiveIntegerField(default=60, help_text="Duración estimada de la cita")
     motivo = models.TextField(blank=True, null=True)
 
+    clinica = models.ForeignKey(
+        'P1_Identidad_Acceso.Clinica',
+        on_delete=models.CASCADE,
+        related_name='citas',
+        null=True, blank=True
+    )
+    
+    # Campos para pagos y app móvil
+    monto = models.DecimalField(max_digits=8, decimal_places=2, default=120.00)
+    estado_pago = models.CharField(max_length=20, choices=[('PENDIENTE', 'Pendiente'), ('PAGADO', 'Pagado'), ('CANCELADO', 'Cancelado')], default='PENDIENTE')
+    numero_ficha = models.CharField(max_length=20, blank=True, null=True)
+    codigo_qr = models.TextField(blank=True, null=True)
+
     ESTADOS = [
         ('PENDIENTE', 'Pendiente'),
         ('ASISTIO', 'Asistió'),

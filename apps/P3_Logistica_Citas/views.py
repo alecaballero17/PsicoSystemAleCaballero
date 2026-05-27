@@ -278,12 +278,15 @@ class MobileCitasAPIView(APIView):
         # Filtros opcionales
         estado = request.query_params.get('estado')
         estado_pago = request.query_params.get('estado_pago')
+        clinica_id = request.query_params.get('clinica_id')
 
-        qs = Cita.objects.filter(paciente=paciente).select_related('psicologo').order_by('-fecha_hora')
+        qs = Cita.objects.filter(paciente=paciente).select_related('psicologo', 'clinica', 'paciente__clinica').order_by('-fecha_hora')
         if estado:
             qs = qs.filter(estado=estado)
         if estado_pago:
             qs = qs.filter(estado_pago=estado_pago)
+        if clinica_id:
+            qs = qs.filter(clinica_id=clinica_id)
 
         citas_data = []
         for cita in qs:
@@ -292,8 +295,13 @@ class MobileCitasAPIView(APIView):
                 "fecha_hora": cita.fecha_hora.isoformat(),
                 "motivo": cita.motivo,
                 "estado": cita.estado,
+                "estado_pago": cita.estado_pago,
+                "monto": str(cita.monto),
                 "psicologo": cita.psicologo.get_full_name() or cita.psicologo.username,
                 "psicologo_username": cita.psicologo.username,
+                "clinica_nombre": cita.clinica.nombre if cita.clinica else (cita.paciente.clinica.nombre if cita.paciente.clinica else 'Sin Clínica'),
+                "numero_ficha": cita.numero_ficha or f"FICHA-{cita.pk:05d}",
+                "codigo_qr": cita.codigo_qr or f"QR-CITA-{cita.pk}",
             })
 
         return Response({"citas": citas_data, "total": len(citas_data)}, status=200)
@@ -308,6 +316,7 @@ class MobileCitasAPIView(APIView):
         motivo = request.data.get('motivo', '')
         psicologo_username = request.data.get('psicologo_username')
         clinica_id = request.data.get('clinica_id')
+        monto = request.data.get('monto', 120.00)
 
         # Validaciones básicas
         if not all([fecha_hora_str, psicologo_username, clinica_id]):
@@ -355,10 +364,19 @@ class MobileCitasAPIView(APIView):
             cita = Cita.objects.create(
                 paciente=paciente,
                 psicologo=psicologo,
+                clinica_id=clinica_id,
                 fecha_hora=fecha_hora,
                 motivo=motivo,
                 estado='PENDIENTE',
+                estado_pago='PENDIENTE',
+                monto=monto,
             )
+            
+            # Generar ficha y qr
+            cita.numero_ficha = f"FICHA-{cita.pk:05d}"
+            cita.codigo_qr = f"PAGO_CITA_{cita.pk}_{cita.monto}"
+            cita.save(update_fields=['numero_ficha', 'codigo_qr'])
+            
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
