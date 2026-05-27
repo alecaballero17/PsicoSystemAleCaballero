@@ -3,7 +3,7 @@ services:
     name: psicosystem-web
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn psicosystem.wsgi:application"
+    startCommand: "bash ./start.sh"
     envVars:
       - key: DEBUG
         value: "False"

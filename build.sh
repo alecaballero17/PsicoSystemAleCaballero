@@ -4,5 +4,5 @@ set -o errexit
 
 pip install -r requirements.txt
 
+# Generar y comprimir recursos estáticos a través de WhiteNoise
 python manage.py collectstatic --no-input
-python manage.py migrate

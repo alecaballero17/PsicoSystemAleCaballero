@@ -132,10 +132,11 @@ WSGI_APPLICATION = "psicosystem.wsgi.application"
 # SECCIÓN: PERSISTENCIA (T004 | INFRAESTRUCTURA POSTGRESQL | SPRINT 0)
 # ==============================================================================
 DATABASES = {
+    # Lee DATABASE_URL si está en la nube, sino se conecta al Postgres local
     "default": dj_database_url.config(
         default=config(
             "DATABASE_URL",
-            default="sqlite:///" + str(BASE_DIR / "db.sqlite3"),
+            default="postgres://postgres:1234@127.0.0.1:5432/db_psicosystem",
         ),
         conn_max_age=600,
     )
