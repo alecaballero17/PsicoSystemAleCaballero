@@ -934,85 +934,30 @@ Usa {hoy_str} si no se menciona fecha."""
             # 1. Generar PDF
             import io, base64
             pdf_buffer = io.BytesIO()
-        p = canvas.Canvas(pdf_buffer, pagesize=letter)
-        p.setFont("Helvetica-Bold", 16)
+            p = canvas.Canvas(pdf_buffer, pagesize=letter)
+            p.setFont("Helvetica-Bold", 16)
             p.drawString(50, 750, "Reporte Global de Pagos y Citas")
             p.setFont("Helvetica", 12)
             p.drawString(50, 730, f"Paciente: {full_name} (CI: {identificador})")
             p.drawString(50, 710, f"Periodo consultado: {start} al {end}")
             p.line(50, 700, 550, 700)
 
-        y = 670
-
-        if not clinicas_a_reportar:
-            p.setFont("Helvetica-Oblique", 12)
-            p.setFillColor(colors.red)
-            p.drawString(50, y, "El paciente no tiene clínicas asociadas.")
-            p.setFillColor(colors.black)
-        else:
-            for clinica_actual in clinicas_a_reportar:
-                # Subtítulo de clínica
-                p.setFont("Helvetica-Bold", 14)
-                p.setFillColor(colors.blue)
-                p.drawString(50, y, f"CLÍNICA: {clinica_actual.nombre}")
-                p.setFillColor(colors.black)
-                y -= 20
-
-                qs = Cita.objects.filter(
-                    paciente__ci=identificador, 
-                    paciente__clinica=clinica_actual,
-                    fecha_hora__date__range=[start, end]
-                ).order_by('fecha_hora')
-
-                if not qs.exists():
-                    p.setFont("Helvetica-Oblique", 12)
-                    p.setFillColor(colors.red)
-                    p.drawString(50, y, "No hubo reporte para esta clínica ya que no hubo pagos.")
-                    p.setFillColor(colors.black)
-                    y -= 30
-                else:
-                    p.setFont("Helvetica-Bold", 10)
-                    p.drawString(50, y, "Fecha y Hora")
-                    p.drawString(180, y, "Especialista")
-                    p.drawString(350, y, "Motivo")
-                    p.drawString(480, y, "Estado/Monto")
-                    y -= 20
-                    p.setFont("Helvetica", 10)
-                    for c in qs:
-                        fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
-                        psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
-                        monto = getattr(c, 'monto', '120.00')
-                        p.drawString(50, y, fecha)
-                        p.drawString(180, y, psi[:25])
-                        p.drawString(350, y, (c.motivo or "Sin motivo")[:25])
-                        p.drawString(480, y, f"{c.estado} - ${monto}")
-                        y -= 15
-                        if y < 50:
-                            p.showPage()
-                            y = 750
-                    y -= 20 # Espacio extra al final de la tabla
-                
-                if y < 100:
-                    p.showPage()
-                    y = 750
-
-            p.showPage()
-            p.save()
-            pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
-            pdf_buffer.close()
-
-            # 2. Generar Excel (CSV en memoria)
-            import csv
-            csv_buffer = io.StringIO()
-            writer = csv.writer(csv_buffer)
-            writer.writerow(["Reporte Global de Pagos y Citas", f"Paciente: {full_name}", f"Periodo: {start} al {end}"])
-            writer.writerow([])
+            y = 670
 
             if not clinicas_a_reportar:
-                writer.writerow(["El paciente no tiene clínicas asociadas."])
+                p.setFont("Helvetica-Oblique", 12)
+                p.setFillColor(colors.red)
+                p.drawString(50, y, "El paciente no tiene clínicas asociadas.")
+                p.setFillColor(colors.black)
             else:
                 for clinica_actual in clinicas_a_reportar:
-                    writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
+                    # Subtítulo de clínica
+                    p.setFont("Helvetica-Bold", 14)
+                    p.setFillColor(colors.blue)
+                    p.drawString(50, y, f"CLÍNICA: {clinica_actual.nombre}")
+                    p.setFillColor(colors.black)
+                    y -= 20
+
                     qs = Cita.objects.filter(
                         paciente__ci=identificador, 
                         paciente__clinica=clinica_actual,
@@ -1020,25 +965,80 @@ Usa {hoy_str} si no se menciona fecha."""
                     ).order_by('fecha_hora')
 
                     if not qs.exists():
-                        writer.writerow(["No hubo reporte para esta clínica ya que no hubo pagos.", "", "", "", ""])
+                        p.setFont("Helvetica-Oblique", 12)
+                        p.setFillColor(colors.red)
+                        p.drawString(50, y, "No hubo reporte para esta clínica ya que no hubo pagos.")
+                        p.setFillColor(colors.black)
+                        y -= 30
                     else:
-                        writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
+                        p.setFont("Helvetica-Bold", 10)
+                        p.drawString(50, y, "Fecha y Hora")
+                        p.drawString(180, y, "Especialista")
+                        p.drawString(350, y, "Motivo")
+                        p.drawString(480, y, "Estado/Monto")
+                        y -= 20
+                        p.setFont("Helvetica", 10)
                         for c in qs:
                             fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
                             psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
                             monto = getattr(c, 'monto', '120.00')
-                            writer.writerow([fecha, psi, c.motivo, c.estado, f"${monto}"])
-                    writer.writerow([]) # Fila en blanco
-            
-            csv_bytes = csv_buffer.getvalue().encode('utf-8-sig') # UTF-8 with BOM for Excel
-            excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
-            csv_buffer.close()
+                            p.drawString(50, y, fecha)
+                            p.drawString(180, y, psi[:25])
+                            p.drawString(350, y, (c.motivo or "Sin motivo")[:25])
+                            p.drawString(480, y, f"{c.estado} - ${monto}")
+                            y -= 15
+                            if y < 50:
+                                p.showPage()
+                                y = 750
+                        y -= 20 # Espacio extra al final de la tabla
+                
+                    if y < 100:
+                        p.showPage()
+                        y = 750
 
-            return Response({
-                "mensaje": "Reportes generados exitosamente",
-                "pdf_base64": pdf_base64,
-                "excel_base64": excel_base64
-            }, status=200)
+                p.showPage()
+                p.save()
+                pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
+                pdf_buffer.close()
+
+                # 2. Generar Excel (CSV en memoria)
+                import csv
+                csv_buffer = io.StringIO()
+                writer = csv.writer(csv_buffer)
+                writer.writerow(["Reporte Global de Pagos y Citas", f"Paciente: {full_name}", f"Periodo: {start} al {end}"])
+                writer.writerow([])
+
+                if not clinicas_a_reportar:
+                    writer.writerow(["El paciente no tiene clínicas asociadas."])
+                else:
+                    for clinica_actual in clinicas_a_reportar:
+                        writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
+                        qs = Cita.objects.filter(
+                            paciente__ci=identificador, 
+                            paciente__clinica=clinica_actual,
+                            fecha_hora__date__range=[start, end]
+                        ).order_by('fecha_hora')
+
+                        if not qs.exists():
+                            writer.writerow(["No hubo reporte para esta clínica ya que no hubo pagos.", "", "", "", ""])
+                        else:
+                            writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
+                            for c in qs:
+                                fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
+                                psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
+                                monto = getattr(c, 'monto', '120.00')
+                                writer.writerow([fecha, psi, c.motivo, c.estado, f"${monto}"])
+                        writer.writerow([]) # Fila en blanco
+            
+                csv_bytes = csv_buffer.getvalue().encode('utf-8-sig') # UTF-8 with BOM for Excel
+                excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
+                csv_buffer.close()
+
+                return Response({
+                    "mensaje": "Reportes generados exitosamente",
+                    "pdf_base64": pdf_base64,
+                    "excel_base64": excel_base64
+                }, status=200)
             
         except Exception as e:
             logger.error(f"Error generando PDF/Excel: {e}")
