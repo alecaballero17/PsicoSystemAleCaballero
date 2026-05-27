@@ -1,0 +1,2010 @@
+OperationalError
+at /api/auth/login/
+html * { padding:0; margin:0; }
+body * { padding:10px 20px; }
+body * * { padding:0; }
+body { font-family: sans-serif; background-color:#fff; color:#000; }
+body > :where(header, main, footer) { border-bottom:1px solid #ddd; }
+h1 { font-weight:normal; }
+h2 { margin-bottom:.8em; }
+h3 { margin:1em 0 .5em 0; }
+h4 { margin:0 0 .5em 0; font-weight: normal; }
+code, pre { font-size: 100%; white-space: pre-wrap; word-break: break-word; }
+summary { cursor: pointer; }
+table { border:1px solid #ccc; border-collapse: collapse; width:100%; background:white; }
+tbody td, tbody th { vertical-align:top; padding:2px 3px; }
+thead th {
+padding:1px 6px 1px 3px; background:#fefefe; text-align:left;
+font-weight:normal; font-size: 0.6875rem; border:1px solid #ddd;
+}
+tbody th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+table.vars { margin:5px 10px 2px 40px; width: auto; }
+table.vars td, table.req td { font-family:monospace; }
+table td.code { width:100%; }
+table td.code pre { overflow:hidden; }
+table.source th { color:#666; }
+table.source td { font-family:monospace; white-space:pre; border-bottom:1px solid #eee; }
+ul.traceback { list-style-type:none; color: #222; }
+ul.traceback li.cause { word-break: break-word; }
+ul.traceback li.frame { padding-bottom:1em; color:#4f4f4f; }
+ul.traceback li.user { background-color:#e0e0e0; color:#000 }
+div.context { padding:10px 0; overflow:hidden; }
+div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
+div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; padding-left: 2px; }
+div.context ol li pre { display:inline; }
+div.context ol.context-line li { color:#464646; background-color:#dfdfdf; padding: 3px 2px; }
+div.context ol.context-line li span { position:absolute; right:32px; }
+.user div.context ol.context-line li { background-color:#bbb; color:#000; }
+.user div.context ol li { color:#666; }
+div.commands, summary.commands { margin-left: 40px; }
+div.commands a, summary.commands { color:#555; text-decoration:none; }
+.user div.commands a { color: black; }
+#summary { background: #ffc; }
+#summary h2 { font-weight: normal; color: #666; }
+#info { padding: 0; }
+#info > * { padding:10px 20px; }
+#explanation { background:#eee; }
+#template, #template-not-exist { background:#f6f6f6; }
+#template-not-exist ul { margin: 0 0 10px 20px; }
+#template-not-exist .postmortem-section { margin-bottom: 3px; }
+#unicode-hint { background:#eee; }
+#traceback { background:#eee; }
+#requestinfo { background:#f6f6f6; padding-left:120px; }
+#summary table { border:none; background:transparent; }
+#requestinfo h2, #requestinfo h3 { position:relative; margin-left:-100px; }
+#requestinfo h3 { margin-bottom:-1em; }
+.error { background: #ffc; }
+.specific { color:#cc3300; font-weight:bold; }
+h2 span.commands { font-size: 0.7rem; font-weight:normal; }
+span.commands a:link {color:#5E5694;}
+pre.exception_value { font-family: sans-serif; color: #575757; font-size: 1.5rem; margin: 10px 0 10px 0; }
+.append-bottom { margin-bottom: 10px; }
+.fname { user-select: all; }
+function hideAll(elems) {
+for (var e = 0; e < elems.length; e++) {
+elems[e].style.display = 'none';
+}
+}
+window.onload = function() {
+hideAll(document.querySelectorAll('ol.pre-context'));
+hideAll(document.querySelectorAll('ol.post-context'));
+hideAll(document.querySelectorAll('div.pastebin'));
+}
+function toggle() {
+for (var i = 0; i < arguments.length; i++) {
+var e = document.getElementById(arguments[i]);
+if (e) {
+e.style.display = e.style.display == 'none' ? 'block': 'none';
+}
+}
+return false;
+}
+function switchPastebinFriendly(link) {
+s1 = "Switch to copy-and-paste view";
+s2 = "Switch back to interactive view";
+link.textContent = link.textContent.trim() == s1 ? s2: s1;
+toggle('browserTraceback', 'pastebinTraceback');
+return false;
+}
+OperationalError
+at /api/auth/login/
+could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+Request Method:
+POST
+Request URL:
+https://psicosystem-api.onrender.com/api/auth/login/
+Django Version:
+6.0.3
+Exception Type:
+OperationalError
+Exception Value:
+could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+Exception Location:
+/opt/render/project/src/.venv/lib/python3.14/site-packages/psycopg2/__init__.py, line 122, in connect
+Raised during:
+apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView
+Python Executable:
+/opt/render/project/src/.venv/bin/python3.14
+Python Version:
+3.14.3
+Python Path:
+[&#x27;/opt/render/project/src&#x27;,
+&#x27;/opt/render/project/src/.venv/bin&#x27;,
+&#x27;/opt/render/project/python/Python-3.14.3/lib/python314.zip&#x27;,
+&#x27;/opt/render/project/python/Python-3.14.3/lib/python3.14&#x27;,
+&#x27;/opt/render/project/python/Python-3.14.3/lib/python3.14/lib-dynload&#x27;,
+&#x27;/opt/render/project/src/.venv/lib/python3.14/site-packages&#x27;]
+Server time:
+Tue, 26 May 2026 21:27:07 -0400
+Traceback
+Switch to copy-and-paste view
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 279, in ensure_connection
+&quot;&quot;&quot;Guarantee that a connection to the database is established.&quot;&quot;&quot;
+if self.connection is None:
+if self.in_atomic_block and self.closed_in_transaction:
+raise ProgrammingError(
+&quot;Cannot open a new connection in an atomic block.&quot;
+)
+with self.wrap_database_errors:
+self.connect()
+^^^^^^^^^^^^^^ …
+# ##### Backend-specific wrappers for PEP-249 connection methods #####
+def _prepare_cursor(self, cursor):
+&quot;&quot;&quot;
+Validate the connection is usable and perform database cursor wrapping.
+Local vars
+Variable
+Value
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,)
+func
+&lt;function BaseDatabaseWrapper.connect at 0x795a05658300&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 256, in connect
+self.close_at = None if max_age is None else time.monotonic() + max_age
+self.closed_in_transaction = False
+self.errors_occurred = False
+# New connections are healthy.
+self.health_check_done = True
+# Establish the connection
+conn_params = self.get_connection_params()
+self.connection = self.get_new_connection(conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+self.set_autocommit(self.settings_dict[&quot;AUTOCOMMIT&quot;])
+self.init_connection_state()
+connection_created.send(sender=self.__class__, connection=self)
+self.run_on_commit = []
+Local vars
+Variable
+Value
+conn_params
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+max_age
+600
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;})
+func
+&lt;function DatabaseWrapper.get_new_connection at 0x795a04b55b10&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/postgresql/base.py, line 333, in get_new_connection
+f&quot;specified. Use one of the psycopg.IsolationLevel values.&quot;
+)
+if self.pool:
+# If nothing else has opened the pool, open it now.
+self.pool.open()
+connection = self.pool.getconn()
+else:
+connection = self.Database.connect(**conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if set_isolation_level:
+connection.isolation_level = self.isolation_level
+if not is_psycopg3:
+# Register dummy loads() to avoid a round trip from psycopg2&#x27;s
+# decode to json.dumps() to json.loads(), when using a custom
+# decoder in JSONField.
+Local vars
+Variable
+Value
+conn_params
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+options
+{}
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+set_isolation_level
+False
+/opt/render/project/src/.venv/lib/python3.14/site-packages/psycopg2/__init__.py, line 122, in connect
+kwasync = {}
+if &#x27;async&#x27; in kwargs:
+kwasync[&#x27;async&#x27;] = kwargs.pop(&#x27;async&#x27;)
+if &#x27;async_&#x27; in kwargs:
+kwasync[&#x27;async_&#x27;] = kwargs.pop(&#x27;async_&#x27;)
+dsn = _ext.make_dsn(dsn, **kwargs)
+conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if cursor_factory is not None:
+conn.cursor_factory = cursor_factory
+return conn
+Local vars
+Variable
+Value
+connection_factory
+None
+cursor_factory
+&lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;
+dsn
+(&#x27;dbname=psicosystem_db_7292 client_encoding=UTF8 &#x27;
+&#x27;user=psicosystem_db_7292_user password=AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC &#x27;
+&#x27;host=dpg-d7e0kn9j2pic73fu16c0-a&#x27;)
+kwargs
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+kwasync
+{}
+The above exception (could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+) was the direct cause of the following exception:
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py, line 55, in inner
+return inner
+else:
+@wraps(get_response)
+def inner(request):
+try:
+response = get_response(request)
+^^^^^^^^^^^^^^^^^^^^^ …
+except Exception as exc:
+response = response_for_exception(request, exc)
+return response
+return inner
+Local vars
+Variable
+Value
+exc
+OperationalError(&#x27;could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known\n&#x27;)
+get_response
+&lt;bound method BaseHandler._get_response of &lt;django.core.handlers.wsgi.WSGIHandler object at 0x795a04839940&gt;&gt;
+request
+&lt;WSGIRequest: POST &#x27;/api/auth/login/&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/handlers/base.py, line 198, in _get_response
+if response is None:
+wrapped_callback = self.make_view_atomic(callback)
+# If it is an asynchronous view, run it in a subthread.
+if iscoroutinefunction(wrapped_callback):
+wrapped_callback = async_to_sync(wrapped_callback)
+try:
+response = wrapped_callback(request, *callback_args, **callback_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except Exception as e:
+response = self.process_exception_by_middleware(e, request)
+if response is None:
+raise
+# Complain if the view returned None (a common error).
+Local vars
+Variable
+Value
+callback
+&lt;function View.as_view.&lt;locals&gt;.view at 0x795a03d91fe0&gt;
+callback_args
+()
+callback_kwargs
+{}
+middleware_method
+&lt;bound method CsrfViewMiddleware.process_view of &lt;CsrfViewMiddleware get_response=convert_exception_to_response.&lt;locals&gt;.inner&gt;&gt;
+request
+&lt;WSGIRequest: POST &#x27;/api/auth/login/&#x27;&gt;
+response
+None
+self
+&lt;django.core.handlers.wsgi.WSGIHandler object at 0x795a04839940&gt;
+wrapped_callback
+&lt;function View.as_view.&lt;locals&gt;.view at 0x795a03d91fe0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/decorators/csrf.py, line 65, in _view_wrapper
+async def _view_wrapper(request, *args, **kwargs):
+return await view_func(request, *args, **kwargs)
+else:
+def _view_wrapper(request, *args, **kwargs):
+return view_func(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+_view_wrapper.csrf_exempt = True
+return wraps(view_func)(_view_wrapper)
+Local vars
+Variable
+Value
+args
+()
+kwargs
+{}
+request
+&lt;WSGIRequest: POST &#x27;/api/auth/login/&#x27;&gt;
+view_func
+&lt;function View.as_view.&lt;locals&gt;.view at 0x795a03d91f30&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/generic/base.py, line 106, in view
+self = cls(**initkwargs)
+self.setup(request, *args, **kwargs)
+if not hasattr(self, &quot;request&quot;):
+raise AttributeError(
+&quot;%s instance has no &#x27;request&#x27; attribute. Did you override &quot;
+&quot;setup() and forget to call super()?&quot; % cls.__name__
+)
+return self.dispatch(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+view.view_class = cls
+view.view_initkwargs = initkwargs
+# __name__ and __qualname__ are intentionally left unchanged as
+# view_class should be used to robustly determine the name of the view
+Local vars
+Variable
+Value
+args
+()
+cls
+&lt;class &#x27;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView&#x27;&gt;
+initkwargs
+{}
+kwargs
+{}
+request
+&lt;WSGIRequest: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py, line 509, in dispatch
+self.http_method_not_allowed)
+else:
+handler = self.http_method_not_allowed
+response = handler(request, *args, **kwargs)
+except Exception as exc:
+response = self.handle_exception(exc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+self.response = self.finalize_response(request, response, *args, **kwargs)
+return self.response
+def options(self, request, *args, **kwargs):
+&quot;&quot;&quot;
+Local vars
+Variable
+Value
+args
+()
+handler
+&lt;bound method CustomTokenObtainPairView.post of &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;&gt;
+kwargs
+{}
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py, line 469, in handle_exception
+exception_handler = self.get_exception_handler()
+context = self.get_exception_handler_context()
+response = exception_handler(exc, context)
+if response is None:
+self.raise_uncaught_exception(exc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+response.exception = True
+return response
+def raise_uncaught_exception(self, exc):
+if settings.DEBUG:
+Local vars
+Variable
+Value
+context
+{&#x27;args&#x27;: (),
+&#x27;kwargs&#x27;: {},
+&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;,
+&#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;}
+exc
+OperationalError(&#x27;could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known\n&#x27;)
+exception_handler
+&lt;function exception_handler at 0x795a03e49e80&gt;
+response
+None
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py, line 480, in raise_uncaught_exception
+def raise_uncaught_exception(self, exc):
+if settings.DEBUG:
+request = self.request
+renderer_format = getattr(request.accepted_renderer, &#x27;format&#x27;)
+use_plaintext_traceback = renderer_format not in (&#x27;html&#x27;, &#x27;api&#x27;, &#x27;admin&#x27;)
+request.force_plaintext_errors(use_plaintext_traceback)
+raise exc
+^^^^^^^^^ …
+# Note: Views are made CSRF exempt from within `as_view` as to prevent
+# accidental removal of this exemption in cases where `dispatch` needs to
+# be overridden.
+def dispatch(self, request, *args, **kwargs):
+&quot;&quot;&quot;
+Local vars
+Variable
+Value
+exc
+OperationalError(&#x27;could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known\n&#x27;)
+renderer_format
+&#x27;json&#x27;
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+use_plaintext_traceback
+True
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py, line 506, in dispatch
+# Get the appropriate handler method
+if request.method.lower() in self.http_method_names:
+handler = getattr(self, request.method.lower(),
+self.http_method_not_allowed)
+else:
+handler = self.http_method_not_allowed
+response = handler(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except Exception as exc:
+response = self.handle_exception(exc)
+self.response = self.finalize_response(request, response, *args, **kwargs)
+return self.response
+Local vars
+Variable
+Value
+args
+()
+handler
+&lt;bound method CustomTokenObtainPairView.post of &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;&gt;
+kwargs
+{}
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+/opt/render/project/src/apps/P1_Identidad_Acceso/views.py, line 61, in post
+&quot;detail&quot;: &quot;Cuenta bloqueada temporalmente por múltiples intentos fallidos. &quot;
+&quot;Intenta en 15 minutos.&quot;
+},
+status=status.HTTP_429_TOO_MANY_REQUESTS,
+)
+try:
+response = super().post(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except Exception:
+cache.set(cache_key, attempts + 1, LOCKOUT_SECONDS)
+raise
+# Login exitoso → resetear contador
+cache.delete(cache_key)
+Local vars
+Variable
+Value
+__class__
+&lt;class &#x27;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView&#x27;&gt;
+args
+()
+attempts
+1
+cache_key
+&#x27;login_attempts_admin.basico&#x27;
+kwargs
+{}
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+username
+&#x27;admin.basico&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/views.py, line 44, in post
+self.www_authenticate_realm,
+)
+def post(self, request: Request, *args, **kwargs) -&gt; Response:
+serializer = self.get_serializer(data=request.data)
+try:
+serializer.is_valid(raise_exception=True)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except TokenError as e:
+raise InvalidToken(e.args[0])
+return Response(serializer.validated_data, status=status.HTTP_200_OK)
+Local vars
+Variable
+Value
+args
+()
+kwargs
+{}
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object at 0x7959fefa25d0&gt;
+serializer
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/serializers.py, line 223, in is_valid
+assert hasattr(self, &#x27;initial_data&#x27;), (
+&#x27;Cannot call `.is_valid()` as no `data=` keyword argument was &#x27;
+&#x27;passed when instantiating the serializer instance.&#x27;
+)
+if not hasattr(self, &#x27;_validated_data&#x27;):
+try:
+self._validated_data = self.run_validation(self.initial_data)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except ValidationError as exc:
+self._validated_data = {}
+self._errors = exc.detail
+else:
+self._errors = {}
+Local vars
+Variable
+Value
+raise_exception
+True
+self
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/serializers.py, line 445, in run_validation
+(is_empty_value, data) = self.validate_empty_values(data)
+if is_empty_value:
+return data
+value = self.to_internal_value(data)
+try:
+self.run_validators(value)
+value = self.validate(value)
+^^^^^^^^^^^^^^^^^^^^ …
+assert value is not None, &#x27;.validate() should return the validated data&#x27;
+except (ValidationError, DjangoValidationError) as exc:
+raise ValidationError(detail=as_serializer_error(exc))
+return value
+Local vars
+Variable
+Value
+data
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+is_empty_value
+False
+self
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+value
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+/opt/render/project/src/apps/P1_Identidad_Acceso/serializers.py, line 42, in validate
+# Verificar si la contraseña expiró (90 días)
+expiracion = user.ultimo_cambio_password + timedelta(days=90)
+token[&quot;must_change_password&quot;] = user.debe_cambiar_password or (timezone.now() &gt; expiracion)
+return token
+def validate(self, attrs):
+data = super().validate(attrs)
+^^^^^^^^^^^^^^^^^^^^^^^ …
+# RF-29 / Frontend: Enviar estas propiedades en la raíz de la respuesta JSON
+# para que authService.js (React) y AuthService (Flutter) puedan leerlos directamente
+data[&quot;role&quot;] = self.user.rol
+data[&quot;clinica_id&quot;] = self.user.clinica_id
+data[&quot;username&quot;] = self.user.username
+Local vars
+Variable
+Value
+__class__
+&lt;class &#x27;apps.P1_Identidad_Acceso.serializers.CustomTokenObtainPairSerializer&#x27;&gt;
+attrs
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+self
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/serializers.py, line 73, in validate
+return cls.token_class.for_user(user)  # type: ignore
+class TokenObtainPairSerializer(TokenObtainSerializer):
+token_class = RefreshToken
+def validate(self, attrs: Dict[str, Any]) -&gt; Dict[str, str]:
+data = super().validate(attrs)
+^^^^^^^^^^^^^^^^^^^^^^^ …
+refresh = self.get_token(self.user)
+data[&quot;refresh&quot;] = str(refresh)
+data[&quot;access&quot;] = str(refresh.access_token)
+Local vars
+Variable
+Value
+__class__
+&lt;class &#x27;rest_framework_simplejwt.serializers.TokenObtainPairSerializer&#x27;&gt;
+attrs
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+self
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/serializers.py, line 54, in validate
+&quot;password&quot;: attrs[&quot;password&quot;],
+}
+try:
+authenticate_kwargs[&quot;request&quot;] = self.context[&quot;request&quot;]
+except KeyError:
+pass
+self.user = authenticate(**authenticate_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if not api_settings.USER_AUTHENTICATION_RULE(self.user):
+raise exceptions.AuthenticationFailed(
+self.error_messages[&quot;no_active_account&quot;],
+&quot;no_active_account&quot;,
+)
+Local vars
+Variable
+Value
+attrs
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+authenticate_kwargs
+{&#x27;password&#x27;: &#x27;Password123&#x27;,
+&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;,
+&#x27;username&#x27;: &#x27;admin.basico&#x27;}
+self
+CustomTokenObtainPairSerializer(context={&#x27;request&#x27;: &lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;, &#x27;format&#x27;: None, &#x27;view&#x27;: &lt;apps.P1_Identidad_Acceso.views.CustomTokenObtainPairView object&gt;}, data={&#x27;username&#x27;: &#x27;admin.basico&#x27;, &#x27;password&#x27;: &#x27;Password123&#x27;}):
+username = CharField(write_only=True)
+password = PasswordField()
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/decorators/debug.py, line 75, in sensitive_variables_wrapper
+@wraps(func)
+def sensitive_variables_wrapper(*func_args, **func_kwargs):
+if variables:
+sensitive_variables_wrapper.sensitive_variables = variables
+else:
+sensitive_variables_wrapper.sensitive_variables = &quot;__ALL__&quot;
+return func(*func_args, **func_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+return sensitive_variables_wrapper
+return decorator
+Local vars
+Variable
+Value
+func
+&lt;function authenticate at 0x795a057a9bc0&gt;
+func_args
+&#x27;********************&#x27;
+func_kwargs
+&#x27;********************&#x27;
+sensitive_variables_wrapper
+&lt;function authenticate at 0x795a057a9c70&gt;
+variables
+(&#x27;credentials&#x27;,)
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/__init__.py, line 114, in authenticate
+@sensitive_variables(&quot;credentials&quot;)
+def authenticate(request=None, **credentials):
+&quot;&quot;&quot;
+If the given credentials are valid, return a User object.
+&quot;&quot;&quot;
+for backend, backend_path in _get_compatible_backends(request, **credentials):
+try:
+user = backend.authenticate(request, **credentials)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except PermissionDenied:
+# This backend says to stop in our tracks - this user should not be
+# allowed in at all.
+break
+if user is None:
+continue
+Local vars
+Variable
+Value
+backend
+&lt;django.contrib.auth.backends.ModelBackend object at 0x7959fefa3390&gt;
+backend_path
+&#x27;django.contrib.auth.backends.ModelBackend&#x27;
+credentials
+{&#x27;password&#x27;: &#x27;Password123&#x27;, &#x27;username&#x27;: &#x27;admin.basico&#x27;}
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/backends.py, line 65, in authenticate
+def authenticate(self, request, username=None, password=None, **kwargs):
+if username is None:
+username = kwargs.get(UserModel.USERNAME_FIELD)
+if username is None or password is None:
+return
+try:
+user = UserModel._default_manager.get_by_natural_key(username)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+except UserModel.DoesNotExist:
+# Run the default password hasher once to reduce the timing
+# difference between an existing and a nonexistent user (#20760).
+UserModel().set_password(password)
+else:
+if user.check_password(password) and self.user_can_authenticate(user):
+Local vars
+Variable
+Value
+kwargs
+{}
+password
+&#x27;Password123&#x27;
+request
+&lt;rest_framework.request.Request: POST &#x27;/api/auth/login/&#x27;&gt;
+self
+&lt;django.contrib.auth.backends.ModelBackend object at 0x7959fefa3390&gt;
+username
+&#x27;admin.basico&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/base_user.py, line 37, in get_by_natural_key
+except ValueError:
+pass
+else:
+email = email_name + &quot;@&quot; + domain_part.lower()
+return email
+def get_by_natural_key(self, username):
+return self.get(**{self.model.USERNAME_FIELD: username})
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+async def aget_by_natural_key(self, username):
+return await self.aget(**{self.model.USERNAME_FIELD: username})
+class AbstractBaseUser(models.Model):
+Local vars
+Variable
+Value
+self
+&lt;django.contrib.auth.models.UserManager object at 0x795a04b2d6d0&gt;
+username
+&#x27;admin.basico&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/manager.py, line 87, in manager_method
+return []
+@classmethod
+def _get_queryset_methods(cls, queryset_class):
+def create_method(name, method):
+@wraps(method)
+def manager_method(self, *args, **kwargs):
+return getattr(self.get_queryset(), name)(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+return manager_method
+new_methods = {}
+for name, method in inspect.getmembers(
+queryset_class, predicate=inspect.isfunction
+Local vars
+Variable
+Value
+args
+()
+kwargs
+{&#x27;username&#x27;: &#x27;admin.basico&#x27;}
+name
+&#x27;get&#x27;
+self
+&lt;django.contrib.auth.models.UserManager object at 0x795a04b2d6d0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py, line 635, in get
+limit = None
+if (
+not clone.query.select_for_update
+or connections[clone.db].features.supports_select_for_update_with_limit
+):
+limit = MAX_GET_RESULTS
+clone.query.set_limits(high=limit)
+num = len(clone)
+^^^^^^^^^^ …
+if num == 1:
+return clone._result_cache[0]
+if not num:
+raise self.model.DoesNotExist(
+&quot;%s matching query does not exist.&quot; % self.model._meta.object_name
+)
+Local vars
+Variable
+Value
+args
+()
+clone
+Error in formatting: OperationalError: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+kwargs
+{&#x27;username&#x27;: &#x27;admin.basico&#x27;}
+limit
+21
+self
+Error in formatting: OperationalError: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py, line 372, in __len__
+def __repr__(self):
+data = list(self[: REPR_OUTPUT_SIZE + 1])
+if len(data) &gt; REPR_OUTPUT_SIZE:
+data[-1] = &quot;...(remaining elements truncated)...&quot;
+return &quot;&lt;%s %r&gt;&quot; % (self.__class__.__name__, data)
+def __len__(self):
+self._fetch_all()
+^^^^^^^^^^^^^^^^^ …
+return len(self._result_cache)
+def __iter__(self):
+&quot;&quot;&quot;
+The queryset iterator protocol uses three nested iterators in the
+default case:
+Local vars
+Variable
+Value
+self
+Error in formatting: OperationalError: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py, line 2000, in _fetch_all
+c._known_related_objects = self._known_related_objects
+c._iterable_class = self._iterable_class
+c._fields = self._fields
+return c
+def _fetch_all(self):
+if self._result_cache is None:
+self._result_cache = list(self._iterable_class(self))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if self._prefetch_related_lookups and not self._prefetch_done:
+self._prefetch_related_objects()
+def _next_is_sticky(self):
+&quot;&quot;&quot;
+Indicate that the next filter call and the one following that should
+Local vars
+Variable
+Value
+self
+Error in formatting: OperationalError: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py, line 95, in __iter__
+def __iter__(self):
+queryset = self.queryset
+db = queryset.db
+compiler = queryset.query.get_compiler(using=db)
+# Execute the query. This will also fill compiler.select, klass_info,
+# and annotations.
+results = compiler.execute_sql(
+…
+chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+)
+select, klass_info, annotation_col_map = (
+compiler.select,
+compiler.klass_info,
+compiler.annotation_col_map,
+Local vars
+Variable
+Value
+compiler
+&lt;SQLCompiler model=Usuario connection=&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt; using=&#x27;default&#x27;&gt;
+db
+&#x27;default&#x27;
+queryset
+Error in formatting: OperationalError: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+self
+&lt;django.db.models.query.ModelIterable object at 0x7959feeed630&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/sql/compiler.py, line 1622, in execute_sql
+if result_type == MULTI:
+return iter([])
+else:
+return
+if chunked_fetch:
+cursor = self.connection.chunked_cursor()
+else:
+cursor = self.connection.cursor()
+^^^^^^^^^^^^^^^^^^^^^^^^ …
+try:
+cursor.execute(sql, params)
+except Exception:
+# Might fail for server-side cursors (e.g. connection closed)
+cursor.close()
+raise
+Local vars
+Variable
+Value
+chunk_size
+100
+chunked_fetch
+False
+params
+(&#x27;admin.basico&#x27;,)
+result_type
+&#x27;multi&#x27;
+self
+&lt;SQLCompiler model=Usuario connection=&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt; using=&#x27;default&#x27;&gt;
+sql
+(&#x27;SELECT &quot;P1_Identidad_Acceso_usuario&quot;.&quot;id&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;password&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;last_login&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;is_superuser&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;username&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;first_name&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;last_name&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;email&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;is_staff&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;is_active&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;date_joined&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;clinica_id&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;rol&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;especialidad&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;telefono&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;ci&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;cancelaciones_hoy&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;ultima_cancelacion_fecha&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;ultimo_cambio_password&quot;, &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot;.&quot;debe_cambiar_password&quot; FROM &#x27;
+&#x27;&quot;P1_Identidad_Acceso_usuario&quot; WHERE &quot;P1_Identidad_Acceso_usuario&quot;.&quot;username&quot; &#x27;
+&#x27;= %s LIMIT 21&#x27;)
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,)
+func
+&lt;function BaseDatabaseWrapper.cursor at 0x795a056589e0&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 320, in cursor
+return self.connection.close()
+# ##### Generic wrappers for PEP-249 connection methods #####
+@async_unsafe
+def cursor(self):
+&quot;&quot;&quot;Create a cursor, opening a connection if necessary.&quot;&quot;&quot;
+return self._cursor()
+^^^^^^^^^^^^^^ …
+@async_unsafe
+def commit(self):
+&quot;&quot;&quot;Commit a transaction and reset the dirty flag.&quot;&quot;&quot;
+self.validate_thread_sharing()
+self.validate_no_atomic_block()
+Local vars
+Variable
+Value
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 296, in _cursor
+wrapped_cursor = self.make_debug_cursor(cursor)
+else:
+wrapped_cursor = self.make_cursor(cursor)
+return wrapped_cursor
+def _cursor(self, name=None):
+self.close_if_health_check_failed()
+self.ensure_connection()
+^^^^^^^^^^^^^^^^^^^^^^^^ …
+with self.wrap_database_errors:
+return self._prepare_cursor(self.create_cursor(name))
+def _commit(self):
+if self.connection is not None:
+with debug_transaction(self, &quot;COMMIT&quot;), self.wrap_database_errors:
+Local vars
+Variable
+Value
+name
+None
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,)
+func
+&lt;function BaseDatabaseWrapper.ensure_connection at 0x795a05658510&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 278, in ensure_connection
+def ensure_connection(self):
+&quot;&quot;&quot;Guarantee that a connection to the database is established.&quot;&quot;&quot;
+if self.connection is None:
+if self.in_atomic_block and self.closed_in_transaction:
+raise ProgrammingError(
+&quot;Cannot open a new connection in an atomic block.&quot;
+)
+with self.wrap_database_errors:
+^^^^^^^^^^^^^^^^^^^^^^^^^ …
+self.connect()
+# ##### Backend-specific wrappers for PEP-249 connection methods #####
+def _prepare_cursor(self, cursor):
+&quot;&quot;&quot;
+Local vars
+Variable
+Value
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/utils.py, line 94, in __exit__
+db_exc_type = getattr(self.wrapper.Database, dj_exc_type.__name__)
+if issubclass(exc_type, db_exc_type):
+dj_exc_value = dj_exc_type(*exc_value.args)
+# Only set the &#x27;errors_occurred&#x27; flag for errors that may make
+# the connection unusable.
+if dj_exc_type not in (DataError, IntegrityError):
+self.wrapper.errors_occurred = True
+raise dj_exc_value.with_traceback(traceback) from exc_value
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+def __call__(self, func):
+# Note that we are intentionally not using @wraps here for performance
+# reasons. Refs #21109.
+def inner(*args, **kwargs):
+with self:
+Local vars
+Variable
+Value
+db_exc_type
+&lt;class &#x27;psycopg2.OperationalError&#x27;&gt;
+dj_exc_type
+&lt;class &#x27;django.db.utils.OperationalError&#x27;&gt;
+dj_exc_value
+OperationalError(&#x27;could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known\n&#x27;)
+exc_type
+&lt;class &#x27;psycopg2.OperationalError&#x27;&gt;
+exc_value
+OperationalError(&#x27;could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known\n&#x27;)
+self
+&lt;django.db.utils.DatabaseErrorWrapper object at 0x7959ff111d30&gt;
+traceback
+&lt;traceback object at 0x7959fef367c0&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 279, in ensure_connection
+&quot;&quot;&quot;Guarantee that a connection to the database is established.&quot;&quot;&quot;
+if self.connection is None:
+if self.in_atomic_block and self.closed_in_transaction:
+raise ProgrammingError(
+&quot;Cannot open a new connection in an atomic block.&quot;
+)
+with self.wrap_database_errors:
+self.connect()
+^^^^^^^^^^^^^^ …
+# ##### Backend-specific wrappers for PEP-249 connection methods #####
+def _prepare_cursor(self, cursor):
+&quot;&quot;&quot;
+Validate the connection is usable and perform database cursor wrapping.
+Local vars
+Variable
+Value
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,)
+func
+&lt;function BaseDatabaseWrapper.connect at 0x795a05658300&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py, line 256, in connect
+self.close_at = None if max_age is None else time.monotonic() + max_age
+self.closed_in_transaction = False
+self.errors_occurred = False
+# New connections are healthy.
+self.health_check_done = True
+# Establish the connection
+conn_params = self.get_connection_params()
+self.connection = self.get_new_connection(conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+self.set_autocommit(self.settings_dict[&quot;AUTOCOMMIT&quot;])
+self.init_connection_state()
+connection_created.send(sender=self.__class__, connection=self)
+self.run_on_commit = []
+Local vars
+Variable
+Value
+conn_params
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+max_age
+600
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py, line 26, in inner
+get_running_loop()
+except RuntimeError:
+pass
+else:
+if not os.environ.get(&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;):
+raise SynchronousOnlyOperation(message)
+# Pass onward.
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^ …
+return inner
+# If the message is actually a function, then be a no-arguments decorator.
+if callable(message):
+func = message
+Local vars
+Variable
+Value
+args
+(&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;,
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;})
+func
+&lt;function DatabaseWrapper.get_new_connection at 0x795a04b55b10&gt;
+kwargs
+{}
+message
+&#x27;You cannot call this from an async context - use a thread or sync_to_async.&#x27;
+/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/postgresql/base.py, line 333, in get_new_connection
+f&quot;specified. Use one of the psycopg.IsolationLevel values.&quot;
+)
+if self.pool:
+# If nothing else has opened the pool, open it now.
+self.pool.open()
+connection = self.pool.getconn()
+else:
+connection = self.Database.connect(**conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if set_isolation_level:
+connection.isolation_level = self.isolation_level
+if not is_psycopg3:
+# Register dummy loads() to avoid a round trip from psycopg2&#x27;s
+# decode to json.dumps() to json.loads(), when using a custom
+# decoder in JSONField.
+Local vars
+Variable
+Value
+conn_params
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;cursor_factory&#x27;: &lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+options
+{}
+self
+&lt;DatabaseWrapper vendor=&#x27;postgresql&#x27; alias=&#x27;default&#x27;&gt;
+set_isolation_level
+False
+/opt/render/project/src/.venv/lib/python3.14/site-packages/psycopg2/__init__.py, line 122, in connect
+kwasync = {}
+if &#x27;async&#x27; in kwargs:
+kwasync[&#x27;async&#x27;] = kwargs.pop(&#x27;async&#x27;)
+if &#x27;async_&#x27; in kwargs:
+kwasync[&#x27;async_&#x27;] = kwargs.pop(&#x27;async_&#x27;)
+dsn = _ext.make_dsn(dsn, **kwargs)
+conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+if cursor_factory is not None:
+conn.cursor_factory = cursor_factory
+return conn
+Local vars
+Variable
+Value
+connection_factory
+None
+cursor_factory
+&lt;class &#x27;psycopg2.extensions.cursor&#x27;&gt;
+dsn
+(&#x27;dbname=psicosystem_db_7292 client_encoding=UTF8 &#x27;
+&#x27;user=psicosystem_db_7292_user password=AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC &#x27;
+&#x27;host=dpg-d7e0kn9j2pic73fu16c0-a&#x27;)
+kwargs
+{&#x27;client_encoding&#x27;: &#x27;UTF8&#x27;,
+&#x27;dbname&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;host&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;password&#x27;: &#x27;AG3Ux8zIxuPKlnIfuRNqSVvA0zLAElTC&#x27;,
+&#x27;user&#x27;: &#x27;psicosystem_db_7292_user&#x27;}
+kwasync
+{}
+Environment:
+Request Method: POST
+Request URL: https://psicosystem-api.onrender.com/api/auth/login/
+Django Version: 6.0.3
+Python Version: 3.14.3
+Installed Applications:
+[&#x27;apps.P1_Identidad_Acceso&#x27;,
+&#x27;apps.P2_Gestion_Clinica&#x27;,
+&#x27;apps.P3_Logistica_Citas&#x27;,
+&#x27;apps.P4_IA_Administracion&#x27;,
+&#x27;rest_framework&#x27;,
+&#x27;rest_framework_simplejwt&#x27;,
+&#x27;rest_framework_simplejwt.token_blacklist&#x27;,
+&#x27;django.contrib.admin&#x27;,
+&#x27;django.contrib.auth&#x27;,
+&#x27;django.contrib.contenttypes&#x27;,
+&#x27;django.contrib.sessions&#x27;,
+&#x27;django.contrib.messages&#x27;,
+&#x27;django.contrib.staticfiles&#x27;,
+&#x27;corsheaders&#x27;,
+&#x27;django_extensions&#x27;,
+&#x27;drf_spectacular&#x27;]
+Installed Middleware:
+[&#x27;corsheaders.middleware.CorsMiddleware&#x27;,
+&#x27;django.middleware.security.SecurityMiddleware&#x27;,
+&#x27;whitenoise.middleware.WhiteNoiseMiddleware&#x27;,
+&#x27;django.contrib.sessions.middleware.SessionMiddleware&#x27;,
+&#x27;django.middleware.common.CommonMiddleware&#x27;,
+&#x27;django.middleware.csrf.CsrfViewMiddleware&#x27;,
+&#x27;django.contrib.auth.middleware.AuthenticationMiddleware&#x27;,
+&#x27;django.contrib.messages.middleware.MessageMiddleware&#x27;,
+&#x27;django.middleware.clickjacking.XFrameOptionsMiddleware&#x27;]
+Traceback (most recent call last):
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
+self.connect()
+^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 256, in connect
+self.connection = self.get_new_connection(conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/postgresql/base.py", line 333, in get_new_connection
+connection = self.Database.connect(**conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The above exception (could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+) was the direct cause of the following exception:
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/handlers/exception.py", line 55, in inner
+response = get_response(request)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/core/handlers/base.py", line 198, in _get_response
+response = wrapped_callback(request, *callback_args, **callback_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+return view_func(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/generic/base.py", line 106, in view
+return self.dispatch(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py", line 509, in dispatch
+response = self.handle_exception(exc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py", line 469, in handle_exception
+self.raise_uncaught_exception(exc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+raise exc
+^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/views.py", line 506, in dispatch
+response = handler(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/apps/P1_Identidad_Acceso/views.py", line 61, in post
+response = super().post(request, *args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/views.py", line 44, in post
+serializer.is_valid(raise_exception=True)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/serializers.py", line 223, in is_valid
+self._validated_data = self.run_validation(self.initial_data)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework/serializers.py", line 445, in run_validation
+value = self.validate(value)
+^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/apps/P1_Identidad_Acceso/serializers.py", line 42, in validate
+data = super().validate(attrs)
+^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/serializers.py", line 73, in validate
+data = super().validate(attrs)
+^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/rest_framework_simplejwt/serializers.py", line 54, in validate
+self.user = authenticate(**authenticate_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/views/decorators/debug.py", line 75, in sensitive_variables_wrapper
+return func(*func_args, **func_kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/__init__.py", line 114, in authenticate
+user = backend.authenticate(request, **credentials)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/backends.py", line 65, in authenticate
+user = UserModel._default_manager.get_by_natural_key(username)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/contrib/auth/base_user.py", line 37, in get_by_natural_key
+return self.get(**{self.model.USERNAME_FIELD: username})
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/manager.py", line 87, in manager_method
+return getattr(self.get_queryset(), name)(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py", line 635, in get
+num = len(clone)
+^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py", line 372, in __len__
+self._fetch_all()
+^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py", line 2000, in _fetch_all
+self._result_cache = list(self._iterable_class(self))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/query.py", line 95, in __iter__
+results = compiler.execute_sql(
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+cursor = self.connection.cursor()
+^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 320, in cursor
+return self._cursor()
+^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 296, in _cursor
+self.ensure_connection()
+^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
+with self.wrap_database_errors:
+^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/utils.py", line 94, in __exit__
+raise dj_exc_value.with_traceback(traceback) from exc_value
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
+self.connect()
+^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/base/base.py", line 256, in connect
+self.connection = self.get_new_connection(conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/utils/asyncio.py", line 26, in inner
+return func(*args, **kwargs)
+^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/django/db/backends/postgresql/base.py", line 333, in get_new_connection
+connection = self.Database.connect(**conn_params)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/opt/render/project/src/.venv/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Exception Type: OperationalError at /api/auth/login/
+Exception Value: could not translate host name &quot;dpg-d7e0kn9j2pic73fu16c0-a&quot; to address: Name or service not known
+Request information
+USER
+AnonymousUser
+GET
+No GET data
+POST
+No POST data
+FILES
+No FILES data
+COOKIES
+No cookie data
+META
+Variable
+Value
+CONTENT_LENGTH
+&#x27;55&#x27;
+CONTENT_TYPE
+&#x27;application/json&#x27;
+HTTP_ACCEPT_ENCODING
+&#x27;gzip, br&#x27;
+HTTP_CDN_LOOP
+&#x27;cloudflare; loops=1&#x27;
+HTTP_CF_CONNECTING_IP
+&#x27;192.223.106.242&#x27;
+HTTP_CF_IPCOUNTRY
+&#x27;BO&#x27;
+HTTP_CF_RAY
+&#x27;a0213c3ddee3f266-SEA&#x27;
+HTTP_CF_VISITOR
+&#x27;{&quot;scheme&quot;:&quot;https&quot;}&#x27;
+HTTP_HOST
+&#x27;psicosystem-api.onrender.com&#x27;
+HTTP_RENDER_PROXY_TTL
+&#x27;4&#x27;
+HTTP_RNDR_ID
+&#x27;64c447c0-4243-46bd&#x27;
+HTTP_TRUE_CLIENT_IP
+&#x27;192.223.106.242&#x27;
+HTTP_USER_AGENT
+&#x27;Python-urllib/3.13&#x27;
+HTTP_X_FORWARDED_FOR
+&#x27;192.223.106.242, 172.71.151.182, 10.26.17.2&#x27;
+HTTP_X_FORWARDED_PROTO
+&#x27;https&#x27;
+HTTP_X_REQUEST_START
+&#x27;1779845227312292&#x27;
+PATH_INFO
+&#x27;/api/auth/login/&#x27;
+QUERY_STRING
+&#x27;&#x27;
+RAW_URI
+&#x27;/api/auth/login/&#x27;
+REMOTE_ADDR
+&#x27;127.0.0.1&#x27;
+REMOTE_PORT
+&#x27;56952&#x27;
+REQUEST_METHOD
+&#x27;POST&#x27;
+SCRIPT_NAME
+&#x27;&#x27;
+SERVER_NAME
+&#x27;0.0.0.0&#x27;
+SERVER_PORT
+&#x27;10000&#x27;
+SERVER_PROTOCOL
+&#x27;HTTP/1.1&#x27;
+SERVER_SOFTWARE
+&#x27;gunicorn/23.0.0&#x27;
+gunicorn.socket
+&lt;socket.socket fd=9, family=2, type=1, proto=0, laddr=(&#x27;127.0.0.1&#x27;, 10000), raddr=(&#x27;127.0.0.1&#x27;, 56952)&gt;
+wsgi.errors
+&lt;gunicorn.http.wsgi.WSGIErrorsWrapper object at 0x7959fef79090&gt;
+wsgi.file_wrapper
+&lt;class &#x27;gunicorn.http.wsgi.FileWrapper&#x27;&gt;
+wsgi.input
+&lt;gunicorn.http.body.Body object at 0x7959fefa1d10&gt;
+wsgi.input_terminated
+True
+wsgi.multiprocess
+False
+wsgi.multithread
+False
+wsgi.run_once
+False
+wsgi.url_scheme
+&#x27;https&#x27;
+wsgi.version
+(1, 0)
+Settings
+Using settings module psicosystem.settings
+Setting
+Value
+ABSOLUTE_URL_OVERRIDES
+{}
+ADMINS
+[]
+ALLOWED_HOSTS
+[&#x27;localhost&#x27;,
+&#x27;127.0.0.1&#x27;,
+&#x27;psicosystem-app.onrender.com&#x27;,
+&#x27;psicosystem-api.onrender.com&#x27;,
+&#x27;.onrender.com&#x27;]
+APPEND_SLASH
+True
+AUTHENTICATION_BACKENDS
+&#x27;********************&#x27;
+AUTH_PASSWORD_VALIDATORS
+&#x27;********************&#x27;
+AUTH_USER_MODEL
+&#x27;********************&#x27;
+BASE_DIR
+PosixPath(&#x27;/opt/render/project/src&#x27;)
+CACHES
+{&#x27;default&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.core.cache.backends.locmem.LocMemCache&#x27;}}
+CACHE_MIDDLEWARE_ALIAS
+&#x27;default&#x27;
+CACHE_MIDDLEWARE_KEY_PREFIX
+&#x27;********************&#x27;
+CACHE_MIDDLEWARE_SECONDS
+600
+CORS_ALLOWED_ORIGINS
+[&#x27;https://psicosystem-api.onrender.com&#x27;]
+CORS_ALLOW_ALL_ORIGINS
+True
+CORS_ALLOW_CREDENTIALS
+True
+CSRF_COOKIE_AGE
+31449600
+CSRF_COOKIE_DOMAIN
+None
+CSRF_COOKIE_HTTPONLY
+True
+CSRF_COOKIE_NAME
+&#x27;csrftoken&#x27;
+CSRF_COOKIE_PATH
+&#x27;/&#x27;
+CSRF_COOKIE_SAMESITE
+&#x27;Lax&#x27;
+CSRF_COOKIE_SECURE
+False
+CSRF_FAILURE_VIEW
+&#x27;django.views.csrf.csrf_failure&#x27;
+CSRF_HEADER_NAME
+&#x27;HTTP_X_CSRFTOKEN&#x27;
+CSRF_TRUSTED_ORIGINS
+[&#x27;https://psicosystem-api.onrender.com&#x27;]
+CSRF_USE_SESSIONS
+False
+DATABASES
+{&#x27;default&#x27;: {&#x27;ATOMIC_REQUESTS&#x27;: False,
+&#x27;AUTOCOMMIT&#x27;: True,
+&#x27;CONN_HEALTH_CHECKS&#x27;: False,
+&#x27;CONN_MAX_AGE&#x27;: 600,
+&#x27;DISABLE_SERVER_SIDE_CURSORS&#x27;: False,
+&#x27;ENGINE&#x27;: &#x27;django.db.backends.postgresql&#x27;,
+&#x27;HOST&#x27;: &#x27;dpg-d7e0kn9j2pic73fu16c0-a&#x27;,
+&#x27;NAME&#x27;: &#x27;psicosystem_db_7292&#x27;,
+&#x27;OPTIONS&#x27;: {},
+&#x27;PASSWORD&#x27;: &#x27;********************&#x27;,
+&#x27;PORT&#x27;: &#x27;&#x27;,
+&#x27;TEST&#x27;: {&#x27;CHARSET&#x27;: None,
+&#x27;COLLATION&#x27;: None,
+&#x27;MIGRATE&#x27;: True,
+&#x27;MIRROR&#x27;: None,
+&#x27;NAME&#x27;: None},
+&#x27;TIME_ZONE&#x27;: None,
+&#x27;USER&#x27;: &#x27;psicosystem_db_7292_user&#x27;}}
+DATABASE_ROUTERS
+[]
+DATA_UPLOAD_MAX_MEMORY_SIZE
+2621440
+DATA_UPLOAD_MAX_NUMBER_FIELDS
+1000
+DATA_UPLOAD_MAX_NUMBER_FILES
+100
+DATETIME_FORMAT
+&#x27;N j, Y, P&#x27;
+DATETIME_INPUT_FORMATS
+[&#x27;%Y-%m-%d %H:%M:%S&#x27;,
+&#x27;%Y-%m-%d %H:%M:%S.%f&#x27;,
+&#x27;%Y-%m-%d %H:%M&#x27;,
+&#x27;%m/%d/%Y %H:%M:%S&#x27;,
+&#x27;%m/%d/%Y %H:%M:%S.%f&#x27;,
+&#x27;%m/%d/%Y %H:%M&#x27;,
+&#x27;%m/%d/%y %H:%M:%S&#x27;,
+&#x27;%m/%d/%y %H:%M:%S.%f&#x27;,
+&#x27;%m/%d/%y %H:%M&#x27;]
+DATE_FORMAT
+&#x27;N j, Y&#x27;
+DATE_INPUT_FORMATS
+[&#x27;%Y-%m-%d&#x27;,
+&#x27;%m/%d/%Y&#x27;,
+&#x27;%m/%d/%y&#x27;,
+&#x27;%b %d %Y&#x27;,
+&#x27;%b %d, %Y&#x27;,
+&#x27;%d %b %Y&#x27;,
+&#x27;%d %b, %Y&#x27;,
+&#x27;%B %d %Y&#x27;,
+&#x27;%B %d, %Y&#x27;,
+&#x27;%d %B %Y&#x27;,
+&#x27;%d %B, %Y&#x27;]
+DEBUG
+True
+DEBUG_PROPAGATE_EXCEPTIONS
+False
+DECIMAL_SEPARATOR
+&#x27;.&#x27;
+DEFAULT_AUTO_FIELD
+&#x27;django.db.models.BigAutoField&#x27;
+DEFAULT_CHARSET
+&#x27;utf-8&#x27;
+DEFAULT_EXCEPTION_REPORTER
+&#x27;django.views.debug.ExceptionReporter&#x27;
+DEFAULT_EXCEPTION_REPORTER_FILTER
+&#x27;django.views.debug.SafeExceptionReporterFilter&#x27;
+DEFAULT_FROM_EMAIL
+&#x27;soporte@psicosystem.com&#x27;
+DEFAULT_INDEX_TABLESPACE
+&#x27;&#x27;
+DEFAULT_TABLESPACE
+&#x27;&#x27;
+DISALLOWED_USER_AGENTS
+[]
+EMAIL_BACKEND
+&#x27;django.core.mail.backends.console.EmailBackend&#x27;
+EMAIL_HOST
+&#x27;&#x27;
+EMAIL_HOST_PASSWORD
+&#x27;********************&#x27;
+EMAIL_HOST_USER
+&#x27;soporte@psicosystem.com&#x27;
+EMAIL_PORT
+587
+EMAIL_SSL_CERTFILE
+None
+EMAIL_SSL_KEYFILE
+&#x27;********************&#x27;
+EMAIL_SUBJECT_PREFIX
+&#x27;[Django] &#x27;
+EMAIL_TIMEOUT
+None
+EMAIL_USE_LOCALTIME
+False
+EMAIL_USE_SSL
+False
+EMAIL_USE_TLS
+True
+FILE_UPLOAD_DIRECTORY_PERMISSIONS
+None
+FILE_UPLOAD_HANDLERS
+[&#x27;django.core.files.uploadhandler.MemoryFileUploadHandler&#x27;,
+&#x27;django.core.files.uploadhandler.TemporaryFileUploadHandler&#x27;]
+FILE_UPLOAD_MAX_MEMORY_SIZE
+2621440
+FILE_UPLOAD_PERMISSIONS
+420
+FILE_UPLOAD_TEMP_DIR
+None
+FIRST_DAY_OF_WEEK
+0
+FIXTURE_DIRS
+[]
+FORCE_SCRIPT_NAME
+None
+FORMAT_MODULE_PATH
+None
+FORM_RENDERER
+&#x27;django.forms.renderers.DjangoTemplates&#x27;
+IGNORABLE_404_URLS
+[]
+INSTALLED_APPS
+[&#x27;apps.P1_Identidad_Acceso&#x27;,
+&#x27;apps.P2_Gestion_Clinica&#x27;,
+&#x27;apps.P3_Logistica_Citas&#x27;,
+&#x27;apps.P4_IA_Administracion&#x27;,
+&#x27;rest_framework&#x27;,
+&#x27;rest_framework_simplejwt&#x27;,
+&#x27;rest_framework_simplejwt.token_blacklist&#x27;,
+&#x27;django.contrib.admin&#x27;,
+&#x27;django.contrib.auth&#x27;,
+&#x27;django.contrib.contenttypes&#x27;,
+&#x27;django.contrib.sessions&#x27;,
+&#x27;django.contrib.messages&#x27;,
+&#x27;django.contrib.staticfiles&#x27;,
+&#x27;corsheaders&#x27;,
+&#x27;django_extensions&#x27;,
+&#x27;drf_spectacular&#x27;]
+INTERNAL_IPS
+[]
+LANGUAGES
+[(&#x27;af&#x27;, &#x27;Afrikaans&#x27;),
+(&#x27;ar&#x27;, &#x27;Arabic&#x27;),
+(&#x27;ar-dz&#x27;, &#x27;Algerian Arabic&#x27;),
+(&#x27;ast&#x27;, &#x27;Asturian&#x27;),
+(&#x27;az&#x27;, &#x27;Azerbaijani&#x27;),
+(&#x27;bg&#x27;, &#x27;Bulgarian&#x27;),
+(&#x27;be&#x27;, &#x27;Belarusian&#x27;),
+(&#x27;bn&#x27;, &#x27;Bengali&#x27;),
+(&#x27;br&#x27;, &#x27;Breton&#x27;),
+(&#x27;bs&#x27;, &#x27;Bosnian&#x27;),
+(&#x27;ca&#x27;, &#x27;Catalan&#x27;),
+(&#x27;ckb&#x27;, &#x27;Central Kurdish (Sorani)&#x27;),
+(&#x27;cs&#x27;, &#x27;Czech&#x27;),
+(&#x27;cy&#x27;, &#x27;Welsh&#x27;),
+(&#x27;da&#x27;, &#x27;Danish&#x27;),
+(&#x27;de&#x27;, &#x27;German&#x27;),
+(&#x27;dsb&#x27;, &#x27;Lower Sorbian&#x27;),
+(&#x27;el&#x27;, &#x27;Greek&#x27;),
+(&#x27;en&#x27;, &#x27;English&#x27;),
+(&#x27;en-au&#x27;, &#x27;Australian English&#x27;),
+(&#x27;en-gb&#x27;, &#x27;British English&#x27;),
+(&#x27;eo&#x27;, &#x27;Esperanto&#x27;),
+(&#x27;es&#x27;, &#x27;Spanish&#x27;),
+(&#x27;es-ar&#x27;, &#x27;Argentinian Spanish&#x27;),
+(&#x27;es-co&#x27;, &#x27;Colombian Spanish&#x27;),
+(&#x27;es-mx&#x27;, &#x27;Mexican Spanish&#x27;),
+(&#x27;es-ni&#x27;, &#x27;Nicaraguan Spanish&#x27;),
+(&#x27;es-ve&#x27;, &#x27;Venezuelan Spanish&#x27;),
+(&#x27;et&#x27;, &#x27;Estonian&#x27;),
+(&#x27;eu&#x27;, &#x27;Basque&#x27;),
+(&#x27;fa&#x27;, &#x27;Persian&#x27;),
+(&#x27;fi&#x27;, &#x27;Finnish&#x27;),
+(&#x27;fr&#x27;, &#x27;French&#x27;),
+(&#x27;fy&#x27;, &#x27;Frisian&#x27;),
+(&#x27;ga&#x27;, &#x27;Irish&#x27;),
+(&#x27;gd&#x27;, &#x27;Scottish Gaelic&#x27;),
+(&#x27;gl&#x27;, &#x27;Galician&#x27;),
+(&#x27;he&#x27;, &#x27;Hebrew&#x27;),
+(&#x27;hi&#x27;, &#x27;Hindi&#x27;),
+(&#x27;hr&#x27;, &#x27;Croatian&#x27;),
+(&#x27;hsb&#x27;, &#x27;Upper Sorbian&#x27;),
+(&#x27;ht&#x27;, &#x27;Haitian Creole&#x27;),
+(&#x27;hu&#x27;, &#x27;Hungarian&#x27;),
+(&#x27;hy&#x27;, &#x27;Armenian&#x27;),
+(&#x27;ia&#x27;, &#x27;Interlingua&#x27;),
+(&#x27;id&#x27;, &#x27;Indonesian&#x27;),
+(&#x27;ig&#x27;, &#x27;Igbo&#x27;),
+(&#x27;io&#x27;, &#x27;Ido&#x27;),
+(&#x27;is&#x27;, &#x27;Icelandic&#x27;),
+(&#x27;it&#x27;, &#x27;Italian&#x27;),
+(&#x27;ja&#x27;, &#x27;Japanese&#x27;),
+(&#x27;ka&#x27;, &#x27;Georgian&#x27;),
+(&#x27;kab&#x27;, &#x27;Kabyle&#x27;),
+(&#x27;kk&#x27;, &#x27;Kazakh&#x27;),
+(&#x27;km&#x27;, &#x27;Khmer&#x27;),
+(&#x27;kn&#x27;, &#x27;Kannada&#x27;),
+(&#x27;ko&#x27;, &#x27;Korean&#x27;),
+(&#x27;ky&#x27;, &#x27;Kyrgyz&#x27;),
+(&#x27;lb&#x27;, &#x27;Luxembourgish&#x27;),
+(&#x27;lt&#x27;, &#x27;Lithuanian&#x27;),
+(&#x27;lv&#x27;, &#x27;Latvian&#x27;),
+(&#x27;mk&#x27;, &#x27;Macedonian&#x27;),
+(&#x27;ml&#x27;, &#x27;Malayalam&#x27;),
+(&#x27;mn&#x27;, &#x27;Mongolian&#x27;),
+(&#x27;mr&#x27;, &#x27;Marathi&#x27;),
+(&#x27;ms&#x27;, &#x27;Malay&#x27;),
+(&#x27;my&#x27;, &#x27;Burmese&#x27;),
+(&#x27;nb&#x27;, &#x27;Norwegian Bokmål&#x27;),
+(&#x27;ne&#x27;, &#x27;Nepali&#x27;),
+(&#x27;nl&#x27;, &#x27;Dutch&#x27;),
+(&#x27;nn&#x27;, &#x27;Norwegian Nynorsk&#x27;),
+(&#x27;os&#x27;, &#x27;Ossetic&#x27;),
+(&#x27;pa&#x27;, &#x27;Punjabi&#x27;),
+(&#x27;pl&#x27;, &#x27;Polish&#x27;),
+(&#x27;pt&#x27;, &#x27;Portuguese&#x27;),
+(&#x27;pt-br&#x27;, &#x27;Brazilian Portuguese&#x27;),
+(&#x27;ro&#x27;, &#x27;Romanian&#x27;),
+(&#x27;ru&#x27;, &#x27;Russian&#x27;),
+(&#x27;sk&#x27;, &#x27;Slovak&#x27;),
+(&#x27;sl&#x27;, &#x27;Slovenian&#x27;),
+(&#x27;sq&#x27;, &#x27;Albanian&#x27;),
+(&#x27;sr&#x27;, &#x27;Serbian&#x27;),
+(&#x27;sr-latn&#x27;, &#x27;Serbian Latin&#x27;),
+(&#x27;sv&#x27;, &#x27;Swedish&#x27;),
+(&#x27;sw&#x27;, &#x27;Swahili&#x27;),
+(&#x27;ta&#x27;, &#x27;Tamil&#x27;),
+(&#x27;te&#x27;, &#x27;Telugu&#x27;),
+(&#x27;tg&#x27;, &#x27;Tajik&#x27;),
+(&#x27;th&#x27;, &#x27;Thai&#x27;),
+(&#x27;tk&#x27;, &#x27;Turkmen&#x27;),
+(&#x27;tr&#x27;, &#x27;Turkish&#x27;),
+(&#x27;tt&#x27;, &#x27;Tatar&#x27;),
+(&#x27;udm&#x27;, &#x27;Udmurt&#x27;),
+(&#x27;ug&#x27;, &#x27;Uyghur&#x27;),
+(&#x27;uk&#x27;, &#x27;Ukrainian&#x27;),
+(&#x27;ur&#x27;, &#x27;Urdu&#x27;),
+(&#x27;uz&#x27;, &#x27;Uzbek&#x27;),
+(&#x27;vi&#x27;, &#x27;Vietnamese&#x27;),
+(&#x27;zh-hans&#x27;, &#x27;Simplified Chinese&#x27;),
+(&#x27;zh-hant&#x27;, &#x27;Traditional Chinese&#x27;)]
+LANGUAGES_BIDI
+[&#x27;he&#x27;, &#x27;ar&#x27;, &#x27;ar-dz&#x27;, &#x27;ckb&#x27;, &#x27;fa&#x27;, &#x27;ug&#x27;, &#x27;ur&#x27;]
+LANGUAGE_CODE
+&#x27;es-bo&#x27;
+LANGUAGE_COOKIE_AGE
+None
+LANGUAGE_COOKIE_DOMAIN
+None
+LANGUAGE_COOKIE_HTTPONLY
+False
+LANGUAGE_COOKIE_NAME
+&#x27;django_language&#x27;
+LANGUAGE_COOKIE_PATH
+&#x27;/&#x27;
+LANGUAGE_COOKIE_SAMESITE
+None
+LANGUAGE_COOKIE_SECURE
+False
+LOCALE_PATHS
+[]
+LOGGING
+{}
+LOGGING_CONFIG
+&#x27;logging.config.dictConfig&#x27;
+LOGIN_REDIRECT_URL
+&#x27;/dashboard/&#x27;
+LOGIN_URL
+&#x27;/login/&#x27;
+LOGOUT_REDIRECT_URL
+&#x27;/login/&#x27;
+MANAGERS
+[]
+MEDIA_ROOT
+&#x27;&#x27;
+MEDIA_URL
+&#x27;/&#x27;
+MESSAGE_STORAGE
+&#x27;django.contrib.messages.storage.fallback.FallbackStorage&#x27;
+MIDDLEWARE
+[&#x27;corsheaders.middleware.CorsMiddleware&#x27;,
+&#x27;django.middleware.security.SecurityMiddleware&#x27;,
+&#x27;whitenoise.middleware.WhiteNoiseMiddleware&#x27;,
+&#x27;django.contrib.sessions.middleware.SessionMiddleware&#x27;,
+&#x27;django.middleware.common.CommonMiddleware&#x27;,
+&#x27;django.middleware.csrf.CsrfViewMiddleware&#x27;,
+&#x27;django.contrib.auth.middleware.AuthenticationMiddleware&#x27;,
+&#x27;django.contrib.messages.middleware.MessageMiddleware&#x27;,
+&#x27;django.middleware.clickjacking.XFrameOptionsMiddleware&#x27;]
+MIGRATION_MODULES
+{}
+MONTH_DAY_FORMAT
+&#x27;F j&#x27;
+NUMBER_GROUPING
+0
+PASSWORD_HASHERS
+&#x27;********************&#x27;
+PASSWORD_RESET_TIMEOUT
+&#x27;********************&#x27;
+PREPEND_WWW
+False
+REST_FRAMEWORK
+{&#x27;DEFAULT_AUTHENTICATION_CLASSES&#x27;: &#x27;********************&#x27;,
+&#x27;DEFAULT_PERMISSION_CLASSES&#x27;: (&#x27;rest_framework.permissions.IsAuthenticated&#x27;,),
+&#x27;DEFAULT_SCHEMA_CLASS&#x27;: &#x27;drf_spectacular.openapi.AutoSchema&#x27;,
+&#x27;DEFAULT_THROTTLE_CLASSES&#x27;: [&#x27;rest_framework.throttling.AnonRateThrottle&#x27;,
+&#x27;rest_framework.throttling.UserRateThrottle&#x27;],
+&#x27;DEFAULT_THROTTLE_RATES&#x27;: {&#x27;anon&#x27;: &#x27;30/minute&#x27;,
+&#x27;login&#x27;: &#x27;5/minute&#x27;,
+&#x27;registro&#x27;: &#x27;3/minute&#x27;,
+&#x27;user&#x27;: &#x27;60/minute&#x27;}}
+ROOT_URLCONF
+&#x27;psicosystem.urls&#x27;
+SECRET_KEY
+&#x27;********************&#x27;
+SECRET_KEY_FALLBACKS
+&#x27;********************&#x27;
+SECURE_BROWSER_XSS_FILTER
+True
+SECURE_CONTENT_TYPE_NOSNIFF
+True
+SECURE_CROSS_ORIGIN_OPENER_POLICY
+&#x27;same-origin&#x27;
+SECURE_CSP
+{}
+SECURE_CSP_REPORT_ONLY
+{}
+SECURE_HSTS_INCLUDE_SUBDOMAINS
+False
+SECURE_HSTS_PRELOAD
+False
+SECURE_HSTS_SECONDS
+0
+SECURE_PROXY_SSL_HEADER
+(&#x27;HTTP_X_FORWARDED_PROTO&#x27;, &#x27;https&#x27;)
+SECURE_REDIRECT_EXEMPT
+[]
+SECURE_REFERRER_POLICY
+&#x27;same-origin&#x27;
+SECURE_SSL_HOST
+None
+SECURE_SSL_REDIRECT
+False
+SERVER_EMAIL
+&#x27;root@localhost&#x27;
+SESSION_CACHE_ALIAS
+&#x27;default&#x27;
+SESSION_COOKIE_AGE
+1209600
+SESSION_COOKIE_DOMAIN
+None
+SESSION_COOKIE_HTTPONLY
+True
+SESSION_COOKIE_NAME
+&#x27;sessionid&#x27;
+SESSION_COOKIE_PATH
+&#x27;/&#x27;
+SESSION_COOKIE_SAMESITE
+&#x27;Lax&#x27;
+SESSION_COOKIE_SECURE
+False
+SESSION_ENGINE
+&#x27;django.contrib.sessions.backends.db&#x27;
+SESSION_EXPIRE_AT_BROWSER_CLOSE
+False
+SESSION_FILE_PATH
+None
+SESSION_SAVE_EVERY_REQUEST
+False
+SESSION_SERIALIZER
+&#x27;django.contrib.sessions.serializers.JSONSerializer&#x27;
+SETTINGS_MODULE
+&#x27;psicosystem.settings&#x27;
+SHORT_DATETIME_FORMAT
+&#x27;m/d/Y P&#x27;
+SHORT_DATE_FORMAT
+&#x27;m/d/Y&#x27;
+SIGNING_BACKEND
+&#x27;django.core.signing.TimestampSigner&#x27;
+SILENCED_SYSTEM_CHECKS
+[]
+SIMPLE_JWT
+{&#x27;ACCESS_TOKEN_LIFETIME&#x27;: &#x27;********************&#x27;,
+&#x27;AUTH_HEADER_TYPES&#x27;: &#x27;********************&#x27;,
+&#x27;BLACKLIST_AFTER_ROTATION&#x27;: True,
+&#x27;REFRESH_TOKEN_LIFETIME&#x27;: &#x27;********************&#x27;,
+&#x27;ROTATE_REFRESH_TOKENS&#x27;: &#x27;********************&#x27;,
+&#x27;TOKEN_OBTAIN_SERIALIZER&#x27;: &#x27;********************&#x27;}
+SPECTACULAR_SETTINGS
+{&#x27;DESCRIPTION&#x27;: &#x27;Documentacion de la API para el sistema PsicoSystem.&#x27;,
+&#x27;SERVE_INCLUDE_SCHEMA&#x27;: False,
+&#x27;TITLE&#x27;: &#x27;PsicoSystem API&#x27;,
+&#x27;VERSION&#x27;: &#x27;1.0.0&#x27;}
+STATICFILES_DIRS
+[]
+STATICFILES_FINDERS
+[&#x27;django.contrib.staticfiles.finders.FileSystemFinder&#x27;,
+&#x27;django.contrib.staticfiles.finders.AppDirectoriesFinder&#x27;]
+STATIC_ROOT
+PosixPath(&#x27;/opt/render/project/src/staticfiles&#x27;)
+STATIC_URL
+&#x27;/static/&#x27;
+STORAGES
+{&#x27;default&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.core.files.storage.FileSystemStorage&#x27;},
+&#x27;staticfiles&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.contrib.staticfiles.storage.StaticFilesStorage&#x27;}}
+TASKS
+{&#x27;default&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.tasks.backends.immediate.ImmediateBackend&#x27;}}
+TEMPLATES
+[{&#x27;APP_DIRS&#x27;: True,
+&#x27;BACKEND&#x27;: &#x27;django.template.backends.django.DjangoTemplates&#x27;,
+&#x27;DIRS&#x27;: [],
+&#x27;OPTIONS&#x27;: {&#x27;context_processors&#x27;: [&#x27;django.template.context_processors.request&#x27;,
+&#x27;django.contrib.auth.context_processors.auth&#x27;,
+&#x27;django.contrib.messages.context_processors.messages&#x27;]}}]
+TEST_NON_SERIALIZED_APPS
+[]
+TEST_RUNNER
+&#x27;django.test.runner.DiscoverRunner&#x27;
+THOUSAND_SEPARATOR
+&#x27;,&#x27;
+TIME_FORMAT
+&#x27;P&#x27;
+TIME_INPUT_FORMATS
+[&#x27;%H:%M:%S&#x27;, &#x27;%H:%M:%S.%f&#x27;, &#x27;%H:%M&#x27;]
+TIME_ZONE
+&#x27;America/La_Paz&#x27;
+URLIZE_ASSUME_HTTPS
+False
+USE_I18N
+True
+USE_THOUSAND_SEPARATOR
+False
+USE_TZ
+True
+USE_X_FORWARDED_HOST
+False
+USE_X_FORWARDED_PORT
+False
+WSGI_APPLICATION
+&#x27;psicosystem.wsgi.application&#x27;
+X_FRAME_OPTIONS
+&#x27;DENY&#x27;
+YEAR_MONTH_FORMAT
+&#x27;F Y&#x27;
+You’re seeing this error because you have DEBUG = True in your
+Django settings file. Change that to False, and Django will
+display a standard page generated by the handler for this status code.

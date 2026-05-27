@@ -5,16 +5,22 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 from .views import (
     registrar_usuario_view,
     CustomTokenObtainPairView,
-    MeAPIView,
+    UsuarioPerfilAPIView,
+    ChangePasswordAPIView,
     RegistroPsicologoAPIView,
-    MiClinicaRetrieveAPIView,
+    MiClinicaRetrieveUpdateAPIView,
     ClinicaCreateAPIView,
+    ClinicaPublicListAPIView,
     UsuarioColaboradorListCreateAPIView,
     UsuarioAdminRetrieveUpdateDestroyAPIView,
     PsicologoListCreateAPIView,
     PsicologoRetrieveUpdateDestroyAPIView,
     PlanesListAPIView,
     OnboardingSaaSAPIView,
+    SuscripcionInfoAPIView,
+    TransaccionClinicaListAPIView,
+    CargarSaldoAPIView,
+    NotificacionesMobileAPIView,
 )
 
 urlpatterns = [
@@ -28,7 +34,8 @@ urlpatterns = [
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/logout/", TokenBlacklistView.as_view(), name="api_logout_blacklist"),
     # T009: Verificación de sesión JWT (Anti-huérfano)
-    path("api/auth/me/", MeAPIView.as_view(), name="api_auth_me"),
+    path("api/auth/me/", UsuarioPerfilAPIView.as_view(), name="api_auth_me"),
+    path("api/auth/change_password/", ChangePasswordAPIView.as_view(), name="api_change_password"),
     path(
         "api/auth/registro/psicologo/",
         RegistroPsicologoAPIView.as_view(),
@@ -36,9 +43,19 @@ urlpatterns = [
     ),
     path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
     path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
-    path("api/clinicas/mi/", MiClinicaRetrieveAPIView.as_view(), name="api_mi_clinica"),
-    path("api/clinica/me/", MiClinicaRetrieveAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
+    
+    # ── Clínicas ──
+    path("api/clinicas/mi/", MiClinicaRetrieveUpdateAPIView.as_view(), name="api_mi_clinica"),
+    path("api/clinica/me/", MiClinicaRetrieveUpdateAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
+    path("api/clinicas/publicas/", ClinicaPublicListAPIView.as_view(), name="api_clinicas_publicas"),
+    path("api/clinicas/<int:pk>/suscripcion/", SuscripcionInfoAPIView.as_view(), name="api_suscripcion_info"),
+    path("api/clinicas/transacciones/", TransaccionClinicaListAPIView.as_view(), name="api_transacciones_clinica"),
+    path("api/clinicas/cargar-saldo/", CargarSaldoAPIView.as_view(), name="api_cargar_saldo"),
+    
+    # ── Notificaciones (Móvil) ──
+    path("api/mobile/notificaciones/", NotificacionesMobileAPIView.as_view(), name="api_mobile_notificaciones"),
+
     path(
         "api/usuarios/",
         UsuarioColaboradorListCreateAPIView.as_view(),

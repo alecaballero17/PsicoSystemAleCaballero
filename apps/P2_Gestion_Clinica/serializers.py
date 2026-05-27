@@ -42,7 +42,8 @@ class PacienteDetalleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 from django.contrib.auth.hashers import make_password
-from apps.P1_Identidad_Acceso.models import Clinica, Usuario
+from apps.P1_Identidad_Acceso.models import Clinica, Usuario, NotificacionPush
+from django.utils import timezone
 
 class PacienteRegistroPublicoSerializer(serializers.Serializer):
     """
@@ -99,9 +100,20 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
             telefono=telefono,
             motivo_consulta="Registro Móvil"
         )
+        
+        # Crear NotificacionPush de bienvenida
+        hora_actual = timezone.localtime(timezone.now()).strftime("%H:%M")
+        titulo_notif = "¡Bienvenido a PsicoSystem!"
+        mensaje_notif = f"Hola {usuario.username}, tu cuenta ha sido creada exitosamente a las {hora_actual}. ¡Nos alegra tenerte aquí!"
+        NotificacionPush.objects.create(
+            usuario=usuario,
+            titulo=titulo_notif,
+            mensaje=mensaje_notif
+        )
 
         return {
             "nombre": paciente.nombre,
             "ci": paciente.ci,
             "email": usuario.email,
         }
+
