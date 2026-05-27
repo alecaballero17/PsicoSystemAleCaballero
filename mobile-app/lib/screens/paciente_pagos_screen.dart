@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -201,6 +202,23 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/$filename');
       await file.writeAsBytes(bytes);
+      
+      final _localNotifications = FlutterLocalNotificationsPlugin();
+      await _localNotifications.show(
+        DateTime.now().millisecond,
+        'Reporte Listo',
+        'Aquí está tu reporte generado ($filename)',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'High Importance Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+      );
+      
       await OpenFilex.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

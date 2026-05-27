@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/user_model.dart';
 import '../services/cita_pago_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class AgendarCitaStepperScreen extends StatefulWidget {
   final User user;
@@ -262,7 +263,24 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
         clinicaId: widget.clinicaId,
       );
       
-      // Mostrar notificación emergente de la cita
+      // Mostrar notificación push local REAL de la cita
+      final _localNotifications = FlutterLocalNotificationsPlugin();
+      await _localNotifications.show(
+        DateTime.now().millisecond,
+        'Cita Programada',
+        'Dr(a). ${_selectedPsicologo!.split(' - ').last} | ${DateFormat('yyyy-MM-dd HH:mm').format(dateTime)}',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'High Importance Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+      );
+
+      // También mostramos la barra inferior (opcional)
       _mostrarNotificacionPushSimulada();
 
       if (mounted) {
