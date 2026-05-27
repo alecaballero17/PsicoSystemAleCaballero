@@ -299,7 +299,23 @@ class _ConsultarCitasScreenState extends State<ConsultarCitasScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: Text('Cancelar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                          child: Text('Cancelar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Función en desarrollo. Comunícate con recepción.', style: GoogleFonts.outfit()), backgroundColor: primaryBlue),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryBlue, side: BorderSide(color: primaryBlue),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text('Postergar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13)),
                         ),
                       ),
                       const SizedBox(width: 10),

@@ -283,6 +283,8 @@ class MobileCitasAPIView(APIView):
         qs = Cita.objects.filter(paciente=paciente).select_related('psicologo', 'clinica', 'paciente__clinica').order_by('-fecha_hora')
         if estado:
             qs = qs.filter(estado=estado)
+        else:
+            qs = qs.exclude(estado='CANCELADA')
         if estado_pago:
             qs = qs.filter(estado_pago=estado_pago)
         if clinica_id:
@@ -432,6 +434,9 @@ class MobileCitaCancelarAPIView(APIView):
 
         if cita.estado in ('CANCELADA', 'REALIZADA'):
             return Response({"error": f"La cita ya está en estado '{cita.estado}' y no puede cancelarse."}, status=400)
+            
+        if cita.estado_pago == 'PAGADO':
+            return Response({"error": "No puedes cancelar una cita que ya ha sido pagada."}, status=400)
 
         # Regla 1: No cancelar faltando menos de 1 hora
         ahora = tz.now()
@@ -473,4 +478,38 @@ class MobileCitaCancelarAPIView(APIView):
 
         return Response({"mensaje": "Cita cancelada exitosamente.", "estado": cita.estado}, status=200)
 
+class MobileCitaPagarAPIView(APIView):
+    """
+    [CU-MOBILE] POST: Pagar una cita desde la App Móvil.
+    """
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        user = request.user
+        cita_id = request.data.get('cita_id')
+        metodo_pago = request.data.get('metodo_pago')
+        
+        try:
+            paciente = Paciente.objects.get(ci=user.ci)
+            cita = Cita.objects.get(pk=cita_id, paciente=paciente)
+        except (Paciente.DoesNotExist, Cita.DoesNotExist):
+            return Response({"error": "Cita no encontrada o no te pertenece."}, status=404)
+
+        if cita.estado_pago == 'PAGADO':
+            return Response({"error": "Esta cita ya está pagada."}, status=400)
+
+        cita.estado_pago = 'PAGADO'
+        if cita.estado == 'PENDIENTE':
+            cita.estado = 'PROGRAMADA'
+        cita.save(update_fields=['estado_pago', 'estado'])
+
+        # Notificación
+        NotificacionPush.objects.create(
+            usuario=user,
+            titulo="✅ Pago Exitoso",
+            mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.get_full_name()} ha sido procesado correctamente.",
+        )
+
+        return Response({"mensaje": "Pago exitoso", "estado_pago": cita.estado_pago, "estado": cita.estado}, status=201)

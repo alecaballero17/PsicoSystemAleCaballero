@@ -8,6 +8,7 @@ from .views import (
     MobileCitasDisponibilidadAPIView,
     MobileCitasAPIView,
     MobileCitaCancelarAPIView,
+    MobileCitaPagarAPIView,
 )
 
 router = DefaultRouter()
@@ -25,4 +26,5 @@ urlpatterns = [
     path("api/mobile/citas/disponibilidad/", MobileCitasDisponibilidadAPIView.as_view(), name="api_mobile_disponibilidad"),
     path("api/mobile/citas/", MobileCitasAPIView.as_view(), name="api_mobile_citas"),
     path("api/mobile/citas/<int:pk>/cancelar/", MobileCitaCancelarAPIView.as_view(), name="api_mobile_cita_cancelar"),
+    path("api/mobile/paciente/pagar/", MobileCitaPagarAPIView.as_view(), name="api_mobile_cita_pagar"),
 ]
