@@ -65,7 +65,7 @@ def editar_cita_view(request, pk):
 
 @login_required
 def listar_citas_view(request):
-    citas = Cita.objects.filter(paciente__clinica=request.user.clinica).select_related(
+    citas = Cita.objects.filter(clinica=request.user.clinica).select_related(
         "paciente", "psicologo"
     ).order_by("fecha_hora")
     return render(request, "P3_Logistica_Citas/cita_list.html", {"citas": citas})
@@ -81,7 +81,7 @@ class CitaListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return (
-            Cita.objects.filter(paciente__clinica=self.request.user.clinica)
+            Cita.objects.filter(clinica=self.request.user.clinica)
             .select_related("paciente", "psicologo")
             .order_by("fecha_hora")
         )
@@ -109,7 +109,7 @@ class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Cita.objects.filter(
-            paciente__clinica=self.request.user.clinica
+            clinica=self.request.user.clinica
         ).select_related("paciente", "psicologo")
 
     def get_serializer_context(self):
@@ -139,7 +139,7 @@ class CitaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, HasClinicaAsignada]
 
     def get_queryset(self):
-        return Cita.objects.filter(paciente__clinica=self.request.user.clinica)
+        return Cita.objects.filter(clinica=self.request.user.clinica)
 
     def perform_create(self, serializer):
         cita = serializer.save()
@@ -395,8 +395,13 @@ class MobileCitasAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
+        # Actualizar la clínica del paciente si no tiene una asignada
+        if paciente.clinica_id is None:
+            paciente.clinica_id = clinica_id
+            paciente.save(update_fields=['clinica_id'])
+
         # ── Notificación in-app: aparece en la campanita del paciente ──
-        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        from apps.P1_Identidad_Acceso.models import NotificacionPush, Usuario
         from django.utils import timezone as tz_now
 
         fecha_local = tz_now.localtime(cita.fecha_hora)
@@ -409,6 +414,23 @@ class MobileCitasAPIView(APIView):
                 f"fue agendada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}. "
                 f"Motivo: {motivo or 'Sin especificar'}."
             ),
+        )
+
+        # ── Notificación a la Web (Clínica y Psicólogo) ──
+        # Notificar a los administradores de la clínica
+        admins = Usuario.objects.filter(rol='ADMIN', clinica_id=clinica_id)
+        for admin in admins:
+            NotificacionPush.objects.create(
+                usuario=admin,
+                titulo="📅 Nueva Cita (App)",
+                mensaje=f"El paciente {paciente.nombre} {paciente.apellidos} agendó una cita con {psicologo.get_full_name()} para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
+            )
+            
+        # Notificar al psicólogo
+        NotificacionPush.objects.create(
+            usuario=psicologo,
+            titulo="📅 Tienes una nueva cita",
+            mensaje=f"Paciente: {paciente.nombre} {paciente.apellidos}. Fecha: {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
         )
 
         return Response({
@@ -528,6 +550,17 @@ class MobileCitaPagarAPIView(APIView):
             titulo="✅ Pago Exitoso",
             mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.get_full_name()} ha sido procesado correctamente.",
         )
+
+        # ── Notificación a la Web (Clínica) ──
+        from apps.P1_Identidad_Acceso.models import Usuario
+        if cita.clinica_id:
+            admins = Usuario.objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
+            for admin in admins:
+                NotificacionPush.objects.create(
+                    usuario=admin,
+                    titulo="💰 Pago Recibido",
+                    mensaje=f"Se recibió un pago de ${cita.monto} del paciente {paciente.nombre} {paciente.apellidos}."
+                )
 
         return Response({"mensaje": "Pago exitoso", "estado_pago": cita.estado_pago, "estado": cita.estado}, status=201)
 

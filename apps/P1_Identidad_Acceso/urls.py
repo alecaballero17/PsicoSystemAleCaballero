@@ -53,8 +53,9 @@ urlpatterns = [
     path("api/clinicas/transacciones/", TransaccionClinicaListAPIView.as_view(), name="api_transacciones_clinica"),
     path("api/clinicas/cargar-saldo/", CargarSaldoAPIView.as_view(), name="api_cargar_saldo"),
     
-    # ── Notificaciones (Móvil) ──
+    # ── Notificaciones (Móvil y Web) ──
     path("api/mobile/notificaciones/", NotificacionesMobileAPIView.as_view(), name="api_mobile_notificaciones"),
+    path("api/notificaciones/", NotificacionesMobileAPIView.as_view(), name="api_web_notificaciones"),
 
     path(
         "api/usuarios/",

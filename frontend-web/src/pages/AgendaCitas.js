@@ -103,7 +103,15 @@ const AgendaCitas = () => {
                                 >
                                     ❌ CANCELAR
                                 </button>
-                                <span style={styles.estado}>{cita.estado}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                    <span style={{
+                                        ...styles.estadoPago,
+                                        backgroundColor: cita.estado_pago === 'PAGADO' ? '#10b981' : (cita.estado_pago === 'CANCELADO' ? '#ef4444' : '#f59e0b')
+                                    }}>
+                                        {cita.estado_pago || 'PENDIENTE'} 
+                                    </span>
+                                    <span style={styles.estado}>{cita.estado}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -129,7 +137,8 @@ const styles = {
     footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' },
     btnReminder: { padding: '8px 12px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
     btnCancel: { padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
-    estado: { fontSize: '11px', color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase' }
+    estado: { fontSize: '11px', color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase' },
+    estadoPago: { fontSize: '10px', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }
 };
 
 export default AgendaCitas;

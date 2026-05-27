@@ -9,7 +9,7 @@ class CitaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cita
-        fields = ["id", "paciente", "paciente_nombre", "psicologo", "psicologo_nombre", "fecha_hora", "duracion_minutos", "motivo", "estado"]
+        fields = ["id", "paciente", "paciente_nombre", "psicologo", "psicologo_nombre", "fecha_hora", "duracion_minutos", "motivo", "estado", "estado_pago", "monto", "clinica"]
 
     def validate(self, attrs):
         fecha_hora = attrs.get('fecha_hora')
