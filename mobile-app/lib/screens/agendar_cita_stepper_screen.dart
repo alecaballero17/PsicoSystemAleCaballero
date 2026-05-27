@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_filex/open_filex.dart';
 import '../models/user_model.dart';
 import '../services/cita_pago_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -724,7 +725,18 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
           child: ElevatedButton.icon(
             icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 20),
             style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () {},
+            onPressed: () async {
+              if (_createdCitaId == null) return;
+              setState(() => _isLoading = true);
+              try {
+                final path = await CitaPagoService.downloadComprobantePdf(widget.token, _createdCitaId!);
+                setState(() => _isLoading = false);
+                await OpenFilex.open(path);
+              } catch (e) {
+                setState(() => _isLoading = false);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al descargar: $e')));
+              }
+            },
             label: Text('Descargar Comprobante PDF', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),

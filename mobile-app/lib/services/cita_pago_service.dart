@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../config/api_config.dart';
 
@@ -15,6 +17,7 @@ class CitaPagoService {
     String? estadoPago,
     String? estado,
     int? clinicaId,
+    bool historialCompleto = false,
   }) async {
     final params = <String, String>{};
     if (estadoPago != null && estadoPago.isNotEmpty) {
@@ -25,6 +28,9 @@ class CitaPagoService {
     }
     if (clinicaId != null) {
       params['clinica_id'] = clinicaId.toString();
+    }
+    if (historialCompleto) {
+      params['historial_completo'] = 'true';
     }
 
     final uri = Uri.parse('${ApiConfig.baseUrl}/mobile/citas/')
@@ -229,6 +235,20 @@ class CitaPagoService {
       return data['respuesta'] ?? 'Sin respuesta.';
     }
     throw Exception(_extractError(response));
+  }
+
+  /// Descarga el comprobante PDF y lo guarda temporalmente
+  static Future<String> downloadComprobantePdf(String token, int citaId) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/mobile/citas/$citaId/comprobante/pdf/');
+    final response = await http.get(uri, headers: _headers(token));
+
+    if (response.statusCode == 200) {
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/comprobante_$citaId.pdf');
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    }
+    throw Exception('Error al descargar comprobante PDF');
   }
 
   /// URL del comprobante PDF de una cita pagada (se abre con el token en header)

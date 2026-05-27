@@ -36,7 +36,7 @@ class _HistorialMedicoScreenState extends State<HistorialMedicoScreen> {
 
   Future<void> _loadHistorial() async {
     try {
-      final data = await CitaPagoService.getHistorial(widget.token);
+      final data = await CitaPagoService.getHistorial(widget.token, historialCompleto: true);
       final citas = data['citas'] ?? data['results'] ?? data;
       setState(() {
         _todasCitas = citas is List ? citas : [];

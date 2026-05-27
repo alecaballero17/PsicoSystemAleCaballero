@@ -275,15 +275,15 @@ class MobileCitasAPIView(APIView):
                 status=200,
             )
 
-        # Filtros opcionales
         estado = request.query_params.get('estado')
         estado_pago = request.query_params.get('estado_pago')
         clinica_id = request.query_params.get('clinica_id')
+        historial_completo = request.query_params.get('historial_completo')
 
         qs = Cita.objects.filter(paciente=paciente).select_related('psicologo', 'clinica', 'paciente__clinica').order_by('-fecha_hora')
         if estado:
             qs = qs.filter(estado=estado)
-        else:
+        elif not historial_completo:
             qs = qs.exclude(estado='CANCELADA')
         if estado_pago:
             qs = qs.filter(estado_pago=estado_pago)
@@ -361,6 +361,19 @@ class MobileCitasAPIView(APIView):
                 status=404
             )
 
+        # Validación de horario cruzado
+        cruce_existente = Cita.objects.filter(
+            paciente=paciente,
+            fecha_hora=fecha_hora,
+            estado__in=['PENDIENTE', 'PROGRAMADA', 'CONFIRMADA']
+        ).exists()
+
+        if cruce_existente:
+            return Response(
+                {"error": "Usted ya cuenta con una cita programada en este horario en otra clínica."},
+                status=400
+            )
+
         # Crear la cita
         try:
             cita = Cita.objects.create(
@@ -391,7 +404,8 @@ class MobileCitasAPIView(APIView):
             usuario=user,
             titulo="✅ Cita Programada",
             mensaje=(
-                f"Tu cita con {psicologo.get_full_name() or psicologo.username} "
+                f"Tu cita en {cita.clinica.nombre if cita.clinica else 'la clínica'} "
+                f"con el/la Dr(a). {psicologo.get_full_name() or psicologo.username} "
                 f"fue agendada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}. "
                 f"Motivo: {motivo or 'Sin especificar'}."
             ),
@@ -467,12 +481,15 @@ class MobileCitaCancelarAPIView(APIView):
 
         # Notificación in-app
         fecha_local = tz.localtime(cita.fecha_hora)
+        motivo_str = request.data.get('motivo', 'Cancelación por el paciente')
         NotificacionPush.objects.create(
             usuario=user,
             titulo="❌ Cita Cancelada",
             mensaje=(
-                f"Tu cita con {cita.psicologo.get_full_name() or cita.psicologo.username} "
-                f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
+                f"Tu cita en {cita.clinica.nombre if cita.clinica else 'la clínica'} "
+                f"con el/la Dr(a). {cita.psicologo.get_full_name() or cita.psicologo.username} "
+                f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada.\n"
+                f"Motivo: {motivo_str}"
             ),
         )
 
@@ -513,3 +530,98 @@ class MobileCitaPagarAPIView(APIView):
         )
 
         return Response({"mensaje": "Pago exitoso", "estado_pago": cita.estado_pago, "estado": cita.estado}, status=201)
+
+import io
+from django.http import HttpResponse
+
+class MobileCitaComprobantePDFAPIView(APIView):
+    """
+    [CU-MOBILE] GET: Genera un comprobante PDF para la cita.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib import colors
+        from django.utils import timezone as tz
+
+        user = request.user
+        try:
+            paciente = Paciente.objects.get(ci=user.ci)
+            cita = Cita.objects.get(pk=pk, paciente=paciente)
+        except (Paciente.DoesNotExist, Cita.DoesNotExist):
+            return Response({"error": "Cita no encontrada o no te pertenece."}, status=404)
+
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
+
+        # Header
+        c.setFillColor(colors.HexColor("#2563EB"))
+        c.rect(0, height - 80, width, 80, fill=1, stroke=0)
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(40, height - 50, "Comprobante de Cita - PsicoSystem")
+
+        # Info
+        c.setFillColor(colors.black)
+        c.setFont("Helvetica", 12)
+        y = height - 120
+
+        # Datos de la clínica
+        clinica_nombre = cita.clinica.nombre if cita.clinica else (cita.paciente.clinica.nombre if cita.paciente.clinica else 'Clínica Desconocida')
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, y, "Datos de la Clínica")
+        c.setFont("Helvetica", 12)
+        y -= 20
+        c.drawString(40, y, f"Nombre: {clinica_nombre}")
+
+        # Datos del Paciente
+        y -= 40
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, y, "Datos del Paciente")
+        c.setFont("Helvetica", 12)
+        y -= 20
+        c.drawString(40, y, f"Nombre: {paciente.nombre} {paciente.apellidos}")
+        y -= 20
+        c.drawString(40, y, f"CI: {paciente.ci}")
+
+        # Datos de la Cita
+        y -= 40
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, y, "Datos de la Cita")
+        c.setFont("Helvetica", 12)
+        y -= 20
+        fecha_local = tz.localtime(cita.fecha_hora)
+        c.drawString(40, y, f"Fecha y Hora: {fecha_local.strftime('%d/%m/%Y a las %H:%M')}")
+        y -= 20
+        psicologo_nombre = cita.psicologo.get_full_name() or cita.psicologo.username
+        c.drawString(40, y, f"Especialista: Dr(a). {psicologo_nombre}")
+        y -= 20
+        c.drawString(40, y, f"Número de Ficha: {cita.numero_ficha or f'FICHA-{cita.pk:05d}'}")
+        y -= 20
+        c.drawString(40, y, f"Estado: {cita.estado}")
+        y -= 20
+        c.drawString(40, y, f"Motivo: {cita.motivo or 'Sin especificar'}")
+
+        # QR Text (Simulado como texto si no se tiene librería para dibujar QR en ReportLab)
+        y -= 60
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "Código QR de Verificación:")
+        c.setFont("Helvetica", 10)
+        y -= 20
+        c.drawString(40, y, cita.codigo_qr or f"PAGO_CITA_{cita.pk}_{cita.monto}")
+
+        # Footer
+        c.setFont("Helvetica-Oblique", 10)
+        c.setFillColor(colors.gray)
+        c.drawString(40, 40, "Este documento es válido como comprobante de reserva en PsicoSystem.")
+
+        c.showPage()
+        c.save()
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Comprobante_Cita_{cita.numero_ficha}.pdf"'
+        return response
