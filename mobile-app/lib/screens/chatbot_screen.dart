@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/chatbot_service.dart';
+import '../services/cita_pago_service.dart';
+import 'package:record/record.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ChatbotScreen extends StatefulWidget {
   final String token;
@@ -26,6 +30,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
+
+  final _record = AudioRecorder();
+  bool _isRecording = false;
+
+  @override
+  void dispose() {
+    _record.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -60,6 +75,41 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _isLoading = false;
       });
       _scrollToBottom();
+    }
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      final path = await _record.stop();
+      setState(() => _isRecording = false);
+      if (path != null) {
+        setState(() => _isLoading = true);
+        try {
+          // Reutilizamos el endpoint de transcripción
+          final transcript = await CitaPagoService.generarReportePorVoz(
+              token: widget.token, audioPath: path);
+          if (transcript.isNotEmpty) {
+            setState(() {
+              _controller.text = transcript;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al procesar audio: $e')),
+            );
+          }
+        } finally {
+          setState(() => _isLoading = false);
+        }
+      }
+    } else {
+      if (await Permission.microphone.request().isGranted) {
+        final dir = await getApplicationDocumentsDirectory();
+        final path = '${dir.path}/chat_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        await _record.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+        setState(() => _isRecording = true);
+      }
     }
   }
 
@@ -154,6 +204,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
                 onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: _isRecording ? Colors.red : Colors.teal.shade700,
+              child: IconButton(
+                icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white),
+                onPressed: _toggleRecording,
               ),
             ),
             const SizedBox(width: 8),

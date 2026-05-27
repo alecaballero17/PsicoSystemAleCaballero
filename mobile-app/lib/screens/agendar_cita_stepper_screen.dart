@@ -177,12 +177,6 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _ciCtrl.dispose();
-    _motivoCtrl.dispose();
-    super.dispose();
-  }
 
   void _nextStep() {
     if (_currentStep == 0 && _selectedPsicologo == null) {

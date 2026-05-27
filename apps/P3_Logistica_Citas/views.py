@@ -214,3 +214,31 @@ class ListaEsperaViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ListaEspera.objects.filter(clinica=self.request.user.clinica)
+
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from rest_framework.views import APIView
+
+class MobileCitasDisponibilidadAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        psicologo_username = request.query_params.get('psicologo_username')
+        fecha_str = request.query_params.get('fecha')
+        
+        if not psicologo_username or not fecha_str:
+            return Response({"error": "Faltan parámetros."}, status=400)
+            
+        fecha = parse_date(fecha_str)
+        if not fecha:
+            return Response({"error": "Formato de fecha inválido."}, status=400)
+            
+        citas = Cita.objects.filter(
+            psicologo__username=psicologo_username,
+            fecha_hora__date=fecha,
+            estado__in=['PROGRAMADA', 'CONFIRMADA']
+        )
+        
+        # Devolver las horas ocupadas en formato HH:MM
+        horas_ocupadas = [timezone.localtime(c.fecha_hora).strftime('%H:%M') for c in citas]
+        return Response({"horas_ocupadas": horas_ocupadas})
