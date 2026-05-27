@@ -6,6 +6,7 @@ from .views import (
     CitaViewSet,
     ListaEsperaViewSet,
     MobileCitasDisponibilidadAPIView,
+    MobileCitasAPIView,
 )
 
 router = DefaultRouter()
@@ -21,4 +22,5 @@ urlpatterns = [
     ),
     path("api/logistica/", include(router.urls)),
     path("api/mobile/citas/disponibilidad/", MobileCitasDisponibilidadAPIView.as_view(), name="api_mobile_disponibilidad"),
+    path("api/mobile/citas/", MobileCitasAPIView.as_view(), name="api_mobile_citas"),
 ]

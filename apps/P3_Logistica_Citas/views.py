@@ -242,3 +242,84 @@ class MobileCitasDisponibilidadAPIView(APIView):
         # Devolver las horas ocupadas en formato HH:MM
         horas_ocupadas = [timezone.localtime(c.fecha_hora).strftime('%H:%M') for c in citas]
         return Response({"horas_ocupadas": horas_ocupadas})
+
+
+class MobileCitasAPIView(APIView):
+    """
+    [CU-MOBILE] POST: Crear una cita desde la App Móvil.
+    El paciente se identifica automáticamente por el CI vinculado a su cuenta de usuario.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from apps.P1_Identidad_Acceso.models import Clinica
+        from django.utils.dateparse import parse_datetime
+
+        user = request.user
+        fecha_hora_str = request.data.get('fecha_hora')
+        motivo = request.data.get('motivo', '')
+        psicologo_username = request.data.get('psicologo_username')
+        clinica_id = request.data.get('clinica_id')
+
+        # Validaciones básicas
+        if not all([fecha_hora_str, psicologo_username, clinica_id]):
+            return Response(
+                {"error": "Faltan campos requeridos: fecha_hora, psicologo_username, clinica_id."},
+                status=400
+            )
+
+        # Buscar psicólogo
+        try:
+            from apps.P1_Identidad_Acceso.models import Usuario
+            psicologo = Usuario.objects.get(username=psicologo_username, rol='PSICOLOGO')
+        except Usuario.DoesNotExist:
+            return Response({"error": "El psicólogo no fue encontrado."}, status=404)
+
+        # Parsear fecha
+        fecha_hora = parse_datetime(fecha_hora_str)
+        if not fecha_hora:
+            return Response({"error": "Formato de fecha inválido. Usa ISO 8601."}, status=400)
+
+        # Localizar si viene sin timezone
+        from django.utils import timezone as tz
+        if fecha_hora.tzinfo is None:
+            from django.utils.timezone import make_aware
+            fecha_hora = make_aware(fecha_hora)
+
+        # Buscar el objeto Paciente por el CI del usuario autenticado
+        ci_del_usuario = user.ci
+        if not ci_del_usuario:
+            return Response(
+                {"error": "Tu cuenta no tiene CI registrado. Actualiza tu perfil."},
+                status=400
+            )
+
+        try:
+            paciente = Paciente.objects.get(ci=ci_del_usuario)
+        except Paciente.DoesNotExist:
+            return Response(
+                {"error": "No se encontró tu expediente de paciente. Contacta con la clínica."},
+                status=404
+            )
+
+        # Crear la cita
+        try:
+            cita = Cita.objects.create(
+                paciente=paciente,
+                psicologo=psicologo,
+                fecha_hora=fecha_hora,
+                motivo=motivo,
+                estado='PENDIENTE',
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+        return Response({
+            "id": cita.pk,
+            "mensaje": "Cita programada exitosamente.",
+            "fecha_hora": cita.fecha_hora.isoformat(),
+            "psicologo": psicologo.get_full_name() or psicologo.username,
+            "estado": cita.estado,
+        }, status=201)
+
