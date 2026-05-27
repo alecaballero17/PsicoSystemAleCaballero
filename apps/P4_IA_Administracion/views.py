@@ -1041,6 +1041,17 @@ Usa {hoy_str} si no se menciona fecha."""
             excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
             csv_buffer.close()
 
+            # ── Notificación in-app: aparece en la campanita ──
+            from apps.P1_Identidad_Acceso.models import NotificacionPush
+            NotificacionPush.objects.create(
+                usuario=request.user,
+                titulo="📊 Reporte Generado",
+                mensaje=(
+                    f"Tu reporte de citas y pagos del periodo {start} al {end} "
+                    f"fue generado exitosamente. Puedes descargarlo desde la sección de Reportes."
+                ),
+            )
+
             return Response({
                 "mensaje": "Reportes generados exitosamente",
                 "pdf_base64": pdf_base64,

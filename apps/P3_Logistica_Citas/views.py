@@ -246,10 +246,57 @@ class MobileCitasDisponibilidadAPIView(APIView):
 
 class MobileCitasAPIView(APIView):
     """
-    [CU-MOBILE] POST: Crear una cita desde la App Móvil.
+    [CU-MOBILE]
+    GET : Historial de citas del paciente autenticado.
+    POST: Crear una cita desde la App Móvil.
     El paciente se identifica automáticamente por el CI vinculado a su cuenta de usuario.
     """
     permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Devuelve el historial de citas del paciente autenticado."""
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from django.utils import timezone as tz
+
+        user = request.user
+        ci_del_usuario = user.ci
+
+        if not ci_del_usuario:
+            return Response(
+                {"citas": [], "total": 0, "advertencia": "Tu cuenta no tiene CI registrado."},
+                status=200,
+            )
+
+        try:
+            paciente = Paciente.objects.get(ci=ci_del_usuario)
+        except Paciente.DoesNotExist:
+            return Response(
+                {"citas": [], "total": 0, "advertencia": "No se encontró tu expediente de paciente."},
+                status=200,
+            )
+
+        # Filtros opcionales
+        estado = request.query_params.get('estado')
+        estado_pago = request.query_params.get('estado_pago')
+
+        qs = Cita.objects.filter(paciente=paciente).select_related('psicologo').order_by('-fecha_hora')
+        if estado:
+            qs = qs.filter(estado=estado)
+        if estado_pago:
+            qs = qs.filter(estado_pago=estado_pago)
+
+        citas_data = []
+        for cita in qs:
+            citas_data.append({
+                "id": cita.pk,
+                "fecha_hora": cita.fecha_hora.isoformat(),
+                "motivo": cita.motivo,
+                "estado": cita.estado,
+                "psicologo": cita.psicologo.get_full_name() or cita.psicologo.username,
+                "psicologo_username": cita.psicologo.username,
+            })
+
+        return Response({"citas": citas_data, "total": len(citas_data)}, status=200)
 
     def post(self, request):
         from apps.P2_Gestion_Clinica.models import Paciente
@@ -315,6 +362,21 @@ class MobileCitasAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
+        # ── Notificación in-app: aparece en la campanita del paciente ──
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        from django.utils import timezone as tz_now
+
+        fecha_local = tz_now.localtime(cita.fecha_hora)
+        NotificacionPush.objects.create(
+            usuario=user,
+            titulo="✅ Cita Programada",
+            mensaje=(
+                f"Tu cita con {psicologo.get_full_name() or psicologo.username} "
+                f"fue agendada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}. "
+                f"Motivo: {motivo or 'Sin especificar'}."
+            ),
+        )
+
         return Response({
             "id": cita.pk,
             "mensaje": "Cita programada exitosamente.",
@@ -322,4 +384,75 @@ class MobileCitasAPIView(APIView):
             "psicologo": psicologo.get_full_name() or psicologo.username,
             "estado": cita.estado,
         }, status=201)
+
+
+class MobileCitaCancelarAPIView(APIView):
+    """
+    [CU-MOBILE] POST: Cancelar una cita desde la App Móvil.
+    Reglas: no se puede cancelar faltando menos de 1 hora y máx. 2 cancelaciones/día.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from django.utils import timezone as tz
+        from django.db import models as db_models
+
+        user = request.user
+
+        # Verificar que la cita pertenece al paciente autenticado
+        try:
+            paciente = Paciente.objects.get(ci=user.ci)
+        except Paciente.DoesNotExist:
+            return Response({"error": "No se encontró tu expediente de paciente."}, status=404)
+
+        try:
+            cita = Cita.objects.get(pk=pk, paciente=paciente)
+        except Cita.DoesNotExist:
+            return Response({"error": "Cita no encontrada o no te pertenece."}, status=404)
+
+        if cita.estado in ('CANCELADA', 'REALIZADA'):
+            return Response({"error": f"La cita ya está en estado '{cita.estado}' y no puede cancelarse."}, status=400)
+
+        # Regla 1: No cancelar faltando menos de 1 hora
+        ahora = tz.now()
+        tiempo_restante = cita.fecha_hora - ahora
+        if tiempo_restante.total_seconds() < 3600:
+            return Response(
+                {"error": "No puedes cancelar citas con menos de 1 hora de antelación."},
+                status=400,
+            )
+
+        # Regla 2: Máx. 2 cancelaciones por día
+        hoy = ahora.date()
+        if user.ultima_cancelacion_fecha == hoy:
+            if user.cancelaciones_hoy >= 2:
+                return Response(
+                    {"error": "Has alcanzado el límite de 2 cancelaciones diarias."},
+                    status=400,
+                )
+            user.cancelaciones_hoy += 1
+        else:
+            user.cancelaciones_hoy = 1
+            user.ultima_cancelacion_fecha = hoy
+        user.save(update_fields=['cancelaciones_hoy', 'ultima_cancelacion_fecha'])
+
+        # Cancelar la cita
+        cita.estado = 'CANCELADA'
+        cita.save(update_fields=['estado'])
+
+        # Notificación in-app
+        fecha_local = tz.localtime(cita.fecha_hora)
+        NotificacionPush.objects.create(
+            usuario=user,
+            titulo="❌ Cita Cancelada",
+            mensaje=(
+                f"Tu cita con {cita.psicologo.get_full_name() or cita.psicologo.username} "
+                f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
+            ),
+        )
+
+        return Response({"mensaje": "Cita cancelada exitosamente.", "estado": cita.estado}, status=200)
+
 

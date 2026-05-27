@@ -123,7 +123,7 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
                       itemCount: _notificaciones.length,
                       itemBuilder: (context, index) {
                         final notif = _notificaciones[index];
-                        final fecha = DateTime.parse(notif['fecha']).toLocal();
+                        final fecha = DateTime.parse(notif['fecha_creacion']).toLocal();
                         final isLeido = notif['leido'] ?? false;
 
                         return Container(
