@@ -62,6 +62,9 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   void initState() {
     super.initState();
     _loadPsicologos();
+    if (widget.user.ci != null && widget.user.ci!.isNotEmpty) {
+      _ciCtrl.text = widget.user.ci!;
+    }
   }
 
   @override

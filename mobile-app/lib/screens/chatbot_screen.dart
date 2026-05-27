@@ -86,8 +86,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         setState(() => _isLoading = true);
         try {
           // Reutilizamos el endpoint de transcripción
-          final transcript = await CitaPagoService.transcribirAudio(
-              token: widget.token, audioPath: path);
+          final transcript = await CitaPagoService.transcribeAudio(
+              token: widget.token, filePath: path);
           if (transcript.isNotEmpty) {
             setState(() {
               _controller.text = transcript;
