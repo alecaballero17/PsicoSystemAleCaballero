@@ -945,9 +945,15 @@ Usa {hoy_str} si no se menciona fecha."""
             y = 670
 
             if not clinicas_a_reportar:
+                p.setFont("Helvetica-Bold", 10)
+                p.drawString(50, y, "Fecha y Hora")
+                p.drawString(180, y, "Especialista")
+                p.drawString(350, y, "Motivo")
+                p.drawString(480, y, "Estado/Monto")
+                y -= 20
                 p.setFont("Helvetica-Oblique", 12)
                 p.setFillColor(colors.red)
-                p.drawString(50, y, "El paciente no tiene clínicas asociadas.")
+                p.drawString(50, y, "No cuentas con un historial de pagos.")
                 p.setFillColor(colors.black)
             else:
                 for clinica_actual in clinicas_a_reportar:
@@ -1009,7 +1015,8 @@ Usa {hoy_str} si no se menciona fecha."""
             writer.writerow([])
 
             if not clinicas_a_reportar:
-                writer.writerow(["El paciente no tiene clínicas asociadas."])
+                writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
+                writer.writerow(["No cuentas con un historial de pagos.", "", "", "", ""])
             else:
                 for clinica_actual in clinicas_a_reportar:
                     writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
