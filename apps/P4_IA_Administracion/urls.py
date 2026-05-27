@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView, VoiceQueryAPIView, BackupDatabaseAPIView, ReporteGeneralPDFAPIView, ReporteGeneralCSVAPIView, RestoreDatabaseAPIView, DestruccionControladaAPIView, ChatbotMobileAPIView, TranscribeAudioMobileAPIView
+from .views import DashboardAPIView, LogAuditoriaAPIView, PredictiveDiagnosisAPIView, TransaccionListCreateAPIView, DescargarComprobantePDFAPIView, VoiceQueryAPIView, BackupDatabaseAPIView, ReporteGeneralPDFAPIView, ReporteGeneralCSVAPIView, RestoreDatabaseAPIView, DestruccionControladaAPIView, ChatbotMobileAPIView, TranscribeAudioMobileAPIView, GenerarReporteMobileAPIView
 
 urlpatterns = [
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
@@ -20,4 +20,5 @@ urlpatterns = [
     path('api/mobile/chat/clinica/<int:context_id>/', ChatbotMobileAPIView.as_view(), {'context_type': 'clinica'}, name='chatbot_clinica'),
     path('api/mobile/chat/cita/<int:context_id>/', ChatbotMobileAPIView.as_view(), {'context_type': 'cita'}, name='chatbot_cita'),
     path('api/mobile/transcribe/', TranscribeAudioMobileAPIView.as_view(), name='chatbot_transcribe'),
+    path('api/mobile/generar-reporte/', GenerarReporteMobileAPIView.as_view(), name='chatbot_generar_reporte'),
 ]

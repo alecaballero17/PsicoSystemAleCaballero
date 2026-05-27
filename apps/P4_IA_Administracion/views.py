@@ -859,3 +859,179 @@ class TranscribeAudioMobileAPIView(APIView):
             return Response({"error": f"Error transcribiendo: {str(e)}"}, status=500)
 
 
+class GenerarReporteMobileAPIView(APIView):
+    """
+    Endpoint para generar reportes en PDF y Excel desde la App Móvil usando transcripción de voz.
+    Soporta reportes 'generales' (múltiples clínicas del paciente) y 'específicos'.
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def post(self, request):
+        transcript = request.data.get('transcript', '')
+        if not transcript:
+            return Response({"error": "No se recibió texto transcrito."}, status=400)
+        
+        hoy_str = date.today().strftime('%Y-%m-%d')
+        start = hoy_str
+        end = hoy_str
+        scope = "especifico"
+        clinicas_mencionadas = []
+
+        # Usar Groq para extraer fechas y alcance (scope)
+        try:
+            client = _get_groq_client()
+            if client:
+                prompt = f"""Hoy es {hoy_str}. De: '{transcript}', extrae un JSON puro con:
+- 'start_date' (YYYY-MM-DD)
+- 'end_date' (YYYY-MM-DD)
+- 'scope' (valor 'general' si menciona palabras como 'todo', 'general', 'todas las clinicas'; valor 'especifico' si especifica alguna clinica). Asume 'general' si hay duda.
+- 'clinicas_mencionadas' (lista de nombres de clinicas, o lista vacía).
+Usa {hoy_str} si no se menciona fecha."""
+                completion = client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model="llama-3.1-8b-instant",
+                    temperature=0,
+                )
+                import re
+                match = re.search(r'\{.*\}', completion.choices[0].message.content, re.DOTALL)
+                if match:
+                    params = json.loads(match.group(0))
+                    start = params.get('start_date', hoy_str)
+                    end = params.get('end_date', hoy_str)
+                    scope = params.get('scope', 'general').lower()
+                    clinicas_mencionadas = [c.lower() for c in params.get('clinicas_mencionadas', [])]
+        except Exception as e:
+            logger.error(f"Error extrayendo datos con IA: {e}")
+            scope = "general"
+
+        # Identificar clínicas del paciente
+        identificador = request.user.ci if request.user.ci else request.user.username
+        pacientes_del_usuario = Paciente.objects.filter(ci=identificador)
+        
+        todas_clinicas = [p.clinica for p in pacientes_del_usuario if p.clinica]
+        # Remover duplicados
+        todas_clinicas = list({c.id: c for c in todas_clinicas}.values())
+        
+        clinicas_a_reportar = []
+        if scope == 'general' or not clinicas_mencionadas:
+            clinicas_a_reportar = todas_clinicas
+        else:
+            for c in todas_clinicas:
+                if any(mencion in c.nombre.lower() for mencion in clinicas_mencionadas):
+                    clinicas_a_reportar.append(c)
+
+        # Fallback de seguridad (si no encuentra por nombre, o no tiene ninguna)
+        if not clinicas_a_reportar:
+            if request.user.clinica:
+                clinicas_a_reportar = [request.user.clinica]
+
+        # 1. Generar PDF
+        import io, base64
+        pdf_buffer = io.BytesIO()
+        p = canvas.Canvas(pdf_buffer, pagesize=letter)
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(50, 750, "Reporte Global de Pagos y Citas")
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 730, f"Paciente: {request.user.get_full_name()} (CI: {identificador})")
+        p.drawString(50, 710, f"Periodo consultado: {start} al {end}")
+        p.line(50, 700, 550, 700)
+
+        y = 670
+
+        if not clinicas_a_reportar:
+            p.setFont("Helvetica-Oblique", 12)
+            p.setFillColor(colors.red)
+            p.drawString(50, y, "El paciente no tiene clínicas asociadas.")
+            p.setFillColor(colors.black)
+        else:
+            for clinica_actual in clinicas_a_reportar:
+                # Subtítulo de clínica
+                p.setFont("Helvetica-Bold", 14)
+                p.setFillColor(colors.blue)
+                p.drawString(50, y, f"CLÍNICA: {clinica_actual.nombre}")
+                p.setFillColor(colors.black)
+                y -= 20
+
+                qs = Cita.objects.filter(
+                    paciente__ci=identificador, 
+                    paciente__clinica=clinica_actual,
+                    fecha_hora__date__range=[start, end]
+                ).order_by('fecha_hora')
+
+                if not qs.exists():
+                    p.setFont("Helvetica-Oblique", 12)
+                    p.setFillColor(colors.red)
+                    p.drawString(50, y, "No hubo reporte para esta clínica ya que no hubo pagos.")
+                    p.setFillColor(colors.black)
+                    y -= 30
+                else:
+                    p.setFont("Helvetica-Bold", 10)
+                    p.drawString(50, y, "Fecha y Hora")
+                    p.drawString(180, y, "Especialista")
+                    p.drawString(350, y, "Motivo")
+                    p.drawString(480, y, "Estado/Monto")
+                    y -= 20
+                    p.setFont("Helvetica", 10)
+                    for c in qs:
+                        fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
+                        psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
+                        monto = getattr(c, 'monto', '120.00')
+                        p.drawString(50, y, fecha)
+                        p.drawString(180, y, psi[:25])
+                        p.drawString(350, y, (c.motivo or "Sin motivo")[:25])
+                        p.drawString(480, y, f"{c.estado} - ${monto}")
+                        y -= 15
+                        if y < 50:
+                            p.showPage()
+                            y = 750
+                    y -= 20 # Espacio extra al final de la tabla
+                
+                if y < 100:
+                    p.showPage()
+                    y = 750
+
+        p.showPage()
+        p.save()
+        pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
+        pdf_buffer.close()
+
+        # 2. Generar Excel (CSV en memoria)
+        import csv
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerow(["Reporte Global de Pagos y Citas", f"Paciente: {request.user.get_full_name()}", f"Periodo: {start} al {end}"])
+        writer.writerow([])
+
+        if not clinicas_a_reportar:
+            writer.writerow(["El paciente no tiene clínicas asociadas."])
+        else:
+            for clinica_actual in clinicas_a_reportar:
+                writer.writerow([f"--- CLÍNICA: {clinica_actual.nombre} ---"])
+                qs = Cita.objects.filter(
+                    paciente__ci=identificador, 
+                    paciente__clinica=clinica_actual,
+                    fecha_hora__date__range=[start, end]
+                ).order_by('fecha_hora')
+
+                if not qs.exists():
+                    writer.writerow(["No hubo reporte para esta clínica ya que no hubo pagos.", "", "", "", ""])
+                else:
+                    writer.writerow(["Fecha y Hora", "Especialista", "Motivo", "Estado", "Monto"])
+                    for c in qs:
+                        fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
+                        psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
+                        monto = getattr(c, 'monto', '120.00')
+                        writer.writerow([fecha, psi, c.motivo, c.estado, f"${monto}"])
+                writer.writerow([]) # Fila en blanco
+        
+        csv_bytes = csv_buffer.getvalue().encode('utf-8-sig') # UTF-8 with BOM for Excel
+        excel_base64 = base64.b64encode(csv_bytes).decode('utf-8')
+        csv_buffer.close()
+
+        return Response({
+            "mensaje": "Reportes generados exitosamente",
+            "pdf_base64": pdf_base64,
+            "excel_base64": excel_base64
+        }, status=200)
+
+

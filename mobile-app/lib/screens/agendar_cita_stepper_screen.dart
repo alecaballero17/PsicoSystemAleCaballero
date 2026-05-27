@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/user_model.dart';
 import '../services/cita_pago_service.dart';
 
@@ -49,11 +52,68 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   final List<String> _horasTarde = ['12:00', '12:15', '13:00', '13:15', '13:30', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15'];
 
   final List<String> _stepTitles = ['Especialista', 'Datos', 'Fecha', 'Hora', 'Confirmar'];
+  String _tarjetaCvc = '';
+  
+  final _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+  bool _isProcessingVoice = false;
 
   @override
   void initState() {
     super.initState();
     _loadPsicologos();
+  }
+
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    _ciCtrl.dispose();
+    _motivoCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleRecording() async {
+    try {
+      if (await _audioRecorder.isRecording()) {
+        final path = await _audioRecorder.stop();
+        setState(() {
+          _isRecording = false;
+          _isProcessingVoice = true;
+        });
+        
+        if (path != null) {
+          final text = await CitaPagoService.transcribeAudio(token: widget.token, filePath: path);
+          setState(() {
+            _motivoCtrl.text = text;
+            _isProcessingVoice = false;
+          });
+        } else {
+          setState(() => _isProcessingVoice = false);
+        }
+      } else {
+        if (await Permission.microphone.request().isGranted) {
+          final tempDir = await getTemporaryDirectory();
+          final path = '${tempDir.path}/motivo_audio.m4a';
+          await _audioRecorder.start(
+            const RecordConfig(encoder: AudioEncoder.aacLc),
+            path: path,
+          );
+          setState(() {
+            _isRecording = true;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permiso de micrófono denegado.')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isRecording = false;
+        _isProcessingVoice = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   Future<void> _loadPsicologos() async {
@@ -389,6 +449,12 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
                 hintText: 'Ej. Estrés, Ansiedad, Terapia de pareja, Test Vocacional...',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: _isProcessingVoice 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Colors.red : const Color(0xFF2563EB)),
+                  onPressed: _isProcessingVoice ? null : _toggleRecording,
+                ),
               ),
             ),
             

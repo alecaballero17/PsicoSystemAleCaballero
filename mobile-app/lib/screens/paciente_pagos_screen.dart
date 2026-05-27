@@ -321,7 +321,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
-        title: Text('Historial y Pagos', style: GoogleFonts.outfit(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: Text('Historial de Pagos', style: GoogleFonts.outfit(color: Colors.black87, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.picture_as_pdf, color: primaryBlue),
