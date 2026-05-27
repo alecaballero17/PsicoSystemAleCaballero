@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConfig {
   // [SPRINT 0 - T008] Base URL con salvavidas (fallback a IP local)
-  static String get baseUrl => dotenv.env['API_URL'] ?? 'http://192.168.0.196:8000/api';
+  static String get baseUrl => dotenv.env['API_URL'] ?? 'https://psicosystem-backend.onrender.com/api';
 
   // 2. Endpoints Dinámicos (Esto te ahorra errores de dedo al escribir URLs)
   static String get login => '$baseUrl/auth/login/';
