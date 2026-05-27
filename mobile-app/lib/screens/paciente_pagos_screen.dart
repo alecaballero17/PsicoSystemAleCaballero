@@ -95,7 +95,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
         }
       }
     } catch (e) {
-      print('Error recording: \$e');
+      print('Error recording: $e');
       setState(() {
         _isRecording = false;
         _isProcessingVoice = false;
@@ -111,7 +111,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
     } catch (e) {
       setState(() => _isProcessingVoice = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al transcribir: \$e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error al transcribir: $e'), backgroundColor: Colors.red),
       );
     }
   }
