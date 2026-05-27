@@ -4,7 +4,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConfig {
-  // [SPRINT 0 - T008] Base URL con salvavidas (fallback a IP local)
+  // [SPRINT 0 - T008] Base URL con salvavidas (fallback al backend de producción)
   static String get baseUrl => dotenv.env['API_URL'] ?? 'https://psicosystem-backend.onrender.com/api';
 
   // 2. Endpoints Dinámicos (Esto te ahorra errores de dedo al escribir URLs)
@@ -15,7 +15,12 @@ class ApiConfig {
   static String get me => '$baseUrl/auth/me/';
   
   // [SPRINT 1 - T015] Endpoints Públicos de Autogestión
-  static String get clinicas => '$baseUrl/clinicas/';
+  static String get clinicas => '$baseUrl/clinicas/publicas/';
   static String get pacientesRegistroPublico => '$baseUrl/pacientes/registro-publico/';
   static String get associateClinic => '$baseUrl/pacientes/me/associate_clinic/';
+
+  // Chatbots
+  static String get chatGlobal => '$baseUrl/mobile/chat/global/';
+  static String chatClinica(int id) => '$baseUrl/mobile/chat/clinica/$id/';
+  static String chatCita(int id) => '$baseUrl/mobile/chat/cita/$id/';
 }

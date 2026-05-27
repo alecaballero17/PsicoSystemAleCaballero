@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 // 1. IMPORTAMOS NUESTRO SERVICIO
 import '../services/auth_service.dart'; 
+import '../services/firebase_service.dart';
 import 'package:psicosystem_mobile/screens/paciente_dashboard_screen.dart';
-import 'package:psicosystem_mobile/screens/registro_paciente_screen.dart'; 
-import 'package:psicosystem_mobile/screens/seleccion_clinica_screen.dart'; // [RF-29]
+import 'package:psicosystem_mobile/screens/registro_paciente_screen.dart';
 
 // 🔥 2. IMPORTAMOS TUS NUEVOS WIDGETS
 import '../widgets/custom_button.dart';
@@ -24,6 +24,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // FUNCIÓN DE LOGIN REFACTORIZADA (Tipado Fuerte Aplicado)
   Future<void> _login() async {
+    if (_usernameController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, rellena todos los campos antes de iniciar sesión.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -40,30 +50,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Validación de Seguridad Estricta (Solo Pacientes)
       if (role == 'PACIENTE') {
-        
-        // [ALINEACIÓN SPRINT 1 - RF-29] Lógica de Usuario Huérfano
-        if (clinicaId == null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SeleccionClinicaScreen(
-                token: token,
-                username: _usernameController.text,
-              ),
+        // [RF-09] Obtener y registrar Token FCM
+        try {
+          final fcmToken = await FirebaseService.getToken();
+          if (fcmToken != null) {
+            await AuthService.registrarFCMToken(token, fcmToken);
+          }
+        } catch (_) {}
+
+        // [MODIFICACIÓN] El usuario pidió que no aparezca la pantalla de seleccionar clínica,
+        // sino que vaya directo al menú (Dashboard) donde aparecen todas las clínicas creadas.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PacienteDashboard(
+              token: token,
+              role: role,
+              username: _usernameController.text,
             ),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PacienteDashboard(
-                token: token,
-                role: role,
-                username: _usernameController.text,
-              ),
-            ),
-          );
-        }
+          ),
+        );
       } else {
         _showError('Acceso Denegado: Aplicación exclusiva para pacientes.');
       }
