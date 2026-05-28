@@ -299,7 +299,7 @@ class MobileCitasAPIView(APIView):
                 "estado": cita.estado,
                 "estado_pago": cita.estado_pago,
                 "monto": str(cita.monto),
-                "psicologo": cita.psicologo.get_full_name() or cita.psicologo.username,
+                "psicologo_nombre": cita.psicologo.get_full_name() or cita.psicologo.username,
                 "psicologo_username": cita.psicologo.username,
                 "clinica_nombre": cita.clinica.nombre if cita.clinica else (cita.paciente.clinica.nombre if cita.paciente.clinica else 'Sin Clínica'),
                 "numero_ficha": cita.numero_ficha or f"FICHA-{cita.pk:05d}",
@@ -636,7 +636,7 @@ class MobileCitaComprobantePDFAPIView(APIView):
         c.drawString(40, y, "Datos del Paciente")
         c.setFont("Helvetica", 12)
         y -= 20
-        c.drawString(40, y, f"Nombre: {paciente.nombre} {paciente.apellidos}")
+        c.drawString(40, y, f"Nombre: {paciente.nombre}")
         y -= 20
         c.drawString(40, y, f"CI: {paciente.ci}")
 

@@ -40,6 +40,7 @@ class Cita(models.Model):
 
     ESTADOS = [
         ('PENDIENTE', 'Pendiente'),
+        ('PROGRAMADA', 'Programada'),
         ('ASISTIO', 'Asistió'),
         ('NO_ASISTIO', 'No asistió'),
         ('CANCELADA', 'Cancelada'),
