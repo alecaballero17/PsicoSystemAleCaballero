@@ -378,7 +378,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['TODOS', 'PENDIENTE', 'PAGADO', 'CANCELADO'].map((filtro) {
+                children: ['TODOS', 'PENDIENTE', 'PAGADO'].map((filtro) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: ChoiceChip(
@@ -418,8 +418,9 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
   }
 
   Widget _buildPagoItem(dynamic citaData, String concepto, String fecha, String monto, bool pagado) {
-    final clinica = citaData['clinica_nombre'] ?? 'Sin Clínica';
-    final psicologo = citaData['psicologo_nombre'] ?? 'Sin Psicólogo';
+    final clinica = (citaData['clinica_nombre'] == null || citaData['clinica_nombre'].isEmpty) ? 'Sin Clínica' : citaData['clinica_nombre'];
+    final pName = citaData['psicologo_nombre'];
+    final psicologo = (pName == null || pName.toString().trim().isEmpty) ? 'Sin Psicólogo' : pName;
     final numeroFicha = citaData['numero_ficha'] ?? 'N/A';
 
     return Container(
@@ -465,18 +466,200 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
                         ),
                         child: Text('Pagar Ahora', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      const SizedBox(width: 8),
-                      OutlinedButton(
-                        onPressed: () => _cancelarCita(context, citaData),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
+                    ],
+                  ),
+                ]
+              ],
+            ),
+          ),
+          Text(monto, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: pagado ? Colors.green : Colors.orange)),
+        ],
+      ),
+    );
+  }
+
+  void _simularPago(BuildContext context, dynamic citaData) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return _PagoModal(
+          citaData: citaData,
+          onConfirmarPago: (metodo) {
+            Navigator.of(ctx).pop();
+            _procesarPago(citaData['id'], metodo);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _procesarPago(int citaId, String metodo) async {
+    // Mostrar validación
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text('Validando pago en la clínica...', style: GoogleFonts.outfit()),
+          ],
+        ),
+      ),
+    );
+
+    // Simulamos un retraso para que se vea el proceso de validación
+    await Future.delayed(const Duration(seconds: 3));
+
+    try {
+      await CitaPagoService.pagarCita(
+        token: widget.token,
+        citaId: citaId,
+        metodoPago: metodo,
+      );
+
+      if (mounted) Navigator.of(context).pop(); // Cerrar carga
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (c) => AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                const SizedBox(height: 16),
+                Text('Pago Exitoso', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(c).pop();
+                  setState(() => _isLoading = true);
+                  _loadData();
+                },
+                child: Text('Aceptar', style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop(); // Cerrar carga
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al procesar el pago: $e', style: GoogleFonts.outfit()), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _cancelarCita(BuildContext context, dynamic citaData) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Cancelar Cita', style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: Text('¿Estás seguro de cancelar esta cita? Recuerda que no se puede cancelar faltando menos de 1 hora.', style: GoogleFonts.outfit()),
+        actions: [
+          TextButton(
+            child: Text('No, Mantener', style: GoogleFonts.outfit(color: Colors.grey)),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Sí, Cancelar', style: GoogleFonts.outfit(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              setState(() => _isLoading = true);
+              try {
+                await CitaPagoService.cancelarCita(token: widget.token, citaId: citaData['id']);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Cita cancelada con éxito.', style: GoogleFonts.outfit()), backgroundColor: Colors.green),
+                );
+                _loadData();
+              } catch (e) {
+                setState(() => _isLoading = false);
+                ScaffoldMessenger.of(context).showSnackBar(
+),
+            ),
+            const SizedBox(height: 16),
+            Text('Historial Reciente', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_citasFiltradas.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text('Aún no hay datos de pagos que coincidan.', style: GoogleFonts.outfit(color: Colors.grey)),
+              )
+            else
+              ..._citasFiltradas.map((c) {
+                final pagado = (c['estado_pago'] ?? '') == 'PAGADO';
+                final fecha = c['fecha_hora'] != null
+                    ? DateFormat("dd MMM yyyy HH:mm").format(DateTime.parse(c['fecha_hora']).toLocal())
+                    : '-';
+                return _buildPagoItem(c, c['motivo'] ?? 'Consulta', fecha, '\$${c['monto'] ?? "0.00"}', pagado);
+              }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPagoItem(dynamic citaData, String concepto, String fecha, String monto, bool pagado) {
+    final clinica = (citaData['clinica_nombre'] == null || citaData['clinica_nombre'].isEmpty) ? 'Sin Clínica' : citaData['clinica_nombre'];
+    final pName = citaData['psicologo_nombre'];
+    final psicologo = (pName == null || pName.toString().trim().isEmpty) ? 'Sin Psicólogo' : pName;
+    final numeroFicha = citaData['numero_ficha'] ?? 'N/A';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: pagado ? Colors.green.shade50 : Colors.orange.shade50, borderRadius: BorderRadius.circular(10)),
+            child: Icon(pagado ? Icons.check_circle : Icons.access_time, color: pagado ? Colors.green : Colors.orange),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(concepto, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text('Clínica: $clinica', style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade700)),
+                Text('Psicólogo: $psicologo', style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade700)),
+                Text('Ficha N°: $numeroFicha', style: GoogleFonts.outfit(fontSize: 13, color: primaryBlue, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(fecha, style: GoogleFonts.outfit(color: Colors.grey.shade500, fontSize: 12)),
+                if (!pagado) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _simularPago(context, citaData),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryBlue,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: Text('Cancelar', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: Text('Pagar Ahora', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -621,12 +804,21 @@ class _PagoModal extends StatefulWidget {
 
 class _PagoModalState extends State<_PagoModal> {
   String metodoSeleccionado = '';
-  String tarjetaNumero = '';
-  String tarjetaFecha = '';
-  String tarjetaCvc = '';
   
+  final _numeroCtrl = TextEditingController();
+  final _fechaCtrl = TextEditingController();
+  final _cvcCtrl = TextEditingController();
+
   final primaryBlue = const Color(0xFF2563EB);
   final darkBlue = const Color(0xFF0F172A);
+
+  @override
+  void dispose() {
+    _numeroCtrl.dispose();
+    _fechaCtrl.dispose();
+    _cvcCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -704,18 +896,19 @@ class _PagoModalState extends State<_PagoModal> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              controller: _numeroCtrl,
               decoration: InputDecoration(
                 labelText: 'Número de Tarjeta',
                 prefixIcon: const Icon(Icons.credit_card),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               keyboardType: TextInputType.number,
-              onChanged: (v) => tarjetaNumero = v,
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: TextFormField(
+                  controller: _fechaCtrl,
                   decoration: InputDecoration(labelText: 'MM/YY', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -723,12 +916,11 @@ class _PagoModalState extends State<_PagoModal> {
                     LengthLimitingTextInputFormatter(4),
                     ExpirationDateFormatter(),
                   ],
-                  onChanged: (v) => tarjetaFecha = v,
                 )),
                 const SizedBox(width: 12),
                 Expanded(child: TextFormField(
+                  controller: _cvcCtrl,
                   decoration: InputDecoration(labelText: 'CVC', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                  onChanged: (v) => tarjetaCvc = v,
                 )),
               ],
             ),
@@ -738,7 +930,7 @@ class _PagoModalState extends State<_PagoModal> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: darkBlue, padding: const EdgeInsets.symmetric(vertical: 16)),
                 onPressed: () {
-                  if (tarjetaNumero.length < 15 || tarjetaFecha.isEmpty || tarjetaCvc.isEmpty) {
+                  if (_numeroCtrl.text.length < 15 || _fechaCtrl.text.isEmpty || _cvcCtrl.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor llena los datos de la tarjeta correctamente')));
                     return;
                   }

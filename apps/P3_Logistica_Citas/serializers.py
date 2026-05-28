@@ -6,10 +6,11 @@ from .models import Cita, ListaEspera
 class CitaSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.ReadOnlyField(source='paciente.nombre')
     psicologo_nombre = serializers.ReadOnlyField(source='psicologo.get_full_name')
+    clinica_nombre = serializers.ReadOnlyField(source='clinica.nombre')
 
     class Meta:
         model = Cita
-        fields = ["id", "paciente", "paciente_nombre", "psicologo", "psicologo_nombre", "fecha_hora", "duracion_minutos", "motivo", "estado", "estado_pago", "monto", "clinica"]
+        fields = ["id", "paciente", "paciente_nombre", "psicologo", "psicologo_nombre", "fecha_hora", "duracion_minutos", "motivo", "estado", "estado_pago", "monto", "clinica", "clinica_nombre", "numero_ficha"]
 
     def validate(self, attrs):
         fecha_hora = attrs.get('fecha_hora')

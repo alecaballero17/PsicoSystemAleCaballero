@@ -269,7 +269,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
       await _localNotifications.show(
         id: DateTime.now().millisecond,
         title: 'Cita Programada',
-        body: 'Dr(a). ${_selectedPsicologo!.split(' - ').last} | ${DateFormat('yyyy-MM-dd HH:mm').format(dateTime)}',
+        body: '${widget.clinicaSeleccionada} | Dr(a). ${_selectedPsicologo!.split(' - ').last} | ${DateFormat('HH:mm').format(dateTime)}',
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'high_importance_channel',
@@ -737,7 +737,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al descargar: $e')));
               }
             },
-            label: Text('Descargar Comprobante PDF', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            label: Text('Descargar Ficha PDF', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
         const SizedBox(height: 12),

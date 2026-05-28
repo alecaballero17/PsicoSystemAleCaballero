@@ -401,15 +401,16 @@ class MobileCitasAPIView(APIView):
             paciente.save(update_fields=['clinica_id'])
 
         # ── Notificación in-app: aparece en la campanita del paciente ──
-        from apps.P1_Identidad_Acceso.models import NotificacionPush, Usuario
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
         from django.utils import timezone as tz_now
 
         fecha_local = tz_now.localtime(cita.fecha_hora)
+        clinica_nombre = clinica.nombre if clinica else 'la clínica'
         NotificacionPush.objects.create(
             usuario=user,
             titulo="✅ Cita Programada",
             mensaje=(
-                f"Tu cita en {cita.clinica.nombre if cita.clinica else 'la clínica'} "
+                f"Tu cita en {clinica_nombre} "
                 f"con el/la Dr(a). {psicologo.get_full_name() or psicologo.username} "
                 f"fue agendada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}. "
                 f"Motivo: {motivo or 'Sin especificar'}."
@@ -423,14 +424,14 @@ class MobileCitasAPIView(APIView):
             NotificacionPush.objects.create(
                 usuario=admin,
                 titulo="📅 Nueva Cita (App)",
-                mensaje=f"El paciente {paciente.nombre} {paciente.apellidos} agendó una cita con {psicologo.get_full_name()} para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
+                mensaje=f"El paciente {paciente.nombre} (CI: {paciente.ci}) agendó una cita con {psicologo.get_full_name()} para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
             )
             
         # Notificar al psicólogo
         NotificacionPush.objects.create(
             usuario=psicologo,
             titulo="📅 Tienes una nueva cita",
-            mensaje=f"Paciente: {paciente.nombre} {paciente.apellidos}. Fecha: {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
+            mensaje=f"Paciente: {paciente.nombre}. Fecha: {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
         )
 
         return Response({
@@ -501,7 +502,7 @@ class MobileCitaCancelarAPIView(APIView):
         cita.estado = 'CANCELADA'
         cita.save(update_fields=['estado'])
 
-        # Notificación in-app
+        # Notificación in-app al paciente
         fecha_local = tz.localtime(cita.fecha_hora)
         motivo_str = request.data.get('motivo', 'Cancelación por el paciente')
         NotificacionPush.objects.create(
@@ -513,6 +514,23 @@ class MobileCitaCancelarAPIView(APIView):
                 f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada.\n"
                 f"Motivo: {motivo_str}"
             ),
+        )
+
+        # ── Notificación a la Web (Clínica) ──
+        if cita.clinica_id:
+            admins = db_models.apps.get_model('P1_Identidad_Acceso', 'Usuario').objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
+            for admin in admins:
+                NotificacionPush.objects.create(
+                    usuario=admin,
+                    titulo="❌ Cita Cancelada",
+                    mensaje=f"El paciente {paciente.nombre} ha cancelado su cita del {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
+                )
+
+        # Notificar al psicólogo
+        NotificacionPush.objects.create(
+            usuario=cita.psicologo,
+            titulo="❌ Cita Cancelada",
+            mensaje=f"La cita con el paciente {paciente.nombre} programada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
         )
 
         return Response({"mensaje": "Cita cancelada exitosamente.", "estado": cita.estado}, status=200)
@@ -559,7 +577,7 @@ class MobileCitaPagarAPIView(APIView):
                 NotificacionPush.objects.create(
                     usuario=admin,
                     titulo="💰 Pago Recibido",
-                    mensaje=f"Se recibió un pago de ${cita.monto} del paciente {paciente.nombre} {paciente.apellidos}."
+                    mensaje=f"Se recibió un pago de ${cita.monto} del paciente {paciente.nombre}."
                 )
 
         return Response({"mensaje": "Pago exitoso", "estado_pago": cita.estado_pago, "estado": cita.estado}, status=201)

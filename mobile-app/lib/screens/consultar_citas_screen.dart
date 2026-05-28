@@ -6,6 +6,7 @@ import '../services/cita_pago_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'chatbot_screen.dart';
 import '../services/chatbot_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class ConsultarCitasScreen extends StatefulWidget {
   final String token;
@@ -380,6 +381,23 @@ class _ConsultarCitasScreenState extends State<ConsultarCitasScreen> {
                   token: widget.token,
                   citaId: citaId,
                 );
+                
+                final _localNotifications = FlutterLocalNotificationsPlugin();
+                await _localNotifications.show(
+                  DateTime.now().millisecond,
+                  'Cita Cancelada',
+                  'Tu cita en ${widget.clinicaNombre} ha sido cancelada.',
+                  const NotificationDetails(
+                    android: AndroidNotificationDetails(
+                      'high_importance_channel',
+                      'High Importance Notifications',
+                      importance: Importance.max,
+                      priority: Priority.high,
+                      icon: '@mipmap/ic_launcher',
+                    ),
+                  ),
+                );
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Cita cancelada con éxito.', style: GoogleFonts.outfit()), backgroundColor: Colors.green),
                 );
