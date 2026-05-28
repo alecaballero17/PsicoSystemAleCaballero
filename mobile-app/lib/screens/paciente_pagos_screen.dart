@@ -515,13 +515,32 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
     await Future.delayed(const Duration(seconds: 3));
 
     try {
-      await CitaPagoService.pagarCita(
+      final response = await CitaPagoService.pagarCita(
         token: widget.token,
         citaId: citaId,
         metodoPago: metodo,
       );
 
       if (mounted) Navigator.of(context).pop();
+
+      // Trigger local push notification
+      try {
+        final _localNotifications = FlutterLocalNotificationsPlugin();
+        await _localNotifications.show(
+          id: DateTime.now().millisecond,
+          title: response['notificacion_titulo'] ?? '✅ Pago Exitoso',
+          body: response['notificacion_mensaje'] ?? 'Tu pago ha sido procesado correctamente.',
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'high_importance_channel',
+              'High Importance Notifications',
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+            ),
+          ),
+        );
+      } catch (_) {}
 
       if (mounted) {
         showDialog(

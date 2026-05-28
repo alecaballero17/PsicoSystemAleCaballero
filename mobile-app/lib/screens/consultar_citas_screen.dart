@@ -53,11 +53,15 @@ class _ConsultarCitasScreenState extends State<ConsultarCitasScreen> {
       final data = await CitaPagoService.getHistorial(
         widget.token,
         clinicaId: widget.clinicaId,
-        estado: 'PENDIENTE',
       );
-      final citas = data['citas'] ?? data['results'] ?? data;
+      final citasRaw = data['citas'] ?? data['results'] ?? data;
+      final lista = citasRaw is List ? citasRaw : [];
+      
       setState(() {
-        _citas = citas is List ? citas : [];
+        _citas = lista.where((c) {
+          final estado = (c['estado']?.toString().toUpperCase() ?? '');
+          return estado != 'ASISTIO' && estado != 'NO_ASISTIO' && estado != 'CANCELADA' && estado != 'REALIZADA';
+        }).toList();
         _isLoading = false;
       });
     } catch (e) {

@@ -882,11 +882,10 @@ class GenerarReporteMobileAPIView(APIView):
             client = _get_groq_client()
             if client:
                 prompt = f"""Hoy es {hoy_str}. De: '{transcript}', extrae un JSON puro con:
-- 'start_date' (YYYY-MM-DD)
-- 'end_date' (YYYY-MM-DD)
+- 'start_date' (YYYY-MM-DD o null si no se menciona)
+- 'end_date' (YYYY-MM-DD o null si no se menciona)
 - 'scope' (valor 'general' si menciona palabras como 'todo', 'general', 'todas las clinicas'; valor 'especifico' si especifica alguna clinica). Asume 'general' si hay duda.
-- 'clinicas_mencionadas' (lista de nombres de clinicas, o lista vacía).
-Usa {hoy_str} si no se menciona fecha."""
+- 'clinicas_mencionadas' (lista de nombres de clinicas, o lista vacía)."""
                 completion = client.chat.completions.create(
                     messages=[{"role": "user", "content": prompt}],
                     model="llama-3.1-8b-instant",
@@ -896,19 +895,20 @@ Usa {hoy_str} si no se menciona fecha."""
                 match = re.search(r'\{.*\}', completion.choices[0].message.content, re.DOTALL)
                 if match:
                     params = json.loads(match.group(0))
-                    start = params.get('start_date', hoy_str)
-                    end = params.get('end_date', hoy_str)
+                    start = params.get('start_date')
+                    end = params.get('end_date')
                     scope = params.get('scope', 'general').lower()
                     clinicas_mencionadas = [c.lower() for c in params.get('clinicas_mencionadas', [])]
         except Exception as e:
             logger.error(f"Error extrayendo datos con IA: {e}")
             scope = "general"
 
-        # Identificar clínicas del paciente
+        # Identificar clínicas del paciente a partir de sus citas
         identificador = request.user.ci if getattr(request.user, 'ci', '') else request.user.username
-        pacientes_del_usuario = Paciente.objects.filter(ci=identificador)
         
-        todas_clinicas = [p.clinica for p in pacientes_del_usuario if p.clinica]
+        citas_del_usuario = Cita.objects.filter(paciente__ci=identificador).select_related('clinica')
+        todas_clinicas = [c.clinica for c in citas_del_usuario if c.clinica]
+        
         # Remover duplicados
         todas_clinicas = list({c.id: c for c in todas_clinicas}.values())
         
@@ -939,7 +939,10 @@ Usa {hoy_str} si no se menciona fecha."""
             p.drawString(50, 750, "Reporte Global de Pagos y Citas")
             p.setFont("Helvetica", 12)
             p.drawString(50, 730, f"Paciente: {full_name} (CI: {identificador})")
-            p.drawString(50, 710, f"Periodo consultado: {start} al {end}")
+            if start and end:
+                p.drawString(50, 710, f"Periodo consultado: {start} al {end}")
+            else:
+                p.drawString(50, 710, f"Periodo consultado: Historial Completo")
             p.line(50, 700, 550, 700)
 
             y = 670
@@ -966,14 +969,16 @@ Usa {hoy_str} si no se menciona fecha."""
 
                     qs = Cita.objects.filter(
                         paciente__ci=identificador, 
-                        paciente__clinica=clinica_actual,
-                        fecha_hora__date__range=[start, end]
-                    ).order_by('fecha_hora')
+                        paciente__clinica=clinica_actual
+                    ).exclude(estado='CANCELADA').order_by('fecha_hora')
+                    
+                    if start and end:
+                        qs = qs.filter(fecha_hora__date__range=[start, end])
 
                     if not qs.exists():
                         p.setFont("Helvetica-Oblique", 12)
                         p.setFillColor(colors.red)
-                        p.drawString(50, y, "No hubo reporte para esta clínica ya que no hubo pagos.")
+                        p.drawString(50, y, "No hubo reporte para esta clínica (sin citas/pagos).")
                         p.setFillColor(colors.black)
                         y -= 30
                     else:
@@ -981,17 +986,18 @@ Usa {hoy_str} si no se menciona fecha."""
                         p.drawString(50, y, "Fecha y Hora")
                         p.drawString(180, y, "Especialista")
                         p.drawString(350, y, "Motivo")
-                        p.drawString(480, y, "Estado/Monto")
+                        p.drawString(480, y, "Estado/Pago")
                         y -= 20
                         p.setFont("Helvetica", 10)
                         for c in qs:
                             fecha = timezone.localtime(c.fecha_hora).strftime('%d/%m/%Y %H:%M')
                             psi = c.psicologo.get_full_name() if c.psicologo else "N/A"
                             monto = getattr(c, 'monto', '120.00')
+                            p_estado = c.estado_pago if c.estado_pago else 'PENDIENTE'
                             p.drawString(50, y, fecha)
                             p.drawString(180, y, psi[:25])
                             p.drawString(350, y, (c.motivo or "Sin motivo")[:25])
-                            p.drawString(480, y, f"{c.estado} - ${monto}")
+                            p.drawString(480, y, f"{p_estado} - ${monto}")
                             y -= 15
                             if y < 50:
                                 p.showPage()

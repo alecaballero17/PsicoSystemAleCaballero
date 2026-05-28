@@ -563,11 +563,14 @@ class MobileCitaPagarAPIView(APIView):
             cita.estado = 'PROGRAMADA'
         cita.save(update_fields=['estado_pago', 'estado'])
 
+        clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
+        mensaje_notif = f"Tu pago de ${cita.monto} mediante {metodo_pago} para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
+        
         # Notificación
         NotificacionPush.objects.create(
             usuario=user,
             titulo="✅ Pago Exitoso",
-            mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.get_full_name()} ha sido procesado correctamente.",
+            mensaje=mensaje_notif,
         )
 
         # ── Notificación a la Web (Clínica) ──
@@ -578,10 +581,16 @@ class MobileCitaPagarAPIView(APIView):
                 NotificacionPush.objects.create(
                     usuario=admin,
                     titulo="💰 Pago Recibido",
-                    mensaje=f"Se recibió un pago de ${cita.monto} del paciente {paciente.nombre}."
+                    mensaje=f"Se recibió un pago de ${cita.monto} mediante {metodo_pago} del paciente {paciente.nombre} en {clinica_nombre}."
                 )
 
-        return Response({"mensaje": "Pago exitoso", "estado_pago": cita.estado_pago, "estado": cita.estado}, status=201)
+        return Response({
+            "mensaje": "Pago exitoso", 
+            "estado_pago": cita.estado_pago, 
+            "estado": cita.estado,
+            "notificacion_titulo": "✅ Pago Exitoso",
+            "notificacion_mensaje": mensaje_notif
+        }, status=201)
 
 import io
 from django.http import HttpResponse
@@ -601,10 +610,12 @@ class MobileCitaComprobantePDFAPIView(APIView):
 
         user = request.user
         try:
-            paciente = Paciente.objects.get(ci=user.ci)
-            cita = Cita.objects.get(pk=pk, paciente=paciente)
-        except (Paciente.DoesNotExist, Cita.DoesNotExist):
-            return Response({"error": "Cita no encontrada o no te pertenece."}, status=404)
+            cita = Cita.objects.get(pk=pk)
+            if cita.paciente.ci != user.ci:
+                return Response({"error": "Cita no te pertenece."}, status=403)
+            paciente = cita.paciente
+        except Cita.DoesNotExist:
+            return Response({"error": "Cita no encontrada."}, status=404)
 
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
