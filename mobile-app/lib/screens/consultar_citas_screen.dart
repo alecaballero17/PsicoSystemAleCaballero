@@ -384,10 +384,10 @@ class _ConsultarCitasScreenState extends State<ConsultarCitasScreen> {
                 
                 final _localNotifications = FlutterLocalNotificationsPlugin();
                 await _localNotifications.show(
-                  DateTime.now().millisecond,
-                  'Cita Cancelada',
-                  'Tu cita en ${widget.clinicaNombre} ha sido cancelada.',
-                  const NotificationDetails(
+                  id: DateTime.now().millisecond,
+                  title: 'Cita Cancelada',
+                  body: 'Tu cita en ${widget.clinicaNombre} ha sido cancelada.',
+                  notificationDetails: const NotificationDetails(
                     android: AndroidNotificationDetails(
                       'high_importance_channel',
                       'High Importance Notifications',
