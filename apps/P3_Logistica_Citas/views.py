@@ -405,6 +405,7 @@ class MobileCitasAPIView(APIView):
         from django.utils import timezone as tz_now
 
         fecha_local = tz_now.localtime(cita.fecha_hora)
+        clinica = Clinica.objects.filter(id=clinica_id).first()
         clinica_nombre = clinica.nombre if clinica else 'la clínica'
         NotificacionPush.objects.create(
             usuario=user,
