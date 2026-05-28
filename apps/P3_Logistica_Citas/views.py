@@ -194,6 +194,16 @@ class CitaViewSet(viewsets.ModelViewSet):
         
         # Notificación automática (CU26)
         mensaje = f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y')} ha sido CANCELADA."
+        
+        from apps.P1_Identidad_Acceso.models import Usuario, NotificacionPush
+        paciente_user = Usuario.objects.filter(ci=cita.paciente.ci).first()
+        if paciente_user:
+            NotificacionPush.objects.create(
+                usuario=paciente_user,
+                titulo="❌ Cita Cancelada por Clínica",
+                mensaje=f"Tu cita en la clínica ha sido cancelada. {mensaje}"
+            )
+
         send_mail(
             subject='Notificación de Cancelación - PsicoSystem',
             message=mensaje,
@@ -562,6 +572,24 @@ class MobileCitaPagarAPIView(APIView):
         if cita.estado == 'PENDIENTE':
             cita.estado = 'PROGRAMADA'
         cita.save(update_fields=['estado_pago', 'estado'])
+
+        # --- Crear Transaccion y Comprobante (Para que aparezca en el Dashboard Web) ---
+        from apps.P4_IA_Administracion.models import Transaccion, Comprobante
+        import uuid
+        try:
+            transaccion = Transaccion.objects.create(
+                clinica_id=cita.clinica_id or paciente.clinica_id,
+                paciente=paciente,
+                monto=cita.monto,
+                concepto=f"Pago por cita {cita.numero_ficha or cita.pk}",
+                metodo_pago=metodo_pago.upper() if metodo_pago else 'QR'
+            )
+            Comprobante.objects.create(
+                transaccion=transaccion,
+                nro_comprobante=f"REC-{uuid.uuid4().hex[:8].upper()}"
+            )
+        except Exception as e:
+            pass # Ignorar fallas contables si ya se marcó la cita como pagada
 
         clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
         mensaje_notif = f"Tu pago de ${cita.monto} mediante {metodo_pago} para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
