@@ -15,9 +15,12 @@ from .views import (
     PsicologoRetrieveUpdateDestroyAPIView,
     PlanesListAPIView,
     OnboardingSaaSAPIView,
+    SuscripcionClinicaAPIView,
 )
 
 urlpatterns = [
+    # SaaS Subscription details and upgrade
+    path("api/suscripciones/<int:clinica_id>/", SuscripcionClinicaAPIView.as_view(), name="api_suscripcion_clinica"),
     # Password reset (API-compatible, redirige por email)
     path("password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"),
     path("password_reset/done/", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),

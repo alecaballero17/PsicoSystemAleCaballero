@@ -1,6 +1,6 @@
 import logging
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -236,6 +236,15 @@ class UsuarioColaboradorListCreateAPIView(generics.ListCreateAPIView):
         return UsuarioSerializer
 
     def perform_create(self, serializer):
+        # [SaaS Limits Check]
+        clinica = self.request.user.clinica
+        plan = clinica.plan_suscripcion if clinica else 'Basico'
+        limite = 2 if plan == 'Basico' else (10 if plan == 'Profesional' else 9999)
+        actual = Usuario.objects.filter(clinica=clinica, rol='PSICOLOGO').count()
+        if actual >= limite:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(f"Límite excedido: Tu plan actual ({plan}) solo permite registrar hasta {limite} psicólogos.")
+
         serializer.save(clinica=self.request.user.clinica, rol="PSICOLOGO")
 
 
@@ -286,6 +295,15 @@ class PsicologoListCreateAPIView(generics.ListCreateAPIView):
         return PsicologoSerializer
 
     def perform_create(self, serializer):
+        # [SaaS Limits Check]
+        clinica = self.request.user.clinica
+        plan = clinica.plan_suscripcion if clinica else 'Basico'
+        limite = 2 if plan == 'Basico' else (10 if plan == 'Profesional' else 9999)
+        actual = Usuario.objects.filter(clinica=clinica, rol='PSICOLOGO').count()
+        if actual >= limite:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(f"Límite excedido: Tu plan actual ({plan}) solo permite registrar hasta {limite} psicólogos.")
+
         serializer.save(clinica=self.request.user.clinica, rol="PSICOLOGO")
 
 
@@ -314,3 +332,76 @@ class PsicologoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
             raise ValidationError("No puedes desactivarte a ti mismo.")
         instance.is_active = False
         instance.save()
+
+
+class SuscripcionClinicaAPIView(APIView):
+    """
+    Endpoint para ver y actualizar el estado de la suscripción SaaS y los límites de la clínica (CU-24).
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+
+    def get(self, request, clinica_id):
+        # Validar pertenencia al Tenant para aislamiento estricto (RF-29)
+        if not request.user.is_superuser and request.user.clinica_id != int(clinica_id):
+            return Response({"error": "No tienes acceso a la suscripción de esta clínica."}, status=status.HTTP_403_FORBIDDEN)
+
+        clinica = get_object_or_404(Clinica, pk=clinica_id)
+        plan = clinica.plan_suscripcion or 'Basico'
+
+        # Límites por plan
+        if plan == 'Basico':
+            pacientes_limite = 5
+            psicologos_limite = 2
+            plan_nombre = "Plan Básico (Gratuito)"
+        elif plan == 'Profesional':
+            pacientes_limite = 20
+            psicologos_limite = 10
+            plan_nombre = "Plan Profesional"
+        else: # Premium
+            pacientes_limite = 9999
+            psicologos_limite = 9999
+            plan_nombre = "Plan Premium (SaaS Full)"
+
+        # Contar registros actuales de la clínica
+        from apps.P2_Gestion_Clinica.models import Paciente
+        pacientes_actuales = Paciente.objects.filter(clinica=clinica).count()
+        psicologos_actuales = Usuario.objects.filter(clinica=clinica, rol='PSICOLOGO').count()
+
+        return Response({
+            "clinica_nombre": clinica.nombre,
+            "plan_nombre": plan_nombre,
+            "estado": "ACTIVA",
+            "fecha_inicio": "2026-05-01T00:00:00Z",
+            "uso": {
+                "pacientes_actuales": pacientes_actuales,
+                "pacientes_limite": pacientes_limite,
+                "psicologos_actuales": psicologos_actuales,
+                "psicologos_limite": psicologos_limite,
+            }
+        }, status=status.HTTP_200_OK)
+
+    def put(self, request, clinica_id):
+        # Actualización de plan con simulación de Stripe Checkout
+        if not request.user.is_superuser and request.user.clinica_id != int(clinica_id):
+            return Response({"error": "No tienes acceso para modificar la suscripción de esta clínica."}, status=status.HTTP_403_FORBIDDEN)
+
+        clinica = get_object_or_404(Clinica, pk=clinica_id)
+        nuevo_plan = request.data.get("plan_suscripcion")
+
+        if nuevo_plan not in ['Basico', 'Profesional', 'Premium']:
+            return Response({"error": "El plan de suscripción seleccionado no es válido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        clinica.plan_suscripcion = nuevo_plan
+        clinica.save()
+
+        # Registrar la acción en la bitácora de auditoría (RF-30)
+        from apps.P4_IA_Administracion.models import LogAuditoria
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Actualizó la suscripción de la clínica al plan: {nuevo_plan} (Transacción Stripe completada)."
+        )
+
+        return Response({
+            "message": f"Suscripción actualizada exitosamente al plan {nuevo_plan}.",
+            "plan_suscripcion": nuevo_plan
+        }, status=status.HTTP_200_OK)

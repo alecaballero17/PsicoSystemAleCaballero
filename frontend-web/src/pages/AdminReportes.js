@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 const AdminReportes = () => {
     const navigate = useNavigate();
-    const { user, tenant } = useAuth();
+    const { tenant } = useAuth();
     
     // Estados para el formulario de reportes
     const [tipoReporte, setTipoReporte] = useState('citas');

@@ -10,7 +10,7 @@ export const GestionPersonal = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
-    
+
     // Formulario de edición/creación
     const [formData, setFormData] = useState({
         id: null,
@@ -22,6 +22,57 @@ export const GestionPersonal = () => {
         especialidad: '',
         horario_atencion: '',
     });
+
+    // Horarios interactivos
+    const [diasPreset, setDiasPreset] = useState('Lunes a Viernes');
+    const [selectedDays, setSelectedDays] = useState([]);
+    const [horaInicio, setHoraInicio] = useState('08:00');
+    const [horaFin, setHoraFin] = useState('16:00');
+
+    const parseHorario = (str) => {
+        let preset = 'Lunes a Viernes';
+        let start = '08:00';
+        let end = '16:00';
+        let custom = [];
+
+        if (!str) return { preset, start, end, custom };
+
+        // Try parsing hours (e.g. 08:00 - 16:00)
+        const hoursMatch = str.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+        if (hoursMatch) {
+            start = hoursMatch[1];
+            end = hoursMatch[2];
+        }
+
+        // Try parsing days
+        if (str.includes('Lunes a Viernes')) {
+            preset = 'Lunes a Viernes';
+        } else if (str.includes('Lunes a Sábado')) {
+            preset = 'Lunes a Sábado';
+        } else if (str.includes('Lunes a Domingo')) {
+            preset = 'Lunes a Domingo';
+        } else {
+            preset = 'Personalizado';
+            const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            custom = days.filter(d => str.toLowerCase().includes(d.toLowerCase()));
+        }
+
+        return { preset, start, end, custom };
+    };
+
+    // Effect to sync widget values to the main form field
+    useEffect(() => {
+        if (formData.rol === 'PSICOLOGO') {
+            let diasText = '';
+            if (diasPreset === 'Personalizado') {
+                diasText = selectedDays.length > 0 ? selectedDays.join(', ') : 'Sin días';
+            } else {
+                diasText = diasPreset;
+            }
+            const fullHorario = `${diasText} ${horaInicio} - ${horaFin}`;
+            setFormData(prev => ({ ...prev, horario_atencion: fullHorario }));
+        }
+    }, [diasPreset, selectedDays, horaInicio, horaFin, formData.rol]);
 
     useEffect(() => {
         fetchPsicologos();
@@ -73,11 +124,21 @@ export const GestionPersonal = () => {
     };
 
     const openCreateModal = () => {
-        setFormData({ id: null, username: '', email: '', password: '', rol: 'PSICOLOGO', especialidad: '', horario_atencion: '' });
+        setDiasPreset('Lunes a Viernes');
+        setSelectedDays([]);
+        setHoraInicio('08:00');
+        setHoraFin('16:00');
+        setFormData({ id: null, username: '', email: '', password: '', rol: 'PSICOLOGO', especialidad: '', horario_atencion: 'Lunes a Viernes 08:00 - 16:00' });
         setShowModal(true);
     };
 
     const openEditModal = (p) => {
+        const parsed = parseHorario(p.horario_atencion);
+        setDiasPreset(parsed.preset);
+        setSelectedDays(parsed.custom);
+        setHoraInicio(parsed.start);
+        setHoraFin(parsed.end);
+
         setFormData({
             id: p.id,
             username: p.username,
@@ -208,7 +269,85 @@ export const GestionPersonal = () => {
                                     </div>
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>Horario de Atención (RF-04)</label>
-                                        <input required type="text" name="horario_atencion" placeholder="Ej. Lunes a Viernes 08:00 - 16:00" value={formData.horario_atencion} onChange={handleInputChange} style={styles.input} />
+                                        
+                                        {/* Rango de Días Preset */}
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                                            {['Lunes a Viernes', 'Lunes a Sábado', 'Lunes a Domingo', 'Personalizado'].map(preset => (
+                                                <button
+                                                    key={preset}
+                                                    type="button"
+                                                    style={{
+                                                        ...styles.btnCapsule,
+                                                        ...(diasPreset === preset ? styles.btnCapsuleActive : {})
+                                                    }}
+                                                    onClick={() => setDiasPreset(preset)}
+                                                >
+                                                    {preset}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Días específicos (si es Personalizado) */}
+                                        {diasPreset === 'Personalizado' && (
+                                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '15px' }}>
+                                                {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(day => {
+                                                    const isSelected = selectedDays.includes(day);
+                                                    return (
+                                                        <button
+                                                            key={day}
+                                                            type="button"
+                                                            title={day}
+                                                            style={{
+                                                                ...styles.dayCircle,
+                                                                ...(isSelected ? styles.dayCircleActive : {})
+                                                            }}
+                                                            onClick={() => {
+                                                                if (isSelected) {
+                                                                    setSelectedDays(selectedDays.filter(d => d !== day));
+                                                                } else {
+                                                                    setSelectedDays([...selectedDays, day]);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {day[0]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* Selector de Horas */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ ...styles.label, fontSize: '11px', marginBottom: '2px' }}>Desde</label>
+                                                <select
+                                                    value={horaInicio}
+                                                    onChange={e => setHoraInicio(e.target.value)}
+                                                    style={styles.input}
+                                                >
+                                                    {['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'].map(h => (
+                                                        <option key={h} value={h}>{h}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ ...styles.label, fontSize: '11px', marginBottom: '2px' }}>Hasta</label>
+                                                <select
+                                                    value={horaFin}
+                                                    onChange={e => setHoraFin(e.target.value)}
+                                                    style={styles.input}
+                                                >
+                                                    {['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'].map(h => (
+                                                        <option key={h} value={h}>{h}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Vista previa del formato */}
+                                        <div style={{ fontSize: '12px', color: '#1e293b', backgroundColor: '#f1f5f9', padding: '10px', borderRadius: '8px', borderLeft: '4px solid #2563eb', fontWeight: 'bold' }}>
+                                            🕒 Vista previa: {formData.horario_atencion || 'No definido'}
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -278,7 +417,43 @@ const styles = {
     },
     inputGroup: { marginBottom: '15px' },
     label: { display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold', color: '#475569' },
-    input: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }
+    input: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' },
+    btnCapsule: {
+        padding: '6px 12px',
+        borderRadius: '20px',
+        border: '1px solid #cbd5e1',
+        backgroundColor: '#fff',
+        color: '#475569',
+        fontSize: '11px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+    },
+    btnCapsuleActive: {
+        backgroundColor: '#2563eb',
+        color: '#fff',
+        borderColor: '#2563eb',
+    },
+    dayCircle: {
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        border: '1px solid #cbd5e1',
+        backgroundColor: '#fff',
+        color: '#475569',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '11px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+    },
+    dayCircleActive: {
+        backgroundColor: '#2563eb',
+        color: '#fff',
+        borderColor: '#2563eb',
+    }
 };
 
 export default GestionPersonal;

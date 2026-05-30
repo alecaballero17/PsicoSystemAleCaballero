@@ -1,4 +1,5 @@
 // [CIERRE SPRINT 1] Flujo SaaS integrado según Requerimientos 3.2 y RF-29.
+// Con simulación de pasarela de pago Stripe (T025) al seleccionar planes de pago.
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosConfig'; 
@@ -26,9 +27,15 @@ const RegistroClinica = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Estados para la pasarela de Stripe Checkout simulada
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' | 'qr'
+    const [paymentStep, setPaymentStep] = useState(0); // 0: input, 1: connecting, 2: verifying, 3: approved
+    const [cardData, setCardData] = useState({ number: '', expiry: '', cvc: '', name: '' });
+
     const navigate = useNavigate();
 
-    // Consultamos los planes disponibles públicos
+    // Consultamos los planes disponibles públicos e inyectamos estilos spin
     useEffect(() => {
         const fetchPlanes = async () => {
             try {
@@ -45,10 +52,57 @@ const RegistroClinica = () => {
         if (user && user.clinica_id && user.clinica_id !== "null" && user.clinica_id !== "undefined") {
             navigate('/dashboard');
         }
+
+        // Inyectar animación spin si no existe
+        if (!document.getElementById('stripe-spin-style')) {
+            const styleSheet = document.createElement("style");
+            styleSheet.id = 'stripe-spin-style';
+            styleSheet.innerText = `
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `;
+            document.head.appendChild(styleSheet);
+        }
     }, [user, navigate]);
 
-    const handleSubmit = async (e) => {
+    const getPlanPrice = (planId) => {
+        if (planId === 'Profesional') return '199 Bs/mes';
+        if (planId === 'Premium') return '549 Bs/mes';
+        return '0 Bs/mes';
+    };
+
+    const handleProcessPayment = (e) => {
         e.preventDefault();
+        setPaymentStep(1); // Conectando con Stripe
+        
+        setTimeout(() => {
+            setPaymentStep(2); // Verificando fondos y 3D Secure
+            
+            setTimeout(() => {
+                setPaymentStep(3); // Pago aprobado
+                
+                setTimeout(() => {
+                    setShowPaymentModal(false);
+                    // Disparar el flujo real de onboarding
+                    handleSubmit();
+                }, 1000);
+            }, 1200);
+        }, 1200);
+    };
+
+    const handleSubmit = async (e) => {
+        if (e) e.preventDefault();
+
+        // Si el plan es Profesional o Premium y no se ha pagado, abrimos el modal de Stripe
+        if ((formData.plan_id === 'Profesional' || formData.plan_id === 'Premium') && !showPaymentModal && paymentStep !== 3) {
+            setPaymentStep(0);
+            setCardData({ number: '', expiry: '', cvc: '', name: '' });
+            setShowPaymentModal(true);
+            return;
+        }
+
         setLoading(true);
         setError(null);
         
@@ -96,6 +150,7 @@ const RegistroClinica = () => {
             }
             
             setError(errorMessage);
+            setPaymentStep(0); // Resetear estado de pago
         } finally {
             setLoading(false);
         }
@@ -181,6 +236,175 @@ const RegistroClinica = () => {
                     </div>
                 </form>
             </div>
+
+            {/* MODAL STRIPE CHECKOUT SIMULATOR */}
+            {showPaymentModal && (
+                <div style={styles.modalOverlay}>
+                    <div style={styles.modalContent}>
+                        <div style={styles.stripeHeader}>
+                            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>💳 Stripe Checkout</span>
+                            <span style={styles.stripeBadge}>Test Mode</span>
+                        </div>
+                        
+                        {paymentStep === 0 && (
+                            <form onSubmit={handleProcessPayment} style={{ marginTop: '20px' }}>
+                                <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#475569', textAlign: 'left' }}>
+                                    Pagar suscripción para el plan <strong>{formData.plan_id}</strong>. 
+                                    Monto: <strong style={{ color: '#0f172a' }}>{getPlanPrice(formData.plan_id)}</strong>.
+                                </p>
+
+                                {/* Pestañas de Métodos de Pago */}
+                                <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', marginBottom: '20px' }}>
+                                    <button 
+                                        type="button" 
+                                        style={{
+                                            flex: 1, 
+                                            padding: '10px', 
+                                            border: 'none', 
+                                            background: paymentMethod === 'card' ? '#f1f5f9' : 'none',
+                                            fontWeight: 'bold',
+                                            borderBottom: paymentMethod === 'card' ? '2px solid #635bff' : 'none',
+                                            color: paymentMethod === 'card' ? '#635bff' : '#64748b',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => setPaymentMethod('card')}
+                                    >
+                                        💳 Tarjeta
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        style={{
+                                            flex: 1, 
+                                            padding: '10px', 
+                                            border: 'none', 
+                                            background: paymentMethod === 'qr' ? '#f1f5f9' : 'none',
+                                            fontWeight: 'bold',
+                                            borderBottom: paymentMethod === 'qr' ? '2px solid #635bff' : 'none',
+                                            color: paymentMethod === 'qr' ? '#635bff' : '#64748b',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => setPaymentMethod('qr')}
+                                    >
+                                        📱 Código QR
+                                    </button>
+                                </div>
+
+                                {paymentMethod === 'card' ? (
+                                    <>
+                                        <div style={styles.modalInputGroup}>
+                                            <label style={styles.modalLabel}>Número de Tarjeta</label>
+                                            <input 
+                                                required 
+                                                type="text" 
+                                                placeholder="4242 4242 4242 4242" 
+                                                value={cardData.number} 
+                                                onChange={e => setCardData({...cardData, number: e.target.value})} 
+                                                style={styles.modalInput} 
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div style={{ ...styles.modalInputGroup, flex: 1 }}>
+                                                <label style={styles.modalLabel}>Expiración</label>
+                                                <input 
+                                                    required 
+                                                    type="text" 
+                                                    placeholder="MM / YY" 
+                                                    value={cardData.expiry} 
+                                                    onChange={e => setCardData({...cardData, expiry: e.target.value})} 
+                                                    style={styles.modalInput} 
+                                                />
+                                            </div>
+                                            <div style={{ ...styles.modalInputGroup, flex: 1 }}>
+                                                <label style={styles.modalLabel}>CVC</label>
+                                                <input 
+                                                    required 
+                                                    type="password" 
+                                                    maxLength="4" 
+                                                    placeholder="123" 
+                                                    value={cardData.cvc} 
+                                                    onChange={e => setCardData({...cardData, cvc: e.target.value})} 
+                                                    style={styles.modalInput} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <div style={styles.modalInputGroup}>
+                                            <label style={styles.modalLabel}>Titular de la Tarjeta</label>
+                                            <input 
+                                                required 
+                                                type="text" 
+                                                placeholder="Nombre completo" 
+                                                value={cardData.name} 
+                                                onChange={e => setCardData({...cardData, name: e.target.value})} 
+                                                style={styles.modalInput} 
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                                        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '15px' }}>
+                                            Escanea el código QR desde tu app bancaria móvil para efectuar el pago seguro.
+                                        </p>
+                                        <div style={{
+                                            margin: '0 auto 15px auto',
+                                            width: '160px',
+                                            height: '160px',
+                                            backgroundColor: 'white',
+                                            border: '4px solid #0f172a',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            padding: '10px',
+                                            boxSizing: 'border-box'
+                                        }}>
+                                            <span style={{ fontSize: '70px', margin: 0 }}>📱</span>
+                                            <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#0f172a', marginTop: '5px' }}>STRIPE-SIMPLE-QR</span>
+                                            <span style={{ fontSize: '8px', color: '#64748b' }}>{formData.plan_id === 'Profesional' ? '199.00' : '549.00'} BS</span>
+                                        </div>
+                                        <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>✓ Código generado exitosamente</span>
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                                    <button type="button" style={{ ...styles.btnSecondary, flex: 1, padding: '12px' }} onClick={() => setShowPaymentModal(false)}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" style={{ ...styles.btnPrimary, flex: 2, padding: '12px', backgroundColor: '#635bff' }}>
+                                        {paymentMethod === 'card' ? 'Pagar con Tarjeta' : 'Confirmar Pago QR'}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {paymentStep > 0 && (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                {paymentStep === 1 && (
+                                    <>
+                                        <div style={styles.spinner}></div>
+                                        <h3 style={{ color: '#0f172a', marginTop: '20px' }}>Conectando con Stripe...</h3>
+                                        <p style={{ color: '#64748b', fontSize: '13px' }}>Abriendo canal seguro y tokenizando datos.</p>
+                                    </>
+                                )}
+                                {paymentStep === 2 && (
+                                    <>
+                                        <div style={styles.spinner}></div>
+                                        <h3 style={{ color: '#0f172a', marginTop: '20px' }}>Verificando pago y 3D Secure...</h3>
+                                        <p style={{ color: '#64748b', fontSize: '13px' }}>Autorizando transacción con el banco emisor.</p>
+                                    </>
+                                )}
+                                {paymentStep === 3 && (
+                                    <>
+                                        <div style={{ fontSize: '50px', color: '#16a34a' }}>✓</div>
+                                        <h3 style={{ color: '#166534', marginTop: '20px' }}>¡Pago Aprobado con Éxito!</h3>
+                                        <p style={{ color: '#64748b', fontSize: '13px' }}>Registrando clínica en el sistema SaaS...</p>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -201,7 +425,25 @@ const styles = {
     errorBox: { padding: '12px', backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '6px', marginBottom: '20px', fontSize: '13px' },
     actions: { display: 'flex', gap: '15px', marginTop: '30px' },
     btnPrimary: { flex: 2, padding: '14px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' },
-    btnSecondary: { flex: 1, padding: '14px', backgroundColor: 'white', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }
+    btnSecondary: { flex: 1, padding: '14px', backgroundColor: 'white', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' },
+    
+    // Modal Stripe
+    modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+    modalContent: { backgroundColor: 'white', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' },
+    stripeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #cbd5e1', paddingBottom: '15px' },
+    stripeBadge: { backgroundColor: '#635bff', color: 'white', fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px' },
+    modalInputGroup: { marginBottom: '15px', textAlign: 'left' },
+    modalLabel: { display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: 'bold', color: '#475569', textTransform: 'uppercase' },
+    modalInput: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontSize: '14px' },
+    spinner: {
+        width: '40px',
+        height: '40px',
+        border: '4px solid #e2e8f0',
+        borderTop: '4px solid #635bff',
+        borderRadius: '50%',
+        margin: '0 auto',
+        animation: 'spin 1s linear infinite'
+    }
 };
 
 export default RegistroClinica;

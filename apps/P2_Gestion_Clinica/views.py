@@ -26,6 +26,15 @@ def registrar_paciente_view(request):
     if request.method == "POST":
         form = PacienteForm(request.POST)
         if form.is_valid():
+            # [SaaS Limits Check]
+            clinica = request.user.clinica
+            plan = clinica.plan_suscripcion if clinica else 'Basico'
+            limite = 5 if plan == 'Basico' else (20 if plan == 'Profesional' else 9999)
+            actual = Paciente.objects.filter(clinica=clinica).count()
+            if actual >= limite:
+                messages.error(request, f"Límite excedido: Tu plan actual ({plan}) solo permite registrar hasta {limite} pacientes. Actualiza tu suscripción en la sección correspondiente.")
+                return redirect("dashboard")
+
             paciente = form.save(commit=False)
             paciente.clinica = request.user.clinica
             paciente.save()
@@ -78,6 +87,15 @@ class PacienteListCreateAPIView(generics.ListCreateAPIView):
         return Paciente.objects.filter(clinica=self.request.user.clinica).order_by("nombre")
 
     def perform_create(self, serializer):
+        # [SaaS Limits Check]
+        clinica = self.request.user.clinica
+        plan = clinica.plan_suscripcion if clinica else 'Basico'
+        limite = 5 if plan == 'Basico' else (20 if plan == 'Profesional' else 9999)
+        actual = Paciente.objects.filter(clinica=clinica).count()
+        if actual >= limite:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(f"Límite excedido: Tu plan actual ({plan}) solo permite registrar hasta {limite} pacientes.")
+
         paciente = serializer.save(clinica=self.request.user.clinica)
         LogAuditoria.objects.create(
             usuario=self.request.user,

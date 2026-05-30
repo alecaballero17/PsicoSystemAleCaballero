@@ -21,7 +21,6 @@ const Dashboard = () => {
     const userName = user?.name || 'USUARIO';
     const userRole = user?.role || 'ADMIN';
     const token = user?.token;
-    const apiClient = authService.apiClient;
 
     // FUNCIÓN DE CARGA DE DATOS (CONEXIÓN CENTRALIZADA)
     const fetchData = useCallback(async () => {
@@ -37,7 +36,7 @@ const Dashboard = () => {
             const [listaPacientes, metricasData, listaCitas] = await Promise.all([
                 pacienteService.getPacientes(), 
                 dashboardService.getMetrics(),
-                apiClient.get('logistica/gestion/')
+                authService.apiClient.get('logistica/gestion/')
             ]);
             
             setPacientes(Array.isArray(listaPacientes) ? listaPacientes : []);
