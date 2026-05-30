@@ -413,7 +413,13 @@ const styles = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
     },
     modalContent: {
-        backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '400px',
+        backgroundColor: 'white', 
+        padding: '30px', 
+        borderRadius: '12px', 
+        width: '100%', 
+        maxWidth: '400px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
     },
     inputGroup: { marginBottom: '15px' },
     label: { display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold', color: '#475569' },

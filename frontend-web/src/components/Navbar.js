@@ -1,13 +1,18 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const { user, logout, tenant } = useAuth(); 
+    const navigate = useNavigate();
 
     return (
         <nav style={{ padding: '10px 20px', background: '#1a2233', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             {/* [ALINEACIÓN RNF-05] - Identidad de marca unificada: Diferenciación visual entre el Proveedor SaaS (PsicoSystem) y el Tenant activo (RF-29). */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div 
+                onClick={() => navigate('/dashboard')}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+            >
                 <div style={{ width: '32px', height: '32px', background: '#2563eb', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '14px' }}>
                     PS
                 </div>
