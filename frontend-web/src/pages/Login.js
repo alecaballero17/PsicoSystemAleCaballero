@@ -39,7 +39,12 @@ const Login = () => {
             // 5. Redirigimos al sistema
             navigate('/dashboard');
         } catch (error) {
-            alert("Credenciales incorrectas. Verifique su acceso.");
+            console.error("Login error:", error);
+            if (error.message === "Network Error" || !error.response) {
+                alert("⚠️ Error de conexión: No se pudo contactar con el backend (http://127.0.0.1:8000). Por favor, asegúrate de haber levantado el backend ejecutando 'python manage.py runserver' en la carpeta correcta.");
+            } else {
+                alert("Credenciales incorrectas. Verifique su acceso.");
+            }
         } finally {
             setLoading(false);
         }
