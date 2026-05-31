@@ -590,6 +590,132 @@ class CreateStripePaymentIntentView(APIView):
             return Response({"error": str(e)}, status=500)
 
 
+class MobileStripeCheckoutSessionView(APIView):
+    """
+    [CU-MOBILE] POST: Crea una Stripe Checkout Session y devuelve la URL para redirigir al navegador.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        import stripe
+        from django.conf import settings
+        from apps.P2_Gestion_Clinica.models import Paciente
+        
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        user = request.user
+        cita_id = request.data.get('cita_id')
+        
+        try:
+            paciente = Paciente.objects.get(ci=user.ci)
+            cita = Cita.objects.get(pk=cita_id, paciente=paciente)
+        except (Paciente.DoesNotExist, Cita.DoesNotExist):
+            return Response({"error": "Cita no encontrada."}, status=404)
+
+        if cita.estado_pago == 'PAGADO':
+            return Response({"error": "Esta cita ya está pagada."}, status=400)
+
+        try:
+            monto_centavos = int(float(cita.monto) * 100)
+            if monto_centavos <= 0:
+                monto_centavos = 12000
+
+            domain_url = "https://psicosystem-backend.onrender.com"
+            success_url = f"{domain_url}/api/mobile/stripe/checkout-success/?session_id={{CHECKOUT_SESSION_ID}}&cita_id={cita.id}"
+
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': f'Pago de Cita Psicológica - {paciente.nombre}',
+                            'description': cita.motivo,
+                        },
+                        'unit_amount': monto_centavos,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=success_url,
+                cancel_url="https://psicosystem-backend.onrender.com/", 
+                metadata={'cita_id': cita.id, 'paciente_ci': paciente.ci},
+            )
+            return Response({
+                'checkout_url': session.url,
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class MobileStripeCheckoutSuccessView(APIView):
+    """
+    [CU-MOBILE] GET: Endpoint al que Stripe redirige cuando el pago en el Checkout fue exitoso.
+    """
+    permission_classes = [] 
+
+    def get(self, request):
+        import stripe
+        from django.conf import settings
+        from django.http import HttpResponse
+        from apps.P1_Identidad_Acceso.models import Transaccion
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        session_id = request.GET.get('session_id')
+        cita_id = request.GET.get('cita_id')
+
+        if not session_id or not cita_id:
+            return HttpResponse("Faltan parámetros", status=400)
+
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session.payment_status == 'paid':
+                cita = Cita.objects.get(pk=cita_id)
+                cita.estado_pago = 'PAGADO'
+                cita.estado = 'CONFIRMADA'
+                cita.save()
+
+                if not hasattr(cita, 'transaccion'):
+                    Transaccion.objects.create(
+                        clinica=cita.paciente.clinica,
+                        monto=cita.monto,
+                        concepto=f"Pago de cita (Stripe Checkout) - {cita.motivo}",
+                        tipo='INGRESO',
+                        metodo_pago='STRIPE'
+                    )
+                else:
+                    t = cita.transaccion
+                    t.metodo_pago = 'STRIPE'
+                    t.save()
+                
+                html = f"""
+                <html>
+                <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <style>
+                  body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                  .card {{ background: white; padding: 40px 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px; width: 90%; }}
+                  .icon {{ color: #16a34a; font-size: 60px; margin-bottom: 20px; }}
+                  h1 {{ color: #16a34a; margin-top: 0; font-size: 24px; }}
+                  p {{ color: #475569; font-size: 16px; line-height: 1.5; }}
+                </style>
+                </head>
+                <body>
+                  <div class="card">
+                    <div class="icon">✓</div>
+                    <h1>Pago Exitoso</h1>
+                    <p>Tu cita ha sido confirmada y pagada correctamente por un monto de ${cita.monto}.</p>
+                    <p><strong>Ya puedes cerrar esta ventana del navegador y regresar a la aplicación de PsicoSystem.</strong></p>
+                  </div>
+                </body>
+                </html>
+                """
+                return HttpResponse(html)
+            else:
+                return HttpResponse("El pago no está completado en Stripe.", status=400)
+        except Exception as e:
+            return HttpResponse(f"Error procesando el pago: {str(e)}", status=500)
+
+
 class MobileCitaPagarAPIView(APIView):
     """
     [CU-MOBILE] POST: Confirma el pago de una cita desde la App Móvil (vía Stripe o QR).
