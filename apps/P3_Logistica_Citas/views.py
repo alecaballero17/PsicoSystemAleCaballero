@@ -546,18 +546,68 @@ class MobileCitaCancelarAPIView(APIView):
 
         return Response({"mensaje": "Cita cancelada exitosamente.", "estado": cita.estado}, status=200)
 
-class MobileCitaPagarAPIView(APIView):
+class CreateStripePaymentIntentView(APIView):
     """
-    [CU-MOBILE] POST: Pagar una cita desde la App Móvil.
+    [CU-MOBILE] POST: Crea un PaymentIntent de Stripe para cobrar una cita.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        import stripe
+        from django.conf import settings
         from apps.P2_Gestion_Clinica.models import Paciente
-        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        
+        stripe.api_key = settings.STRIPE_SECRET_KEY
         user = request.user
         cita_id = request.data.get('cita_id')
-        metodo_pago = request.data.get('metodo_pago')
+        
+        try:
+            paciente = Paciente.objects.get(ci=user.ci)
+            cita = Cita.objects.get(pk=cita_id, paciente=paciente)
+        except (Paciente.DoesNotExist, Cita.DoesNotExist):
+            return Response({"error": "Cita no encontrada."}, status=404)
+
+        if cita.estado_pago == 'PAGADO':
+            return Response({"error": "Esta cita ya está pagada."}, status=400)
+
+        # Crear el PaymentIntent en Stripe
+        try:
+            monto_centavos = int(float(cita.monto) * 100)
+            if monto_centavos <= 0:
+                monto_centavos = 12000 # Fallback 120.00 si no hay monto
+
+            intent = stripe.PaymentIntent.create(
+                amount=monto_centavos,
+                currency='usd',
+                metadata={'cita_id': cita.id, 'paciente_ci': paciente.ci},
+                automatic_payment_methods={'enabled': True},
+            )
+            return Response({
+                'client_secret': intent.client_secret,
+                'payment_intent_id': intent.id
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class MobileCitaPagarAPIView(APIView):
+    """
+    [CU-MOBILE] POST: Confirma el pago de una cita desde la App Móvil (vía Stripe o QR).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        import stripe
+        from django.conf import settings
+        from apps.P2_Gestion_Clinica.models import Paciente
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        
+        user = request.user
+        cita_id = request.data.get('cita_id')
+        metodo_pago = request.data.get('metodo_pago', 'QR')
+        payment_intent_id = request.data.get('payment_intent_id')
         
         try:
             paciente = Paciente.objects.get(ci=user.ci)
@@ -568,6 +618,18 @@ class MobileCitaPagarAPIView(APIView):
         if cita.estado_pago == 'PAGADO':
             return Response({"error": "Esta cita ya está pagada."}, status=400)
 
+        # Verificación con Stripe si el método es TARJETA
+        if metodo_pago == 'TARJETA':
+            if not payment_intent_id:
+                return Response({"error": "No se proporcionó el payment_intent_id."}, status=400)
+            try:
+                intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                if intent.status != 'succeeded':
+                    return Response({"error": f"El pago en Stripe no fue completado. Estado: {intent.status}"}, status=400)
+            except Exception as e:
+                return Response({"error": f"Error al verificar Stripe: {str(e)}"}, status=500)
+
+        # Resto del proceso (marcar pagado, contabilidad, notificaciones)
         cita.estado_pago = 'PAGADO'
         if cita.estado == 'PENDIENTE':
             cita.estado = 'PROGRAMADA'
@@ -582,7 +644,7 @@ class MobileCitaPagarAPIView(APIView):
                 paciente=paciente,
                 monto=cita.monto,
                 concepto=f"Pago por cita {cita.numero_ficha or cita.pk}",
-                metodo_pago=metodo_pago.upper() if metodo_pago else 'QR'
+                metodo_pago='STRIPE' if metodo_pago == 'TARJETA' else 'QR'
             )
             Comprobante.objects.create(
                 transaccion=transaccion,
@@ -592,7 +654,8 @@ class MobileCitaPagarAPIView(APIView):
             pass # Ignorar fallas contables si ya se marcó la cita como pagada
 
         clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
-        mensaje_notif = f"Tu pago de ${cita.monto} mediante {metodo_pago} para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
+        metodo_str = 'Tarjeta (Stripe)' if metodo_pago == 'TARJETA' else 'QR'
+        mensaje_notif = f"Tu pago de ${cita.monto} mediante {metodo_str} para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
         
         # Notificación
         NotificacionPush.objects.create(
@@ -609,7 +672,7 @@ class MobileCitaPagarAPIView(APIView):
                 NotificacionPush.objects.create(
                     usuario=admin,
                     titulo="💰 Pago Recibido",
-                    mensaje=f"Se recibió un pago de ${cita.monto} mediante {metodo_pago} del paciente {paciente.nombre} en {clinica_nombre}."
+                    mensaje=f"Se recibió un pago de ${cita.monto} mediante {metodo_str} del paciente {paciente.nombre} en {clinica_nombre}."
                 )
 
         return Response({

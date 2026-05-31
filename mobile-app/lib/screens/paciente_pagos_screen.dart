@@ -10,6 +10,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import '../services/cita_pago_service.dart';
 
 class PacientePagosScreen extends StatefulWidget {
@@ -506,19 +507,42 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text('Validando pago en la clínica...', style: GoogleFonts.outfit()),
+            Text('Procesando pago seguro...', style: GoogleFonts.outfit()),
           ],
         ),
       ),
     );
 
-    await Future.delayed(const Duration(seconds: 3));
-
     try {
+      String? paymentIntentId;
+      
+      if (metodo == 'TARJETA') {
+        // 1. Crear PaymentIntent en backend
+        final intentData = await CitaPagoService.createStripePaymentIntent(token: widget.token, citaId: citaId);
+        final clientSecret = intentData['client_secret'];
+        
+        // 2. Confirmar el pago en Stripe con la tarjeta del CardField
+        final paymentIntent = await Stripe.instance.confirmPayment(
+          paymentIntentClientSecret: clientSecret,
+          data: const PaymentMethodParams.card(
+            paymentMethodData: PaymentMethodData(),
+          ),
+        );
+        
+        if (paymentIntent.status != PaymentIntentsStatus.Succeeded) {
+          throw Exception("El pago no fue exitoso en Stripe (Estado: ${paymentIntent.status})");
+        }
+        paymentIntentId = paymentIntent.id;
+      } else {
+        await Future.delayed(const Duration(seconds: 2)); // Simulación para QR
+      }
+
+      // 3. Confirmar con el backend
       final response = await CitaPagoService.pagarCita(
         token: widget.token,
         citaId: citaId,
         metodoPago: metodo,
+        paymentIntentId: paymentIntentId,
       );
 
       if (mounted) Navigator.of(context).pop();
@@ -713,38 +737,21 @@ class _PagoModalState extends State<_PagoModal> {
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => setState(() => metodoSeleccionado = ''),
                 ),
-                Text('Datos de Tarjeta', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Datos de Tarjeta (Stripe)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _numeroCtrl,
+            CardField(
+              onCardChanged: (card) {
+                // Se puede validar si la tarjeta está completa
+              },
               decoration: InputDecoration(
-                labelText: 'Número de Tarjeta',
-                prefixIcon: const Icon(Icons.credit_card),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: primaryBlue, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: TextFormField(
-                  controller: _fechaCtrl,
-                  decoration: InputDecoration(labelText: 'MM/YY', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                    ExpirationDateFormatter(),
-                  ],
-                )),
-                const SizedBox(width: 12),
-                Expanded(child: TextFormField(
-                  controller: _cvcCtrl,
-                  decoration: InputDecoration(labelText: 'CVC', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                )),
-              ],
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -752,13 +759,9 @@ class _PagoModalState extends State<_PagoModal> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: darkBlue, padding: const EdgeInsets.symmetric(vertical: 16)),
                 onPressed: () {
-                  if (_numeroCtrl.text.length < 15 || _fechaCtrl.text.isEmpty || _cvcCtrl.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor llena los datos de la tarjeta correctamente')));
-                    return;
-                  }
                   widget.onConfirmarPago('TARJETA');
                 },
-                child: Text('Confirmar Pago', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('Procesar Pago Seguro', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'services/firebase_service.dart';
 import 'screens/login_screen.dart';
 
@@ -9,6 +10,9 @@ Future<void> main() async {
   
   // Cargamos el archivo de configuración
   await dotenv.load(fileName: ".env");
+  
+  // Inicializar Stripe
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
   
   // 🔥 Inicializar Firebase para Notificaciones Push (RF-09)
   await FirebaseService.initialize();

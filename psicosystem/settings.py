@@ -258,3 +258,7 @@ DEFAULT_FROM_EMAIL = config(
     "DEFAULT_FROM_EMAIL",
     default=EMAIL_HOST_USER or "noreply@psicosystem.local",
 )
+ 
+ S T R I P E _ S E C R E T _ K E Y   =   c o n f i g ( ' S T R I P E _ S E C R E T _ K E Y ' ,   d e f a u l t = ' ' )  
+ S T R I P E _ P U B L I S H A B L E _ K E Y   =   c o n f i g ( ' S T R I P E _ P U B L I S H A B L E _ K E Y ' ,   d e f a u l t = ' ' )  
+ 

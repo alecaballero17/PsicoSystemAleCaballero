@@ -10,6 +10,7 @@ from .views import (
     MobileCitaCancelarAPIView,
     MobileCitaPagarAPIView,
     MobileCitaComprobantePDFAPIView,
+    CreateStripePaymentIntentView,
 )
 
 router = DefaultRouter()
@@ -29,4 +30,5 @@ urlpatterns = [
     path("api/mobile/citas/<int:pk>/cancelar/", MobileCitaCancelarAPIView.as_view(), name="api_mobile_cita_cancelar"),
     path("api/mobile/citas/<int:pk>/comprobante/pdf/", MobileCitaComprobantePDFAPIView.as_view(), name="api_mobile_cita_comprobante_pdf"),
     path("api/mobile/paciente/pagar/", MobileCitaPagarAPIView.as_view(), name="api_mobile_cita_pagar"),
+    path("api/mobile/stripe/create-payment-intent/", CreateStripePaymentIntentView.as_view(), name="api_mobile_stripe_create_payment_intent"),
 ]
