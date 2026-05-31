@@ -9,14 +9,12 @@ echo "🔥 [STARTUP NUBE] Iniciando servidor Gunicorn y preparando tareas de fon
     echo "⏱️ [DATABASE NUBE] Esperando 15 segundos para la estabilización del contenedor..."
     sleep 15
     
-    echo "🔥 [DATABASE NUBE] Vaciando la base de datos (PostgreSQL)..."
-    python manage.py flush --no-input || echo "⚠️ Advertencia: No se pudo vaciar la base de datos."
+    # ELIMINADO: python manage.py flush --no-input (Esto borraba TODA tu base de datos al iniciar el servidor)
     
     echo "🔥 [DATABASE NUBE] Ejecutando migraciones..."
     python manage.py migrate --no-input || echo "⚠️ Advertencia: Error en las migraciones."
     
-    echo "🌱 [DATABASE NUBE] Poblando base de datos con clínicas y usuarios de demo..."
-    python manage.py seed_demo || echo "⚠️ Advertencia: Error al poblar los datos."
+    # ELIMINADO: python manage.py seed_demo (Esto sobreescribía con datos de prueba)
     
     echo "✅ [DATABASE NUBE] Operaciones de base de datos finalizadas con éxito!"
 ) &

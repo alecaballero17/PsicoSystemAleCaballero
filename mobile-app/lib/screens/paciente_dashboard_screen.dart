@@ -200,10 +200,12 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
-    // Usamos GestureDetector para resetear el timer de inactividad mientras usa la app
-    return GestureDetector(
-      onTap: _userInteracted,
-      onPanDown: (_) => _userInteracted,
+    // Usamos Listener para capturar CUALQUIER interacción en la pantalla,
+    // evitando que botones o scroll consuman el evento y el timer no se resetee.
+    return Listener(
+      onPointerDown: (_) => _userInteracted(),
+      onPointerMove: (_) => _userInteracted(),
+      behavior: HitTestBehavior.translucent,
       // PopScope intercepta el botón atrás físico del celular
       child: PopScope(
         canPop: false,
