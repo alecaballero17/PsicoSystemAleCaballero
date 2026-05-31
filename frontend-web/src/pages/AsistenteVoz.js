@@ -38,6 +38,27 @@ const AsistenteVoz = () => {
             const response = await apiClient.post('ia/voz-reporte/', { query });
             setResult(response.data);
             speak(response.data.summary);
+            
+            if (response.data.action === 'DOWNLOAD_PDF') {
+                const params = response.data.params;
+                setTimeout(async () => {
+                    try {
+                        const pdfResponse = await apiClient.get(`ia/reporte-pdf/?tipo=${params.entidad}&start=${params.start_date}&end=${params.end_date}`, {
+                            responseType: 'blob'
+                        });
+                        const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `Reporte_${params.entidad}_${params.start_date}.pdf`);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.parentNode.removeChild(link);
+                    } catch (e) {
+                        console.error("Error descargando el PDF:", e);
+                        setError("No se pudo descargar el PDF protegido.");
+                    }
+                }, 1500);
+            }
         } catch (err) {
             setError("No pude procesar tu solicitud.");
         } finally {

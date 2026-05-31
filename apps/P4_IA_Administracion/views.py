@@ -492,10 +492,15 @@ class VoiceQueryAPIView(APIView):
             )
             narrative_text = narrative_completion.choices[0].message.content.strip()
 
+            action = None
+            if 'pdf' in query_text.lower():
+                action = 'DOWNLOAD_PDF'
+
             return Response({
                 "params": params,
                 "results": results,
-                "summary": narrative_text
+                "summary": narrative_text,
+                "action": action
             })
 
         except Exception as e:

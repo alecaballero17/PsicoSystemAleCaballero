@@ -513,36 +513,75 @@ class MobileCitaCancelarAPIView(APIView):
         cita.estado = 'CANCELADA'
         cita.save(update_fields=['estado'])
 
-        # Notificación in-app al paciente
-        fecha_local = tz.localtime(cita.fecha_hora)
+        # Notificación in-app al paciente y clínica (envuelto en try-except para evitar error 500)
+        try:
+            fecha_local = tz.localtime(cita.fecha_hora)
+        except Exception:
+            fecha_local = cita.fecha_hora
+            
         motivo_str = request.data.get('motivo', 'Cancelación por el paciente')
-        NotificacionPush.objects.create(
-            usuario=user,
-            titulo="❌ Cita Cancelada",
-            mensaje=(
-                f"Tu cita en {cita.clinica.nombre if cita.clinica else 'la clínica'} "
-                f"con el/la Dr(a). {cita.psicologo.get_full_name() or cita.psicologo.username} "
-                f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada.\n"
-                f"Motivo: {motivo_str}"
-            ),
-        )
+        
+        try:
+            clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
+            psicologo_nombre = cita.psicologo.get_full_name() or cita.psicologo.username
+            
+            NotificacionPush.objects.create(
+                usuario=user,
+                titulo="❌ Cita Cancelada",
+                mensaje=(
+                    f"Tu cita en {clinica_nombre} "
+                    f"con el/la Dr(a). {psicologo_nombre} "
+                    f"del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada.\n"
+                    f"Motivo: {motivo_str}"
+                ),
+            )
 
-        # ── Notificación a la Web (Clínica) ──
-        if cita.clinica_id:
-            admins = db_models.apps.get_model('P1_Identidad_Acceso', 'Usuario').objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
-            for admin in admins:
+            from firebase_admin import messaging
+            from apps.P1_Identidad_Acceso.models import FcmToken
+            
+            # ── Notificación a la Web (Clínica) ──
+            if cita.clinica_id:
+                admins = db_models.apps.get_model('P1_Identidad_Acceso', 'Usuario').objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
+                for admin in admins:
+                    NotificacionPush.objects.create(
+                        usuario=admin,
+                        titulo="❌ Cita Cancelada",
+                        mensaje=f"El paciente {paciente.nombre} ha cancelado su cita del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} con {psicologo_nombre}."
+                    )
+                    # Push Real
+                    for ft in FcmToken.objects.filter(usuario=admin):
+                        try:
+                            msg = messaging.Message(
+                                notification=messaging.Notification(
+                                    title="❌ Cita Cancelada",
+                                    body=f"El paciente {paciente.nombre} canceló cita del {fecha_local.strftime('%H:%M')}."
+                                ),
+                                token=ft.token
+                            )
+                            messaging.send(msg)
+                        except Exception: pass
+
+            # Notificar al psicólogo
+            if cita.psicologo:
                 NotificacionPush.objects.create(
-                    usuario=admin,
+                    usuario=cita.psicologo,
                     titulo="❌ Cita Cancelada",
-                    mensaje=f"El paciente {paciente.nombre} ha cancelado su cita del {fecha_local.strftime('%d/%m/%Y a las %H:%M')}."
+                    mensaje=f"La cita con el paciente {paciente.nombre} programada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
                 )
-
-        # Notificar al psicólogo
-        NotificacionPush.objects.create(
-            usuario=cita.psicologo,
-            titulo="❌ Cita Cancelada",
-            mensaje=f"La cita con el paciente {paciente.nombre} programada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
-        )
+                # Push Real
+                for ft in FcmToken.objects.filter(usuario=cita.psicologo):
+                    try:
+                        msg = messaging.Message(
+                            notification=messaging.Notification(
+                                title="❌ Cita Cancelada",
+                                body=f"El paciente {paciente.nombre} canceló cita del {fecha_local.strftime('%H:%M')}."
+                            ),
+                            token=ft.token
+                        )
+                        messaging.send(msg)
+                    except Exception: pass
+        except Exception as e:
+            print("Error enviando notificaciones de cancelación:", e)
 
         return Response({"mensaje": "Cita cancelada exitosamente.", "estado": cita.estado}, status=200)
 
