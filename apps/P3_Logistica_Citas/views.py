@@ -670,7 +670,8 @@ class MobileStripeCheckoutSuccessView(APIView):
             if session.payment_status == 'paid':
                 cita = Cita.objects.get(pk=cita_id)
                 cita.estado_pago = 'PAGADO'
-                cita.estado = 'CONFIRMADA'
+                if cita.estado == 'PENDIENTE':
+                    cita.estado = 'PROGRAMADA'
                 cita.save()
 
                 if not hasattr(cita, 'transaccion'):
