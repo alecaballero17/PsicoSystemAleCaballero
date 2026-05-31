@@ -10,6 +10,8 @@ export const GestionPersonal = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const [limitMessage, setLimitMessage] = useState('');
 
     // Formulario de edición/creación
     const [formData, setFormData] = useState({
@@ -119,7 +121,17 @@ export const GestionPersonal = () => {
             setShowModal(false);
             fetchPsicologos();
         } catch (err) {
-            alert("Error al guardar: " + JSON.stringify(err.response?.data || err.message));
+            const errorData = err.response?.data;
+            const errorStr = typeof errorData === 'string'
+                ? errorData
+                : (Array.isArray(errorData) ? errorData[0] : (errorData?.detail || JSON.stringify(errorData || err.message)));
+
+            if (errorStr && (errorStr.includes("Límite excedido") || errorStr.includes("limite") || errorStr.includes("excedido"))) {
+                setLimitMessage(errorStr);
+                setShowLimitModal(true);
+            } else {
+                alert("Error al guardar: " + errorStr);
+            }
         }
     };
 
@@ -359,6 +371,45 @@ export const GestionPersonal = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Límite de Suscripción Excedido (Incentivo de Venta SaaS) */}
+            {showLimitModal && (
+                <div style={styles.limitModalOverlay}>
+                    <div style={styles.limitModalContent}>
+                        <div style={styles.limitIconContainer}>
+                            <span style={{ fontSize: '48px' }}>👑</span>
+                        </div>
+                        <h3 style={styles.limitModalTitle}>¡Límite de Plan Alcanzado!</h3>
+                        <p style={styles.limitModalText}>{limitMessage}</p>
+                        <div style={styles.limitIncentiveCard}>
+                            <p style={{ margin: 0, fontWeight: 'bold', color: '#1e293b' }}>
+                                ¡Haz crecer tu clínica hoy!
+                            </p>
+                            <p style={{ margin: '4px 0 0 0', color: '#64748b' }}>
+                                Actualiza a un plan superior para registrar pacientes y psicólogos sin restricciones.
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '25px', width: '100%' }}>
+                            <button 
+                                onClick={() => {
+                                    setShowLimitModal(false);
+                                    setShowModal(false);
+                                    navigate('/suscripcion');
+                                }}
+                                style={styles.limitBtnUpgrade}
+                            >
+                                🚀 ACTUALIZAR PLAN AHORA
+                            </button>
+                            <button 
+                                onClick={() => setShowLimitModal(false)}
+                                style={styles.limitBtnCancel}
+                            >
+                                Mantener plan actual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -459,6 +510,90 @@ const styles = {
         backgroundColor: '#2563eb',
         color: '#fff',
         borderColor: '#2563eb',
+    },
+    limitModalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000
+    },
+    limitModalContent: {
+        backgroundColor: 'white',
+        padding: '35px',
+        borderRadius: '20px',
+        width: '100%',
+        maxWidth: '420px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        border: '1px solid #e2e8f0'
+    },
+    limitIconContainer: {
+        width: '80px',
+        height: '80px',
+        borderRadius: '50%',
+        backgroundColor: '#fef3c7',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: '20px'
+    },
+    limitModalTitle: {
+        margin: '0 0 10px 0',
+        fontSize: '20px',
+        fontWeight: '900',
+        color: '#0f172a'
+    },
+    limitModalText: {
+        fontSize: '13.5px',
+        color: '#ef4444',
+        margin: '0 0 20px 0',
+        fontWeight: '600',
+        lineHeight: '1.5',
+        backgroundColor: '#fef2f2',
+        padding: '10px 15px',
+        borderRadius: '8px',
+        border: '1px solid #fecaca'
+    },
+    limitIncentiveCard: {
+        backgroundColor: '#f8fafc',
+        padding: '15px',
+        borderRadius: '10px',
+        border: '1px solid #cbd5e1',
+        fontSize: '12px',
+        lineHeight: '1.5'
+    },
+    limitBtnUpgrade: {
+        width: '100%',
+        padding: '14px',
+        backgroundColor: '#2563eb',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        fontSize: '13px',
+        boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
+    },
+    limitBtnCancel: {
+        width: '100%',
+        padding: '12px',
+        backgroundColor: 'transparent',
+        color: '#64748b',
+        border: 'none',
+        borderRadius: '8px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        fontSize: '12px'
     }
 };
 
