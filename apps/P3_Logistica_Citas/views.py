@@ -657,7 +657,6 @@ class MobileStripeCheckoutSuccessView(APIView):
         import stripe
         from django.conf import settings
         from django.http import HttpResponse
-        from apps.P1_Identidad_Acceso.models import Transaccion
 
         stripe.api_key = settings.STRIPE_SECRET_KEY
         session_id = request.GET.get('session_id')
@@ -675,17 +674,40 @@ class MobileStripeCheckoutSuccessView(APIView):
                 cita.save()
 
                 if not hasattr(cita, 'transaccion'):
-                    Transaccion.objects.create(
-                        clinica=cita.paciente.clinica,
-                        monto=cita.monto,
-                        concepto=f"Pago de cita (Stripe Checkout) - {cita.motivo}",
-                        tipo='INGRESO',
-                        metodo_pago='STRIPE'
-                    )
+                    from apps.P4_IA_Administracion.models import Transaccion, Comprobante
+                    import uuid
+                    try:
+                        transaccion = Transaccion.objects.create(
+                            clinica_id=cita.clinica_id or cita.paciente.clinica_id,
+                            paciente=cita.paciente,
+                            monto=cita.monto,
+                            concepto=f"Pago de cita (Stripe Checkout) - {cita.motivo}",
+                            metodo_pago='TRANSFERENCIA'
+                        )
+                        Comprobante.objects.create(
+                            transaccion=transaccion,
+                            nro_comprobante=f"REC-{uuid.uuid4().hex[:8].upper()}"
+                        )
+                    except Exception:
+                        pass
                 else:
                     t = cita.transaccion
-                    t.metodo_pago = 'STRIPE'
+                    t.metodo_pago = 'TRANSFERENCIA'
                     t.save()
+                
+                # --- Notificación Push al Paciente ---
+                try:
+                    from apps.P1_Identidad_Acceso.models import NotificacionPush
+                    clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
+                    mensaje_notif = f"Tu pago de ${cita.monto} mediante Tarjeta (Stripe) para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
+                    
+                    NotificacionPush.objects.create(
+                        usuario=cita.paciente.usuario,
+                        titulo="✅ Pago Exitoso",
+                        mensaje=mensaje_notif,
+                    )
+                except Exception:
+                    pass
                 
                 html = f"""
                 <html>
