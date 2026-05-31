@@ -6,12 +6,37 @@ const Navbar = () => {
     const { user, logout, tenant } = useAuth();
     const [notificaciones, setNotificaciones] = useState([]);
     const [showNotifs, setShowNotifs] = useState(false);
+    const alertedNotifsRef = React.useRef(new Set());
+
+    useEffect(() => {
+        if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    }, []);
 
     const fetchNotificaciones = async () => {
         if (!user) return;
         try {
             const res = await apiClient.get('notificaciones/');
-            setNotificaciones(res.data);
+            const nuevasNotificaciones = res.data;
+            setNotificaciones(nuevasNotificaciones);
+
+            // Web Push Notifications reales
+            if ("Notification" in window && Notification.permission === "granted") {
+                nuevasNotificaciones.forEach(n => {
+                    if (!n.leido && !alertedNotifsRef.current.has(n.id)) {
+                        new Notification(n.titulo || "Nueva Notificación", {
+                            body: n.mensaje,
+                            icon: "/favicon.ico"
+                        });
+                        alertedNotifsRef.current.add(n.id);
+                    }
+                });
+            } else {
+                // Registrar IDs para evitar alertas si dan permiso después
+                nuevasNotificaciones.forEach(n => alertedNotifsRef.current.add(n.id));
+            }
+
         } catch (error) {
             console.error("Error al obtener notificaciones:", error);
         }
