@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
+import 'package:url_launcher/url_launcher.dart';
 import '../services/cita_pago_service.dart';
 
 class PacientePagosScreen extends StatefulWidget {
@@ -514,82 +515,95 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
     );
 
     try {
-      String? paymentIntentId;
-      
       if (metodo == 'TARJETA') {
-        // 1. Crear PaymentIntent en backend
-        final intentData = await CitaPagoService.createStripePaymentIntent(token: widget.token, citaId: citaId);
-        final clientSecret = intentData['client_secret'];
+        final checkoutData = await CitaPagoService.createStripeCheckoutSession(token: widget.token, citaId: citaId);
+        final urlString = checkoutData['checkout_url'];
+        final uri = Uri.parse(urlString);
         
-        // 2. Confirmar el pago en Stripe con la tarjeta del CardField
-        final paymentIntent = await Stripe.instance.confirmPayment(
-          paymentIntentClientSecret: clientSecret,
-          data: const PaymentMethodParams.card(
-            paymentMethodData: PaymentMethodData(),
-          ),
-        );
+        if (mounted) Navigator.of(context).pop();
         
-        if (paymentIntent.status != PaymentIntentsStatus.Succeeded) {
-          throw Exception("El pago no fue exitoso en Stripe (Estado: ${paymentIntent.status})");
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          throw Exception("No se pudo abrir el navegador para el pago.");
         }
-        paymentIntentId = paymentIntent.id;
-      } else {
-        await Future.delayed(const Duration(seconds: 2)); // Simulación para QR
-      }
-
-      // 3. Confirmar con el backend
-      final response = await CitaPagoService.pagarCita(
-        token: widget.token,
-        citaId: citaId,
-        metodoPago: metodo,
-        paymentIntentId: paymentIntentId,
-      );
-
-      if (mounted) Navigator.of(context).pop();
-
-      // Trigger local push notification
-      try {
-        final _localNotifications = FlutterLocalNotificationsPlugin();
-        await _localNotifications.show(
-          id: DateTime.now().millisecond,
-          title: response['notificacion_titulo'] ?? '✅ Pago Exitoso',
-          body: response['notificacion_mensaje'] ?? 'Tu pago ha sido procesado correctamente.',
-          notificationDetails: const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'high_importance_channel',
-              'High Importance Notifications',
-              importance: Importance.max,
-              priority: Priority.high,
-              icon: '@mipmap/ic_launcher',
-            ),
-          ),
-        );
-      } catch (_) {}
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (c) => AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 60),
-                const SizedBox(height: 16),
-                Text('Pago Exitoso', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+        
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (c) => AlertDialog(
+              title: Text('Verificando Pago', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              content: Text('Por favor completa el pago en tu navegador. Una vez termines, regresa aquí y presiona "Ya pagué" para actualizar tu historial.', style: GoogleFonts.outfit()),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(c).pop();
+                    setState(() => _isLoading = true);
+                    _loadData();
+                  },
+                  child: Text('Ya pagué', style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold)),
+                )
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(c).pop();
-                  setState(() => _isLoading = true);
-                  _loadData();
-                },
-                child: Text('Aceptar', style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold)),
-              )
-            ],
-          ),
+          );
+        }
+        return;
+      } else {
+        await Future.delayed(const Duration(seconds: 2)); // Simulación para QR
+
+        final response = await CitaPagoService.pagarCita(
+          token: widget.token,
+          citaId: citaId,
+          metodoPago: metodo,
+          paymentIntentId: null,
         );
+
+        if (mounted) Navigator.of(context).pop();
+
+        try {
+          final _localNotifications = FlutterLocalNotificationsPlugin();
+          await _localNotifications.show(
+            id: DateTime.now().millisecond,
+            title: response['notificacion_titulo'] ?? '✅ Pago Exitoso',
+            body: response['notificacion_mensaje'] ?? 'Tu pago ha sido procesado correctamente.',
+            notificationDetails: const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'high_importance_channel',
+                'High Importance Notifications',
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: '@mipmap/ic_launcher',
+              ),
+            ),
+          );
+        } catch (_) {}
+
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (c) => AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                  const SizedBox(height: 16),
+                  Text('Pago Exitoso', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(c).pop();
+                    setState(() => _isLoading = true);
+                    _loadData();
+                  },
+                  child: Text('Aceptar', style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold)),
+                )
+              ],
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) Navigator.of(context).pop();
@@ -737,21 +751,14 @@ class _PagoModalState extends State<_PagoModal> {
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => setState(() => metodoSeleccionado = ''),
                 ),
-                Text('Datos de Tarjeta (Stripe)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Pago Seguro (Stripe)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             const SizedBox(height: 16),
-            CardField(
-              onCardChanged: (card) {
-                // Se puede validar si la tarjeta está completa
-              },
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: primaryBlue, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            Text(
+              'Serás redirigido a la pasarela oficial de Stripe en tu navegador para realizar el pago de forma segura y sin errores.',
+              style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade700),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -761,7 +768,7 @@ class _PagoModalState extends State<_PagoModal> {
                 onPressed: () {
                   widget.onConfirmarPago('TARJETA');
                 },
-                child: Text('Procesar Pago Seguro', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('Ir a Pagar (Seguro)', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

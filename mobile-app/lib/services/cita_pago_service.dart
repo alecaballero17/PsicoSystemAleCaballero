@@ -131,6 +131,22 @@ class CitaPagoService {
     throw Exception(_extractError(response));
   }
 
+  static Future<Map<String, dynamic>> createStripeCheckoutSession({
+    required String token,
+    required int citaId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/mobile/stripe/create-checkout-session/'),
+      headers: _headers(token),
+      body: json.encode({'cita_id': citaId}),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(utf8.decode(response.bodyBytes));
+    }
+    throw Exception(_extractError(response));
+  }
+
   static Future<Map<String, dynamic>> cancelarCita({
     required String token,
     required int citaId,
