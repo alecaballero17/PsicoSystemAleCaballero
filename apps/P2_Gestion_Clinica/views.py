@@ -5,8 +5,8 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from .forms import PacienteForm
-from .serializers import PacienteSerializer
-from .models import Paciente
+from .serializers import PacienteSerializer, PacienteDetalleSerializer
+from .models import Paciente, ExpedienteClinico
 from apps.P4_IA_Administracion.models import LogAuditoria
 from apps.P1_Identidad_Acceso.permissions import (
     HasClinicaAsignada,
@@ -104,15 +104,25 @@ class PacienteListCreateAPIView(generics.ListCreateAPIView):
 
 
 class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PacienteSerializer
     permission_classes = [
         IsAuthenticated,
         EsPsicologoOAdministrador,
         HasClinicaAsignada,
     ]
 
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return PacienteDetalleSerializer
+        return PacienteSerializer
+
     def get_queryset(self):
         return Paciente.objects.filter(clinica=self.request.user.clinica)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # CU20: Recuperación de Datos Clínicos (Automática)
+        ExpedienteClinico.objects.get_or_create(paciente=instance)
+        return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         paciente = serializer.save()

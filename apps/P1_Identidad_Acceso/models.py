@@ -35,6 +35,11 @@ class Usuario(AbstractUser):
     telefono = models.CharField(max_length=20, blank=True, default='')
     horario_atencion = models.CharField(max_length=200, blank=True, default='')
 
+    # Configuración de Preferencias de Notificación (CU22)
+    email_notif_citas = models.BooleanField(default=True)
+    email_notif_reportes = models.BooleanField(default=True)
+    push_notif_alertas = models.BooleanField(default=True)
+
     # Seguridad: Requerimientos del docente
     ultima_fecha_pass = models.DateTimeField(auto_now_add=True)
     forzar_cambio_pass = models.BooleanField(default=False)

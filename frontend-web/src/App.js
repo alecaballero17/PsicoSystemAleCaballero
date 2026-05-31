@@ -33,6 +33,7 @@ import RegistroCita from './pages/RegistroCita';
 import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
 import AdminReportes from './pages/AdminReportes';
 import Bitacora from './pages/Bitacora';
+import PreferenciasNotificaciones from './pages/PreferenciasNotificaciones';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
@@ -151,6 +152,11 @@ function App() {
                     <Route path="/admin/auditoria" element={
                         <PrivateRoute allowedRoles={['ADMIN']}>
                             <Bitacora />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/preferencias-notificaciones" element={
+                        <PrivateRoute>
+                            <PreferenciasNotificaciones />
                         </PrivateRoute>
                     } />
                     <Route path="/registro-cita" element={<PrivateRoute><RegistroCita /></PrivateRoute>} />

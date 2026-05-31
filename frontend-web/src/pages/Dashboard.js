@@ -18,7 +18,6 @@ const Dashboard = () => {
     const [cargando, setCargando] = useState(true);
     
     // OBTENEMOS DATOS DE SESIÓN
-    const userName = user?.name || 'USUARIO';
     const userRole = user?.role || 'ADMIN';
     const token = user?.token;
 
@@ -181,18 +180,6 @@ const Dashboard = () => {
                 )}
 
                 <div style={styles.sidebarFooter}>
-                    <div style={{ paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '15px' }}>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>
-                            🏥 SESIÓN INICIADA EN:
-                        </div>
-                        <div style={{ fontSize: '13px', color: 'white', fontWeight: 'bold' }}>
-                            {tenant?.nombre || "Cargando Clínica..."}
-                        </div>
-                    </div>
-                    <div style={styles.sessionInfo}>
-                        <div style={styles.statusDot}></div>
-                        <span>Servidor: Online</span>
-                    </div>
                     <button 
                         onClick={async () => { 
                             await authService.logout(); 
@@ -209,16 +196,7 @@ const Dashboard = () => {
             {/* MAIN CONTENT: Área de Trabajo */}
             <main style={styles.main}>
                 <header style={styles.header}>
-                    <div style={styles.headerPath}>Consola / Dashboard</div>
-                    <div style={{ ...styles.headerUser, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                        <span style={{ color: '#1e293b', fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>
-                            🏥 {tenant?.nombre || "Cargando Clínica..."}
-                        </span>
-                        <div>
-                            <span style={styles.userRoleTag}>{userRole}</span>
-                            <span style={styles.userName}>{userName}</span>
-                        </div>
-                    </div>
+                    <div style={styles.headerPath}>Panel Principal</div>
                 </header>
 
                 <div style={styles.content}>
@@ -227,17 +205,17 @@ const Dashboard = () => {
                         <div style={styles.kpiCard}>
                             <span style={styles.kpiLabel}>TOTAL PACIENTES</span>
                             <div style={styles.kpiValue}>{metrics.total_pacientes}</div>
-                            <div style={styles.kpiSub}>Sincronizado con PostgreSQL</div>
+                            <div style={{ ...styles.kpiSub, color: '#16a34a' }}>Registrados en la clínica</div>
                         </div>
                         <div style={styles.kpiCard}>
                             <span style={styles.kpiLabel}>CITAS HOY</span>
                             <div style={styles.kpiValue}>{metrics.citas_hoy}</div>
-                            <div style={styles.kpiSub}>Módulo Agenda (Sprint 2)</div>
+                            <div style={{ ...styles.kpiSub, color: '#2563eb' }}>Sesiones programadas hoy</div>
                         </div>
                         <div style={styles.kpiCard}>
-                            <span style={styles.kpiLabel}>ESTADO API</span>
-                            <div style={styles.kpiValue}>ONLINE</div>
-                            <div style={styles.kpiSub}>Latencia: 24ms</div>
+                            <span style={styles.kpiLabel}>PLAN ACTIVO</span>
+                            <div style={styles.kpiValue}>{tenant.plan?.toUpperCase() || 'PREMIUM'}</div>
+                            <div style={{ ...styles.kpiSub, color: '#8b5cf6' }}>Suscripción SaaS Activa</div>
                         </div>
                     </div>
 

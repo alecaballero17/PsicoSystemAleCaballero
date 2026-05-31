@@ -148,15 +148,16 @@ class CitaViewSet(viewsets.ModelViewSet):
             accion=f"Programó cita (ViewSet): {cita.paciente} — {cita.fecha_hora}",
         )
         
-        # Notificación por Email
-        mensaje = f"Se ha programado una nueva cita para {cita.paciente.nombre} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')} con el profesional {cita.psicologo.get_full_name()}."
-        send_mail(
-            subject='Nueva Cita Programada - PsicoSystem',
-            message=mensaje,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[self.request.user.email or 'admin@psicosystem.com'],
-            fail_silently=True,
-        )
+        # Notificación por Email (Si la preferencia está activa)
+        if getattr(self.request.user, 'email_notif_citas', True):
+            mensaje = f"Se ha programado una nueva cita para {cita.paciente.nombre} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')} con el profesional {cita.psicologo.get_full_name()}."
+            send_mail(
+                subject='Nueva Cita Programada - PsicoSystem',
+                message=mensaje,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[self.request.user.email or 'admin@psicosystem.com'],
+                fail_silently=True,
+            )
 
     @action(detail=True, methods=['post'])
     def enviar_recordatorio(self, request, pk=None):
@@ -192,15 +193,16 @@ class CitaViewSet(viewsets.ModelViewSet):
         cita.estado = 'CANCELADA'
         cita.save()
         
-        # Notificación automática (CU26)
-        mensaje = f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y')} ha sido CANCELADA."
-        send_mail(
-            subject='Notificación de Cancelación - PsicoSystem',
-            message=mensaje,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request.user.email or 'paciente@ejemplo.com'],
-            fail_silently=True,
-        )
+        # Notificación automática (CU26) (Si la preferencia está activa)
+        if getattr(request.user, 'email_notif_citas', True):
+            mensaje = f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y')} ha sido CANCELADA."
+            send_mail(
+                subject='Notificación de Cancelación - PsicoSystem',
+                message=mensaje,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email or 'paciente@ejemplo.com'],
+                fail_silently=True,
+            )
 
         LogAuditoria.objects.create(
             usuario=request.user,

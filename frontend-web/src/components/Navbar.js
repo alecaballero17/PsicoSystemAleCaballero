@@ -28,6 +28,9 @@ const Navbar = () => {
                             👤 {user.name} ({user.role})
                         </span>
                     </div>
+                    <button onClick={() => navigate('/preferencias-notificaciones')} style={{ padding: '8px 16px', background: '#334155', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', transition: 'background 0.2s' }} onMouseOver={e => e.target.style.background = '#475569'} onMouseOut={e => e.target.style.background = '#334155'}>
+                        🔔 Notificaciones
+                    </button>
                     <button onClick={logout} style={{ padding: '8px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', transition: 'background 0.2s' }} onMouseOver={e => e.target.style.background = '#b91c1c'} onMouseOut={e => e.target.style.background = '#dc2626'}>
                         Cerrar Sesión
                     </button>

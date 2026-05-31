@@ -36,14 +36,15 @@ export const AuthProvider = ({ children }) => {
                         const response = await authService.apiClient.get('clinica/me/');
                         setTenant({
                             nombre: response.data.nombre,
-                            logo: response.data.logo_url
+                            logo: response.data.logo_url,
+                            plan: response.data.plan_suscripcion
                         });
                     } catch (e) {
                         console.error("Error cargando identidad del Tenant:", e);
                     }
                 }
             } else {
-                setTenant({ nombre: 'PsicoSystem', logo: '' });
+                setTenant({ nombre: 'PsicoSystem', logo: '', plan: '' });
             }
         };
 
@@ -54,7 +55,8 @@ export const AuthProvider = ({ children }) => {
     const updateTenant = (newInfo) => {
         setTenant({
             nombre: newInfo.nombre,
-            logo: newInfo.logo_url || newInfo.logo
+            logo: newInfo.logo_url || newInfo.logo,
+            plan: newInfo.plan_suscripcion
         });
     };
 

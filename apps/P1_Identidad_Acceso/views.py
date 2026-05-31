@@ -33,7 +33,9 @@ logger = logging.getLogger(__name__)
 # Endpoint /api/auth/me/ — Verificación de sesión JWT (Anti-huérfano)
 # ==========================================================================
 class MeAPIView(APIView):
-    """GET: Devuelve los datos del usuario autenticado. Usado por el frontend para verificar sesión."""
+    """GET: Devuelve los datos del usuario autenticado. Usado por el frontend para verificar sesión.
+    PUT: Actualiza los campos de preferencias del usuario.
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -47,6 +49,25 @@ class MeAPIView(APIView):
             "rol": user.rol,
             "clinica_id": user.clinica_id,
             "clinica_nombre": user.clinica.nombre if user.clinica else None,
+            "email_notif_citas": user.email_notif_citas,
+            "email_notif_reportes": user.email_notif_reportes,
+            "push_notif_alertas": user.push_notif_alertas,
+        }, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        user = request.user
+        if "email_notif_citas" in request.data:
+            user.email_notif_citas = request.data["email_notif_citas"]
+        if "email_notif_reportes" in request.data:
+            user.email_notif_reportes = request.data["email_notif_reportes"]
+        if "push_notif_alertas" in request.data:
+            user.push_notif_alertas = request.data["push_notif_alertas"]
+        user.save()
+        return Response({
+            "status": "success",
+            "email_notif_citas": user.email_notif_citas,
+            "email_notif_reportes": user.email_notif_reportes,
+            "push_notif_alertas": user.push_notif_alertas,
         }, status=status.HTTP_200_OK)
 
 
