@@ -538,7 +538,8 @@ class MobileCitaCancelarAPIView(APIView):
 
             # ── Notificación a la Web (Clínica) ──
             if cita.clinica_id:
-                admins = db_models.apps.get_model('P1_Identidad_Acceso', 'Usuario').objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
+                from apps.P1_Identidad_Acceso.models import Usuario
+                admins = Usuario.objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
                 for admin in admins:
                     NotificacionPush.objects.create(
                         usuario=admin,
