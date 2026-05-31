@@ -690,22 +690,29 @@ class MobileStripeCheckoutSuccessView(APIView):
                 html = f"""
                 <html>
                 <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <style>
-                  body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
-                  .card {{ background: white; padding: 40px 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px; width: 90%; }}
-                  .icon {{ color: #16a34a; font-size: 60px; margin-bottom: 20px; }}
-                  h1 {{ color: #16a34a; margin-top: 0; font-size: 24px; }}
-                  p {{ color: #475569; font-size: 16px; line-height: 1.5; }}
-                </style>
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <script>
+                        setTimeout(function() {{
+                            window.location.href = "intent://pago-exitoso#Intent;scheme=psicosystem;package=com.example.psicosystem_mobile;end";
+                        }}, 2000);
+                    </script>
+                    <style>
+                        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                        .card {{ background: white; padding: 40px 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }}
+                        .icon {{ color: #16a34a; font-size: 60px; margin-bottom: 20px; }}
+                        h1 {{ color: #16a34a; margin-top: 0; font-size: 24px; }}
+                        p {{ color: #475569; font-size: 16px; line-height: 1.5; }}
+                        .btn {{ display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }}
+                    </style>
                 </head>
                 <body>
-                  <div class="card">
-                    <div class="icon">✓</div>
-                    <h1>Pago Exitoso</h1>
-                    <p>Tu cita ha sido confirmada y pagada correctamente por un monto de ${cita.monto}.</p>
-                    <p><strong>Ya puedes cerrar esta ventana del navegador y regresar a la aplicación de PsicoSystem.</strong></p>
-                  </div>
+                    <div class="card">
+                        <div class="icon">✓</div>
+                        <h1>Pago Exitoso</h1>
+                        <p>Tu cita ha sido confirmada y pagada correctamente por un monto de ${cita.monto}.</p>
+                        <p>Serás redirigido automáticamente a la aplicación en un par de segundos...</p>
+                        <a href="intent://pago-exitoso#Intent;scheme=psicosystem;package=com.example.psicosystem_mobile;end" class="btn">Volver a PsicoSystem</a>
+                    </div>
                 </body>
                 </html>
                 """
