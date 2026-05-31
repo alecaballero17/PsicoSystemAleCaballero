@@ -405,8 +405,8 @@ class MobileCitasAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
-        # Actualizar la clínica del paciente si no tiene una asignada
-        if paciente.clinica_id is None:
+        # Actualizar la clínica del paciente si no tiene o si es diferente
+        if not paciente.clinica_id or str(paciente.clinica_id) != str(clinica_id):
             paciente.clinica_id = clinica_id
             paciente.save(update_fields=['clinica_id'])
 
@@ -696,17 +696,30 @@ class MobileStripeCheckoutSuccessView(APIView):
                     t.metodo_pago = 'TRANSFERENCIA'
                     t.save()
                 
-                # --- Notificación Push al Paciente ---
+                # --- Notificación Push al Paciente y Clínica ---
                 try:
-                    from apps.P1_Identidad_Acceso.models import NotificacionPush
+                    from apps.P1_Identidad_Acceso.models import NotificacionPush, Usuario
                     clinica_nombre = cita.clinica.nombre if cita.clinica else 'la clínica'
                     mensaje_notif = f"Tu pago de ${cita.monto} mediante Tarjeta (Stripe) para la cita con {cita.psicologo.get_full_name()} en {clinica_nombre} ha sido procesado correctamente."
                     
-                    NotificacionPush.objects.create(
-                        usuario=cita.paciente.usuario,
-                        titulo="✅ Pago Exitoso",
-                        mensaje=mensaje_notif,
-                    )
+                    # Notificar al paciente
+                    usuario_paciente = Usuario.objects.filter(ci=cita.paciente.ci).first()
+                    if usuario_paciente:
+                        NotificacionPush.objects.create(
+                            usuario=usuario_paciente,
+                            titulo="✅ Pago Exitoso",
+                            mensaje=mensaje_notif,
+                        )
+                        
+                    # Notificar a la clínica
+                    if cita.clinica_id:
+                        admins = Usuario.objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
+                        for admin in admins:
+                            NotificacionPush.objects.create(
+                                usuario=admin,
+                                titulo="💰 Nuevo Pago Recibido",
+                                mensaje=f"Se recibió un pago de ${cita.monto} del paciente {cita.paciente.nombre} vía Tarjeta (Stripe)."
+                            )
                 except Exception:
                     pass
                 

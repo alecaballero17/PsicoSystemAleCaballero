@@ -53,3 +53,11 @@ class ArchivoAdjunto(models.Model):
     class Meta:
         verbose_name = "Archivo Adjunto"
         verbose_name_plural = "Archivos Adjuntos"
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Paciente)
+def create_expediente_clinico(sender, instance, created, **kwargs):
+    if created:
+        ExpedienteClinico.objects.get_or_create(paciente=instance)
