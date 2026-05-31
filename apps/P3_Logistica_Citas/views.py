@@ -536,9 +536,6 @@ class MobileCitaCancelarAPIView(APIView):
                 ),
             )
 
-            from firebase_admin import messaging
-            from apps.P1_Identidad_Acceso.models import FcmToken
-            
             # ── Notificación a la Web (Clínica) ──
             if cita.clinica_id:
                 admins = db_models.apps.get_model('P1_Identidad_Acceso', 'Usuario').objects.filter(rol='ADMIN', clinica_id=cita.clinica_id)
@@ -548,18 +545,6 @@ class MobileCitaCancelarAPIView(APIView):
                         titulo="❌ Cita Cancelada",
                         mensaje=f"El paciente {paciente.nombre} ha cancelado su cita del {fecha_local.strftime('%d/%m/%Y a las %H:%M')} con {psicologo_nombre}."
                     )
-                    # Push Real
-                    for ft in FcmToken.objects.filter(usuario=admin):
-                        try:
-                            msg = messaging.Message(
-                                notification=messaging.Notification(
-                                    title="❌ Cita Cancelada",
-                                    body=f"El paciente {paciente.nombre} canceló cita del {fecha_local.strftime('%H:%M')}."
-                                ),
-                                token=ft.token
-                            )
-                            messaging.send(msg)
-                        except Exception: pass
 
             # Notificar al psicólogo
             if cita.psicologo:
@@ -568,18 +553,6 @@ class MobileCitaCancelarAPIView(APIView):
                     titulo="❌ Cita Cancelada",
                     mensaje=f"La cita con el paciente {paciente.nombre} programada para el {fecha_local.strftime('%d/%m/%Y a las %H:%M')} ha sido cancelada."
                 )
-                # Push Real
-                for ft in FcmToken.objects.filter(usuario=cita.psicologo):
-                    try:
-                        msg = messaging.Message(
-                            notification=messaging.Notification(
-                                title="❌ Cita Cancelada",
-                                body=f"El paciente {paciente.nombre} canceló cita del {fecha_local.strftime('%H:%M')}."
-                            ),
-                            token=ft.token
-                        )
-                        messaging.send(msg)
-                    except Exception: pass
         except Exception as e:
             print("Error enviando notificaciones de cancelación:", e)
 
