@@ -597,8 +597,8 @@ class ReporteGeneralPDFAPIView(APIView):
         
         if tipo == 'citas':
             citas = Cita.objects.filter(paciente__clinica=request.user.clinica, fecha_hora__date__range=[start, end])
-            if not citas.exists(): # FALLBACK PARA DEFENSA
-                citas = Cita.objects.filter(paciente__clinica=request.user.clinica).order_by('-fecha_hora')[:10]
+            # if not citas.exists(): # FALLBACK PARA DEFENSA
+            #     citas = Cita.objects.filter(paciente__clinica=request.user.clinica).order_by('-fecha_hora')[:10]
             
             p.drawString(50, y, "PACIENTE")
             p.drawString(250, y, "FECHA / HORA")
@@ -613,8 +613,8 @@ class ReporteGeneralPDFAPIView(APIView):
                 y -= 15
         else:
             trans = Transaccion.objects.filter(clinica=request.user.clinica, fecha__date__range=[start, end])
-            if not trans.exists(): # FALLBACK PARA DEFENSA
-                trans = Transaccion.objects.filter(clinica=request.user.clinica).order_by('-fecha')[:10]
+            # if not trans.exists(): # FALLBACK PARA DEFENSA
+            #     trans = Transaccion.objects.filter(clinica=request.user.clinica).order_by('-fecha')[:10]
 
             p.drawString(50, y, "PACIENTE")
             p.drawString(250, y, "CONCEPTO")
@@ -660,8 +660,8 @@ class ReporteGeneralCSVAPIView(APIView):
         
         if tipo == 'citas':
             citas = Cita.objects.filter(paciente__clinica=request.user.clinica, fecha_hora__date__range=[start, end])
-            if not citas.exists():
-                citas = Cita.objects.filter(paciente__clinica=request.user.clinica).order_by('-fecha_hora')[:10]
+            # if not citas.exists():
+            #     citas = Cita.objects.filter(paciente__clinica=request.user.clinica).order_by('-fecha_hora')[:10]
             
             writer.writerow(["ID Cita", "Paciente", "Fecha / Hora", "Estado", "Motivo"])
             for c in citas:
@@ -669,8 +669,8 @@ class ReporteGeneralCSVAPIView(APIView):
                 writer.writerow([c.pk, c.paciente.nombre, fecha_local, c.estado, c.motivo])
         else:
             trans = Transaccion.objects.filter(clinica=request.user.clinica, fecha__date__range=[start, end])
-            if not trans.exists():
-                trans = Transaccion.objects.filter(clinica=request.user.clinica).order_by('-fecha')[:10]
+            # if not trans.exists():
+            #     trans = Transaccion.objects.filter(clinica=request.user.clinica).order_by('-fecha')[:10]
                 
             writer.writerow(["ID Transaccion", "Paciente", "Concepto", "Monto (BS)", "Método de Pago", "Fecha"])
             for t in trans:
