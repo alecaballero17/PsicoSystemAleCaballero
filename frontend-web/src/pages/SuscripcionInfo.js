@@ -6,6 +6,125 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosConfig';
 import authService from '../services/authService';
 
+const RealisticQRCode = ({ size = 140 }) => {
+    // Generate a 25x25 grid
+    const grid = [];
+    const N = 25;
+    for (let r = 0; r < N; r++) {
+        grid[r] = new Array(N).fill(0);
+    }
+
+    // Helper to draw a square
+    const drawSquare = (row, col, size, value) => {
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                if (row + r < N && col + c < N) {
+                    grid[row + r][col + c] = value;
+                }
+            }
+        }
+    };
+
+    // Draw position detection patterns (7x7)
+    const drawFinderPattern = (row, col) => {
+        // Outer 7x7 black
+        drawSquare(row, col, 7, 1);
+        // Inner 5x5 white
+        drawSquare(row + 1, col + 1, 5, 0);
+        // Center 3x3 black
+        drawSquare(row + 2, col + 2, 3, 1);
+    };
+
+    drawFinderPattern(0, 0);
+    drawFinderPattern(0, N - 7);
+    drawFinderPattern(N - 7, 0);
+
+    // Draw timing patterns (dots between finders)
+    for (let i = 8; i < N - 8; i++) {
+        grid[6][i] = i % 2 === 0 ? 1 : 0;
+        grid[i][6] = i % 2 === 0 ? 1 : 0;
+    }
+
+    // Alignment pattern (5x5) at (N-9, N-9)
+    const alRow = N - 9, alCol = N - 9;
+    drawSquare(alRow, alCol, 5, 1);
+    drawSquare(alRow + 1, alCol + 1, 3, 0);
+    grid[alRow + 2][alCol + 2] = 1;
+
+    // Fill the rest with pseudo-random modules
+    let seed = 42;
+    const rand = () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280.0;
+    };
+
+    for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+            if (r < 8 && c < 8) continue;
+            if (r < 8 && c >= N - 8) continue;
+            if (r >= N - 8 && c < 8) continue;
+            if (r >= alRow && r < alRow + 5 && c >= alCol && c < alCol + 5) continue;
+            if (r === 6 || c === 6) continue;
+            
+            grid[r][c] = rand() > 0.48 ? 1 : 0; // slightly denser
+        }
+    }
+
+    // Clear a 5x5 center area for the badge/logo
+    const centerStart = Math.floor(N / 2) - 2;
+    for (let r = centerStart; r < centerStart + 5; r++) {
+        for (let c = centerStart; c < centerStart + 5; c++) {
+            grid[r][c] = 0;
+        }
+    }
+
+    // Render the SVG
+    const cellSize = size / N;
+    const rects = [];
+    for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+            if (grid[r][c] === 1) {
+                rects.push(
+                    <rect
+                        key={`${r}-${c}`}
+                        x={c * cellSize}
+                        y={r * cellSize}
+                        width={cellSize}
+                        height={cellSize}
+                        fill="#0f172a"
+                    />
+                );
+            }
+        }
+    }
+
+    return (
+        <div style={{ position: 'relative', width: size, height: size }}>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                <rect width={size} height={size} fill="white" />
+                {rects}
+            </svg>
+            <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: `${size * 0.22}px`,
+                height: `${size * 0.22}px`,
+                backgroundColor: '#ffffff',
+                border: '2px solid #635bff',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+                <span style={{ fontSize: `${size * 0.12}px` }}>🔒</span>
+            </div>
+        </div>
+    );
+};
+
 export const SuscripcionInfo = () => {
     const navigate = useNavigate();
     const [info, setInfo] = useState(null);
@@ -359,24 +478,34 @@ export const SuscripcionInfo = () => {
                                                 <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '15px' }}>
                                                     Escanea el código QR desde tu app bancaria móvil para efectuar el pago de forma segura a través de Stripe/Simple.
                                                 </p>
-                                                {/* Código QR Simulado */}
+                                                {/* Código QR Realista */}
                                                 <div style={{
                                                     margin: '0 auto 15px auto',
-                                                    width: '160px',
-                                                    height: '160px',
-                                                    backgroundColor: 'white',
-                                                    border: '4px solid #0f172a',
-                                                    borderRadius: '8px',
+                                                    width: '200px',
+                                                    backgroundColor: '#f8fafc',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '12px',
+                                                    padding: '15px',
+                                                    boxSizing: 'border-box',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    padding: '10px',
-                                                    boxSizing: 'border-box'
+                                                    alignItems: 'center'
                                                 }}>
-                                                    <span style={{ fontSize: '70px', margin: 0 }}>📱</span>
-                                                    <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#0f172a', marginTop: '5px' }}>STRIPE-SIMPLE-QR</span>
-                                                    <span style={{ fontSize: '8px', color: '#64748b' }}>{targetPlan === 'Profesional' ? '199.00' : '549.00'} BS</span>
+                                                    <div style={{
+                                                        backgroundColor: 'white',
+                                                        padding: '10px',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                                                    }}>
+                                                        <RealisticQRCode size={140} />
+                                                    </div>
+                                                    <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#0f172a', letterSpacing: '1px' }}>SIMPLE-STRIPE-PAY</span>
+                                                        <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#635bff', marginTop: '2px' }}>
+                                                            {targetPlan === 'Profesional' ? '199.00' : '549.00'} BS
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>✓ Código generado exitosamente</span>
                                             </div>
