@@ -181,3 +181,144 @@ class ArchivoAdjuntoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ArchivoAdjunto.objects.filter(expediente__paciente__clinica=self.request.user.clinica)
+
+# ==============================================================================
+# SPRINT 4: APIs de Evolución, Diagnóstico e Historial Completo (CU29)
+# ==============================================================================
+from .models import Evolucion, DiagnosticoPaciente
+from .serializers import EvolucionSerializer, DiagnosticoPacienteSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from apps.P3_Logistica_Citas.models import Cita
+from apps.P3_Logistica_Citas.serializers import CitaSerializer
+
+class EvolucionViewSet(viewsets.ModelViewSet):
+    """T061: CRUD de notas de evolución clínica por sesión."""
+    serializer_class = EvolucionSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador]
+
+    def get_queryset(self):
+        qs = Evolucion.objects.filter(paciente__clinica=self.request.user.clinica)
+        paciente_id = self.request.query_params.get('paciente')
+        if paciente_id:
+            qs = qs.filter(paciente_id=paciente_id)
+        return qs
+
+    def perform_create(self, serializer):
+        evolucion = serializer.save(psicologo=self.request.user)
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Registró evolución clínica para {evolucion.paciente.nombre} ({evolucion.fecha_sesion})"
+        )
+
+class DiagnosticoPacienteViewSet(viewsets.ModelViewSet):
+    """T064: CRUD de diagnóstico global (inicial/final) del paciente."""
+    serializer_class = DiagnosticoPacienteSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador]
+
+    def get_queryset(self):
+        qs = DiagnosticoPaciente.objects.filter(paciente__clinica=self.request.user.clinica)
+        paciente_id = self.request.query_params.get('paciente')
+        if paciente_id:
+            qs = qs.filter(paciente_id=paciente_id)
+        return qs
+
+    def perform_create(self, serializer):
+        dx = serializer.save(psicologo=self.request.user)
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Registró diagnóstico global para {dx.paciente.nombre}"
+        )
+
+    def perform_update(self, serializer):
+        dx = serializer.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Actualizó diagnóstico de {dx.paciente.nombre} (estado: {dx.get_estado_display()})"
+        )
+
+class HistorialCompletoAPIView(APIView):
+    """T062: Endpoint que devuelve el historial clínico completo de un paciente."""
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get(self, request, paciente_id):
+        paciente = get_object_or_404(Paciente, pk=paciente_id, clinica=request.user.clinica)
+
+        # Diagnóstico global
+        try:
+            dx_global = DiagnosticoPaciente.objects.get(paciente=paciente)
+            dx_data = DiagnosticoPacienteSerializer(dx_global).data
+        except DiagnosticoPaciente.DoesNotExist:
+            dx_data = None
+
+        # Evoluciones
+        evoluciones = Evolucion.objects.filter(paciente=paciente).order_by('-fecha_sesion')
+        evo_data = EvolucionSerializer(evoluciones, many=True).data
+
+        # Citas
+        citas = Cita.objects.filter(paciente=paciente).order_by('-fecha_hora')
+        citas_data = CitaSerializer(citas, many=True).data
+
+        return Response({
+            'paciente': {
+                'id': paciente.id,
+                'nombre': paciente.nombre,
+                'ci': paciente.ci,
+                'fecha_nacimiento': str(paciente.fecha_nacimiento),
+                'telefono': paciente.telefono,
+                'motivo_consulta': paciente.motivo_consulta,
+            },
+            'diagnostico_global': dx_data,
+            'evoluciones': evo_data,
+            'citas': citas_data,
+        })
+
+class AnaliticaClinicaAPIView(APIView):
+    """T071: Métricas de analítica clínica para el dashboard."""
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get(self, request):
+        clinica = request.user.clinica
+
+        total_pacientes = Paciente.objects.filter(clinica=clinica).count()
+
+        # Diagnósticos por estado
+        en_tratamiento = DiagnosticoPaciente.objects.filter(paciente__clinica=clinica, estado='EN_TRATAMIENTO').count()
+        alta = DiagnosticoPaciente.objects.filter(paciente__clinica=clinica, estado='ALTA').count()
+        abandono = DiagnosticoPaciente.objects.filter(paciente__clinica=clinica, estado='ABANDONO').count()
+        sin_diagnostico = total_pacientes - (en_tratamiento + alta + abandono)
+
+        # Distribución de estados de ánimo (últimas evoluciones)
+        from django.db.models import Count
+        estados_animo = list(
+            Evolucion.objects.filter(paciente__clinica=clinica)
+            .values('estado_animo')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
+
+        # Últimos diagnósticos IA
+        from apps.P4_IA_Administracion.models import DiagnosticoIA
+        ultimos_ia = list(
+            DiagnosticoIA.objects.filter(psicologo__clinica=clinica)
+            .order_by('-fecha_analisis')[:10]
+            .values('id', 'paciente__nombre', 'resultado_ia', 'probabilidad_acierto', 'fecha_analisis')
+        )
+
+        # Últimas evoluciones
+        ultimas_evoluciones = EvolucionSerializer(
+            Evolucion.objects.filter(paciente__clinica=clinica)[:10],
+            many=True
+        ).data
+
+        return Response({
+            'total_pacientes': total_pacientes,
+            'en_tratamiento': en_tratamiento,
+            'alta': alta,
+            'abandono': abandono,
+            'sin_diagnostico': sin_diagnostico,
+            'estados_animo': estados_animo,
+            'ultimos_ia': ultimos_ia,
+            'ultimas_evoluciones': ultimas_evoluciones,
+        })
+

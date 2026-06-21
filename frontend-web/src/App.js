@@ -34,6 +34,10 @@ import DiagnosticoIA from './pages/DiagnosticoIA'; // [SPRINT 2] IA Predictiva
 import AdminReportes from './pages/AdminReportes';
 import Bitacora from './pages/Bitacora';
 import PreferenciasNotificaciones from './pages/PreferenciasNotificaciones';
+// [SPRINT 4] Historial Clínico, Evoluciones y Analítica (CU29/CU22)
+import HistorialClinico from './pages/HistorialClinico';
+import RegistroEvolucion from './pages/RegistroEvolucion';
+import AnaliticaClinica from './pages/AnaliticaClinica';
 
 // ==============================================================================
 // RUTAS PROTEGIDAS (RNF-03: Seguridad de Acceso)
@@ -160,6 +164,27 @@ function App() {
                         </PrivateRoute>
                     } />
                     <Route path="/registro-cita" element={<PrivateRoute><RegistroCita /></PrivateRoute>} />
+
+                    {/* [SPRINT 4] Historial Clínico del Paciente (CU29 - T062) */}
+                    <Route path="/historial-clinico/:pacienteId" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <HistorialClinico />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 4] Registro de Evoluciones y Diagnósticos (CU29 - T063/T064) */}
+                    <Route path="/registro-evolucion/:pacienteId" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <RegistroEvolucion />
+                        </PrivateRoute>
+                    } />
+
+                    {/* [SPRINT 4] Dashboard de Analítica Clínica (CU22 - T071) */}
+                    <Route path="/analitica-clinica" element={
+                        <PrivateRoute allowedRoles={['PSICOLOGO', 'ADMIN']}>
+                            <AnaliticaClinica />
+                        </PrivateRoute>
+                    } />
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

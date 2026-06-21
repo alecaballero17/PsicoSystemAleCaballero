@@ -323,7 +323,19 @@ const GestionPacientes = () => {
                                                     )}
                                                 </td>
                                                 <td style={styles.td}>
-                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                        <button 
+                                                            style={{ ...styles.btnExpediente, background: '#7c3aed', fontSize: '11px', padding: '6px 10px' }} 
+                                                            onClick={() => navigate(`/historial-clinico/${p.id}`)}
+                                                        >
+                                                            📋 Historial
+                                                        </button>
+                                                        <button 
+                                                            style={{ ...styles.btnExpediente, background: '#4f46e5', fontSize: '11px', padding: '6px 10px' }} 
+                                                            onClick={() => navigate(`/registro-evolucion/${p.id}`)}
+                                                        >
+                                                            ➕ Evolución
+                                                        </button>
                                                         <button 
                                                             style={styles.btnExpediente} 
                                                             onClick={() => handleSelectPaciente(p)}

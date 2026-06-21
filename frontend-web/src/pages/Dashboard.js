@@ -137,6 +137,16 @@ const Dashboard = () => {
                     <div style={{ ...styles.navItem, color: '#f59e0b', fontWeight: 'bold' }} onClick={() => navigate('/reporte-voz')}>
                         🎙️ Reportes por Voz
                     </div>
+
+                    {/* [SPRINT 4] Historial Clínico (CU29 - T062) */}
+                    <div style={styles.navItem} onClick={() => navigate('/pacientes')}>
+                        📋 Historial Clínico
+                    </div>
+
+                    {/* [SPRINT 4] Analítica Clínica (CU22 - T071) */}
+                    <div style={{ ...styles.navItem, color: '#8b5cf6', fontWeight: 'bold' }} onClick={() => navigate('/analitica-clinica')}>
+                        📊 Analítica Clínica
+                    </div>
                 </nav>
 
                 {userRole === 'ADMIN' && (
