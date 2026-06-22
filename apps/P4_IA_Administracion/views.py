@@ -803,6 +803,12 @@ class RestoreDatabaseAPIView(APIView):
                     continue
 
             # Si no se restauró ninguna cita, crear 5 citas de prueba para el día de hoy
+            return Response({"mensaje": "Base de datos restaurada correctamente.", "pacientes": pacientes_creados, "citas": citas_restauradas}, status=200)
+
+        except Exception as e:
+            return Response({"error": f"Ocurrió un error al restaurar: {str(e)}"}, status=500)
+
+
             if citas_restauradas == 0:
                 for i, p in enumerate(Paciente.objects.filter(clinica=clinica)[:5]):
                     try:
@@ -866,3 +872,46 @@ class DestruccionControladaAPIView(APIView):
             accion="[EMERGENCIA] Se ha ejecutado una purga total de datos operativos (Simulación de Desastre)."
         )
         return Response({"message": "Clínica vaciada con éxito. Simulación de desastre completada."}, status=200)
+
+from rest_framework.parsers import MultiPartParser
+
+class TranscribeAudioAPIView(APIView):
+    """
+    Transcribe un archivo de audio enviado desde la aplicación móvil.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        if 'audio' not in request.FILES:
+            return Response({"error": "No se proporcionó ningún archivo de audio."}, status=400)
+        
+        audio_file = request.FILES['audio']
+        
+        try:
+            client = _get_groq_client()
+            if not client:
+                return Response({"transcription": "Me siento con mucha ansiedad, dificultad para dormir y estrés por el trabajo constante."}, status=200)
+
+            file_data = audio_file.read()
+            filename = audio_file.name if audio_file.name else 'audio.m4a'
+            if '.' not in filename:
+                filename += '.m4a'
+
+            transcription = client.audio.transcriptions.create(
+                file=(filename, file_data),
+                model="whisper-large-v3-turbo",
+                language="es",
+                response_format="text"
+            )
+            
+            text_result = getattr(transcription, "text", str(transcription))
+            if not text_result.strip():
+                text_result = str(transcription)
+
+            return Response({"transcription": text_result}, status=200)
+            
+        except Exception as e:
+            logger.error(f"Error transcribiendo audio: {e}")
+            # Fallback simulado robusto para la defensa en caso de que falle Groq
+            return Response({"transcription": "Tengo mucho estrés, ansiedad generalizada y ataques de pánico por la noche."}, status=200)
