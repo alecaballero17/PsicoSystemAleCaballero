@@ -32,5 +32,10 @@ urlpatterns = [
     # Sprint 4: Historial completo y Analítica Clínica
     path("api/pacientes/<int:paciente_id>/historial/", HistorialCompletoAPIView.as_view(), name="api_historial_completo"),
     path("api/analitica-clinica/", AnaliticaClinicaAPIView.as_view(), name="api_analitica_clinica"),
+    
+    # Endpoints Móviles Públicos
+    path("api/pacientes/registro-publico/", PacienteRegistroPublicoAPIView.as_view(), name="api_pacientes_registro_publico"),
+    path("api/pacientes/me/associate_clinic/", AssociateClinicAPIView.as_view(), name="api_paciente_associate_clinic"),
+
     path("api/clinica/", include(router.urls)),
 ]
