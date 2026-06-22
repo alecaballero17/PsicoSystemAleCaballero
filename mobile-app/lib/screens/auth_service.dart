@@ -24,13 +24,15 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        // 🔥 Pasamos el Map al Constructor Factory
         return AuthResponse.fromJson(json.decode(response.body));
       } else {
-        throw Exception('Error de credenciales (Código ${response.statusCode})');
+        throw Exception('Usuario o contraseña incorrectos.');
       }
     } catch (e) {
-      throw Exception('Error de conexión: No se pudo contactar con el servidor.');
+      if (e.toString().contains('Usuario o contraseña incorrectos')) {
+        rethrow;
+      }
+      throw Exception('Error de conexión: No se pudo contactar con el servidor. ($e)');
     }
   }
 

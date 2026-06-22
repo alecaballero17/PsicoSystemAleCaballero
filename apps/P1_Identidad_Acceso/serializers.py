@@ -33,7 +33,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["username"] = user.username
         
         # Verificar si la contraseña expiró (90 días)
-        expiracion = user.ultimo_cambio_password + timedelta(days=90)
+        ultimo_cambio = user.ultimo_cambio_password or timezone.now()
+        expiracion = ultimo_cambio + timedelta(days=90)
         token["must_change_password"] = user.debe_cambiar_password or (timezone.now() > expiracion)
         
         return token
@@ -47,7 +48,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["username"] = self.user.username
         
         # Verificar expiración para respuesta JSON inmediata
-        expiracion = self.user.ultimo_cambio_password + timedelta(days=90)
+        ultimo_cambio = self.user.ultimo_cambio_password or timezone.now()
+        expiracion = ultimo_cambio + timedelta(days=90)
         data["must_change_password"] = self.user.debe_cambiar_password or (timezone.now() > expiracion)
 
         # Disparar señal de Django para la bitácora P4 (React/Flutter login)
