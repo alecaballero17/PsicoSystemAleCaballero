@@ -17,26 +17,19 @@ class AIService:
             return "ERROR: Groq API Key no configurada en las variables de entorno."
 
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "model": "llama3-8b-8192",
-                "messages": [
+            client = Groq(api_key=api_key.strip("'\""))
+            completion = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[
                     {"role": "system", "content": context_prompt},
                     {"role": "user", "content": user_message}
                 ],
-                "temperature": 0.7,
-                "max_tokens": 256,
-                "top_p": 1,
-                "stream": False
-            }
-            response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
-            response.raise_for_status()
-            
-            completion = response.json()
-            return completion["choices"][0]["message"]["content"]
+                temperature=0.7,
+                max_tokens=256,
+                top_p=1,
+                stream=False
+            )
+            return completion.choices[0].message.content
         except Exception as e:
             return f"Lo siento, ocurrió un error procesando tu solicitud: {str(e)}"
     @staticmethod
@@ -49,6 +42,8 @@ class AIService:
             return {"error": "Groq API Key no configurada."}
             
         try:
+            # Eliminamos posibles comillas de la variable de entorno
+            api_key = api_key.strip("'\"")
             headers = {
                 "Authorization": f"Bearer {api_key}"
             }
@@ -112,7 +107,7 @@ class AIService:
             return {"error": "Groq API Key no configurada."}
 
         try:
-            client = Groq(api_key=api_key)
+            client = Groq(api_key=api_key.strip("'\""))
             hoy = datetime.datetime.now()
             
             system_prompt = f"""
@@ -140,25 +135,18 @@ class AIService:
             }}
             """
             
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "model": "llama3-8b-8192",
-                "messages": [
+            completion = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Comando de voz transcrito: '{transcript}'"}
                 ],
-                "temperature": 0.1,
-                "max_tokens": 256,
-                "response_format": {"type": "json_object"}
-            }
-            response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
-            response.raise_for_status()
+                temperature=0.1,
+                max_tokens=256,
+                response_format={"type": "json_object"}
+            )
             
-            completion = response.json()
-            text = completion["choices"][0]["message"]["content"].strip()
+            text = completion.choices[0].message.content.strip()
             return json.loads(text)
         except Exception as e:
             return {"error": f"Error interpretando comando con Groq: {str(e)}"}

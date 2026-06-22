@@ -390,7 +390,7 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
             Text('Nro de Documento (CI) / Email *', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TextField(
-              controller: _ciCtrl..text = widget.user.ci ?? widget.user.username,
+              controller: _ciCtrl..text = (widget.user.ci != null && widget.user.ci!.isNotEmpty) ? widget.user.ci! : widget.user.email,
               readOnly: true,
               decoration: InputDecoration(
                 hintText: 'Ej. 1234567',
