@@ -304,13 +304,22 @@ class PsicologoListCreateAPIView(generics.ListCreateAPIView):
 
     def get_permissions(self):
         if self.request.method == 'GET':
-            return [IsAuthenticated(), HasClinicaAsignada()]
+            return [IsAuthenticated()]
         return [IsAuthenticated(), EsPsicologoOAdministrador(), HasClinicaAsignada()]
+
     def get_queryset(self):
-        return Usuario.objects.filter(
-            clinica=self.request.user.clinica,
-            rol="PSICOLOGO",
-        ).order_by("first_name", "last_name")
+        queryset = Usuario.objects.filter(rol="PSICOLOGO")
+        
+        if self.request.user.rol == 'PACIENTE':
+            clinica_id = self.request.query_params.get('clinica_id', None)
+            # Permite a los móviles filtrar los psicólogos por una clínica específica
+            if clinica_id:
+                queryset = queryset.filter(clinica_id=clinica_id)
+        else:
+            # Para el panel web, los admins/psicólogos solo ven a los de su propia clínica
+            queryset = queryset.filter(clinica=self.request.user.clinica)
+            
+        return queryset.order_by("first_name", "last_name")
 
     def get_serializer_class(self):
         if self.request.method == "POST":
