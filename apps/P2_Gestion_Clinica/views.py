@@ -363,9 +363,9 @@ class AssociateClinicAPIView(APIView):
             user.save()
 
             try:
-                paciente = Paciente.objects.get(ci=user.username)
+                paciente = Paciente.objects.get(ci=user.last_name)
             except Paciente.DoesNotExist:
-                paciente = Paciente.objects.filter(ci=user.username).first()
+                paciente = Paciente.objects.filter(nombre=user.first_name).first()
 
             if paciente:
                 paciente.clinica = clinica
@@ -388,9 +388,9 @@ class MiHistorialClinicoAPIView(APIView):
 
     def get(self, request):
         try:
-            paciente = Paciente.objects.get(ci=request.user.username)
+            paciente = Paciente.objects.get(ci=request.user.last_name)
         except Paciente.DoesNotExist:
-            paciente = Paciente.objects.filter(ci=request.user.username).first()
+            paciente = Paciente.objects.filter(nombre=request.user.first_name).first()
 
         if not paciente:
             return Response({"detail": "Paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
