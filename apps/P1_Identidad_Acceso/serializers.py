@@ -64,12 +64,17 @@ class ClinicaSerializer(serializers.ModelSerializer):
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
+    ci = serializers.SerializerMethodField()
+
     class Meta:
         model = Usuario
         fields = [
             "id", "username", "email", "first_name", "last_name", 
             "clinica", "rol", "especialidad", "telefono", "ci"
         ]
+
+    def get_ci(self, obj):
+        return obj.ci if obj.ci else obj.last_name
 
 
 class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
