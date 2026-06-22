@@ -69,6 +69,14 @@ class Usuario(AbstractUser):
     ultimo_cambio_password = models.DateTimeField(default=timezone.now)
     debe_cambiar_password = models.BooleanField(default=False)
 
+    # Campos legacy/huérfanos en la base de datos (se mantienen para evitar IntegrityError)
+    forzar_cambio_pass = models.BooleanField(default=False)
+    ultima_fecha_pass = models.DateTimeField(default=timezone.now)
+    horario_atencion = models.CharField(max_length=200, blank=True, default='')
+    email_notif_citas = models.BooleanField(default=True)
+    email_notif_reportes = models.BooleanField(default=True)
+    push_notif_alertas = models.BooleanField(default=True)
+
     def save(self, *args, **kwargs):
         # Si es un usuario nuevo o si la contraseña está siendo actualizada
         is_new = self.pk is None
