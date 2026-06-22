@@ -124,7 +124,6 @@ class PacienteRegistroPublicoSerializer(serializers.Serializer):
             password=make_password(raw_password),
             rol='PACIENTE',
             clinica=clinica,
-            ci=ci,
             first_name=nombre
         )
 
