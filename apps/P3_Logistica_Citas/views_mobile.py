@@ -314,3 +314,21 @@ class MobileCitasDisponibilidadAPIView(APIView):
             horas_ocupadas.add(local_dt.strftime("%H:%M"))
 
         return Response({"horas_ocupadas": list(horas_ocupadas)}, status=status.HTTP_200_OK)
+
+
+class MobilePsicologosListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        psicologos = Usuario.objects.filter(rol='PSICOLOGO', is_active=True)
+        data = []
+        for p in psicologos:
+            data.append({
+                "id": p.id,
+                "first_name": p.first_name,
+                "last_name": p.last_name,
+                "username": p.username,
+                "especialidad": getattr(p, 'especialidad', 'Psicólogo General'),
+                "clinica": p.clinica.nombre if p.clinica else "Sin Clínica Asignada"
+            })
+        return Response(data, status=status.HTTP_200_OK)
