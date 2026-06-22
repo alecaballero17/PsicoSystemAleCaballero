@@ -302,8 +302,10 @@ class UsuarioAdminRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPI
 class PsicologoListCreateAPIView(generics.ListCreateAPIView):
     """GET: psicólogos de la clínica. POST: alta de nuevo psicólogo."""
 
-    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
-
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated(), HasClinicaAsignada()]
+        return [IsAuthenticated(), EsPsicologoOAdministrador(), HasClinicaAsignada()]
     def get_queryset(self):
         return Usuario.objects.filter(
             clinica=self.request.user.clinica,
