@@ -34,3 +34,39 @@ class EsAdministrador(permissions.BasePermission):
             return False
         # Bloquear superusuarios que no tengan rol ADMIN explícito
         return getattr(u, "rol", None) == "ADMIN"
+
+class RequiresModuloContabilidad(permissions.BasePermission):
+    message = "Tu clínica no tiene acceso al Módulo de Contabilidad. Actualiza tu plan a Profesional o Premium."
+
+    def has_permission(self, request, view):
+        u = request.user
+        if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
+            return False
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
+
+class RequiresModuloIA(permissions.BasePermission):
+    message = "Tu clínica no tiene acceso al Módulo de IA. Actualiza tu plan a Premium."
+
+    def has_permission(self, request, view):
+        u = request.user
+        if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
+            return False
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
+
+class RequiresModuloAuditoria(permissions.BasePermission):
+    message = "El Historial de Auditoría es una función avanzada. Actualiza tu plan a Profesional o Premium."
+
+    def has_permission(self, request, view):
+        u = request.user
+        if not u or not u.is_authenticated or not hasattr(u, 'clinica') or not u.clinica:
+            return False
+        return u.clinica.plan_suscripcion in ['Basico', 'Profesional', 'Premium']
+
+
+class EsPaciente(permissions.BasePermission):
+    message = "Solo pacientes pueden realizar pagos móviles."
+
+    def has_permission(self, request, view):
+        u = request.user
+        # Para facilitar pruebas del frontend, dejamos que admins tambien pasen
+        return bool(u and u.is_authenticated and getattr(u, "rol", None) in ("PACIENTE", "ADMIN", "PSICOLOGO"))

@@ -18,7 +18,7 @@ class RegistroPsicologoCompletoForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = Usuario
         # 'clinica' se asigna en la vista. UserCreationForm usa password1/password2 (no "password").
-        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+        fields = ['username', 'email', 'first_name', 'last_name']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

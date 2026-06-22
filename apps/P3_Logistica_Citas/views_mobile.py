@@ -10,19 +10,9 @@ import base64
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-from apps.P1_Identidad_Acceso.models import Usuario
+from apps.P1_Identidad_Acceso.models import Usuario, TransaccionClinica, NotificacionPush
 from apps.P2_Gestion_Clinica.models import Paciente
 from apps.P3_Logistica_Citas.models import Cita
-
-class MockManager:
-    def create(self, *args, **kwargs):
-        pass
-
-class MockModel:
-    objects = MockManager()
-
-NotificacionPush = MockModel()
-TransaccionClinica = MockModel()
 
 class MobileCitasAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -33,7 +23,7 @@ class MobileCitasAPIView(APIView):
             return Response({"detail": "Solo pacientes pueden ver su historial móvil."}, status=status.HTTP_403_FORBIDDEN)
         
         try:
-            paciente = Paciente.objects.get(ci=user.last_name) if user.last_name else Paciente.objects.filter(nombre__icontains=user.username).first()
+            paciente = Paciente.objects.get(ci=user.ci) if user.ci else Paciente.objects.filter(nombre__icontains=user.username).first()
             if not paciente:
                 return Response({"detail": "Perfil de paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Paciente.DoesNotExist:
@@ -77,7 +67,7 @@ class MobileCitasAPIView(APIView):
 
         # Buscar o crear Paciente si no existe
         paciente, created = Paciente.objects.get_or_create(
-            ci=user.last_name if user.last_name else user.username,
+            ci=user.ci if user.ci else user.username,
             defaults={
                 'nombre': f"{user.first_name} {user.last_name}".strip() or user.username,
                 'telefono': user.telefono,
@@ -198,7 +188,7 @@ class MobileCitaFichaPDFAPIView(APIView):
     def get(self, request, cita_id):
         try:
             from django.db.models import Q
-            cita = Cita.objects.get(id=cita_id, paciente__ci=request.user.last_name if request.user.last_name else request.user.username)
+            cita = Cita.objects.get(id=cita_id, paciente__ci=request.user.ci if request.user.ci else request.user.username)
         except Cita.DoesNotExist:
             return Response({"error": "Cita no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -267,6 +257,7 @@ class MobilePacientePagarAPIView(APIView):
             )
 
         # Notificación para el paciente
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
         NotificacionPush.objects.create(
             usuario=user,
             titulo="Pago Exitoso",
@@ -308,7 +299,7 @@ class MobileCitasDisponibilidadAPIView(APIView):
         
         user = request.user
         citas_paciente = Cita.objects.filter(
-            paciente__ci=user.last_name if user.last_name else user.username,
+            paciente__ci=user.ci if user.ci else user.username,
             fecha_hora__date=fecha,
             estado__in=['PENDIENTE', 'CONFIRMADA', 'REALIZADA']
         )

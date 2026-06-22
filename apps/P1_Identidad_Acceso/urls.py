@@ -5,9 +5,8 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 from .views import (
     registrar_usuario_view,
     CustomTokenObtainPairView,
-    MeAPIView,
     RegistroPsicologoAPIView,
-    MiClinicaRetrieveAPIView,
+    MiClinicaRetrieveUpdateAPIView,
     ClinicaCreateAPIView,
     UsuarioColaboradorListCreateAPIView,
     UsuarioAdminRetrieveUpdateDestroyAPIView,
@@ -15,13 +14,16 @@ from .views import (
     PsicologoRetrieveUpdateDestroyAPIView,
     PlanesListAPIView,
     OnboardingSaaSAPIView,
-    SuscripcionClinicaAPIView,
     ClinicaPublicListAPIView,
+    UsuarioPerfilAPIView,
+    ChangePasswordAPIView,
+    SuscripcionInfoAPIView,
+    TransaccionClinicaListAPIView,
+    CargarSaldoAPIView,
+    NotificacionesMobileAPIView,
 )
 
 urlpatterns = [
-    # SaaS Subscription details and upgrade
-    path("api/suscripciones/<int:clinica_id>/", SuscripcionClinicaAPIView.as_view(), name="api_suscripcion_clinica"),
     # Password reset (API-compatible, redirige por email)
     path("password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"),
     path("password_reset/done/", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),
@@ -31,8 +33,8 @@ urlpatterns = [
     path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/logout/", TokenBlacklistView.as_view(), name="api_logout_blacklist"),
-    # T009: Verificación de sesión JWT (Anti-huérfano)
-    path("api/auth/me/", MeAPIView.as_view(), name="api_auth_me"),
+    path("api/auth/me/", UsuarioPerfilAPIView.as_view(), name="api_auth_me"),
+    path("api/auth/change_password/", ChangePasswordAPIView.as_view(), name="api_change_password"),
     path(
         "api/auth/registro/psicologo/",
         RegistroPsicologoAPIView.as_view(),
@@ -40,9 +42,8 @@ urlpatterns = [
     ),
     path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
     path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
+    path("api/clinicas/mi/", MiClinicaRetrieveUpdateAPIView.as_view(), name="api_mi_clinica"),
     path("api/clinicas/publicas/", ClinicaPublicListAPIView.as_view(), name="api_clinicas_publicas"),
-    path("api/clinicas/mi/", MiClinicaRetrieveAPIView.as_view(), name="api_mi_clinica"),
-    path("api/clinica/me/", MiClinicaRetrieveAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
     path(
         "api/usuarios/",
@@ -64,5 +65,25 @@ urlpatterns = [
         "api/psicologos/<int:pk>/",
         PsicologoRetrieveUpdateDestroyAPIView.as_view(),
         name="api_psicologo_detail",
+    ),
+    path(
+        "api/suscripciones/<int:pk>/",
+        SuscripcionInfoAPIView.as_view(),
+        name="api_suscripcion_info",
+    ),
+    path(
+        "api/suscripciones/transacciones/",
+        TransaccionClinicaListAPIView.as_view(),
+        name="api_transacciones_clinica",
+    ),
+    path(
+        "api/suscripciones/cargar-saldo/",
+        CargarSaldoAPIView.as_view(),
+        name="api_cargar_saldo",
+    ),
+    path(
+        "api/mobile/notificaciones/",
+        NotificacionesMobileAPIView.as_view(),
+        name="api_mobile_notificaciones",
     ),
 ]

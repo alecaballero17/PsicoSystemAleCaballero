@@ -1,8 +1,24 @@
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Clinica, Usuario
+from .models import Clinica, Usuario, TransaccionClinica
+
+
+# --------------------------------------------------------------------------
+# Facturación SaaS: Transacciones de la Clínica (Tenant Billing)
+# --------------------------------------------------------------------------
+class TransaccionClinicaSerializer(serializers.ModelSerializer):
+    fecha_formateada = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TransaccionClinica
+        fields = ["id", "tipo", "monto", "descripcion", "fecha", "fecha_formateada", "metodo_pago"]
+
+    def get_fecha_formateada(self, obj):
+        return obj.fecha.strftime("%d/%m/%Y %H:%M")
 
 
 # --------------------------------------------------------------------------
@@ -15,6 +31,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["rol"] = user.rol
         token["clinica_id"] = user.clinica_id
         token["username"] = user.username
+        
+        # Verificar si la contraseña expiró (90 días)
+        expiracion = user.ultimo_cambio_password + timedelta(days=90)
+        token["must_change_password"] = user.debe_cambiar_password or (timezone.now() > expiracion)
+        
         return token
 
     def validate(self, attrs):
@@ -24,6 +45,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["role"] = self.user.rol
         data["clinica_id"] = self.user.clinica_id
         data["username"] = self.user.username
+        
+        # Verificar expiración para respuesta JSON inmediata
+        expiracion = self.user.ultimo_cambio_password + timedelta(days=90)
+        data["must_change_password"] = self.user.debe_cambiar_password or (timezone.now() > expiracion)
 
         # Disparar señal de Django para la bitácora P4 (React/Flutter login)
         from django.contrib.auth.signals import user_logged_in
@@ -35,7 +60,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class ClinicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clinica
-        fields = ["id", "nombre", "nit", "direccion", "plan_suscripcion"]
+        fields = ["id", "nombre", "nit", "direccion", "telefono", "email_contacto", "logo", "plan_suscripcion", "especialidades", "horarios_atencion"]
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -43,7 +68,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "id", "username", "email", "first_name", "last_name", 
-            "clinica", "rol", "especialidad", "telefono", "horario_atencion"
+            "clinica", "rol", "especialidad", "telefono", "ci"
         ]
 
 
@@ -60,7 +85,6 @@ class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
             "last_name",
             "especialidad",
             "telefono",
-            "horario_atencion",
             "password",
             "password_confirm",
         ]
@@ -148,7 +172,7 @@ class ClinicaOnboardingSerializer(serializers.ModelSerializer):
 class AdminOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ["username", "email", "password"]
+        fields = ["username", "email", "password", "first_name", "last_name"]
         extra_kwargs = {'password': {'write_only': True}}
 
 class OnboardingSaaSSerializer(serializers.Serializer):
@@ -198,7 +222,7 @@ class UsuarioAdminUpdateSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "first_name", "last_name", "email", "rol", "is_active", 
-            "especialidad", "telefono", "horario_atencion"
+            "especialidad", "telefono"
         ]
 
     def validate_rol(self, value):
@@ -228,7 +252,7 @@ class PsicologoCreateSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             "username", "email", "first_name", "last_name",
-            "especialidad", "telefono", "horario_atencion", "password", "password_confirm",
+            "especialidad", "telefono", "password", "password_confirm",
         ]
 
     def validate(self, attrs):

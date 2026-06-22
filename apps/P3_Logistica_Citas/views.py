@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from rest_framework import generics
+from rest_framework import generics, viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -12,8 +12,8 @@ from apps.P1_Identidad_Acceso.permissions import (
 from apps.P4_IA_Administracion.models import LogAuditoria
 
 from .forms import CitaForm
-from .models import Cita
-from .serializers import CitaSerializer
+from .models import Cita, ListaEspera
+from .serializers import CitaSerializer, ListaEsperaSerializer
 
 
 @login_required
@@ -71,7 +71,14 @@ def listar_citas_view(request):
     return render(request, "P3_Logistica_Citas/cita_list.html", {"citas": citas})
 
 
+# ==============================================================================
+# API REST — CITAS (RF-06, RF-07, RF-08, T030)
+# ==============================================================================
 class CitaListCreateAPIView(generics.ListCreateAPIView):
+    """
+    GET: Lista citas filtradas por tenant. Soporta filtros de calendario (RF-08).
+    POST: Crea cita con validación de colisiones (T030).
+    """
     serializer_class = CitaSerializer
     permission_classes = [
         IsAuthenticated,
@@ -80,11 +87,28 @@ class CitaListCreateAPIView(generics.ListCreateAPIView):
     ]
 
     def get_queryset(self):
-        return (
+        qs = (
             Cita.objects.filter(paciente__clinica=self.request.user.clinica)
             .select_related("paciente", "psicologo")
             .order_by("fecha_hora")
         )
+
+        # RF-08: Filtros de calendario para Agenda Dinámica
+        fecha_inicio = self.request.query_params.get("fecha_inicio")
+        fecha_fin = self.request.query_params.get("fecha_fin")
+        psicologo_id = self.request.query_params.get("psicologo_id")
+        estado = self.request.query_params.get("estado")
+
+        if fecha_inicio:
+            qs = qs.filter(fecha_hora__date__gte=fecha_inicio)
+        if fecha_fin:
+            qs = qs.filter(fecha_hora__date__lte=fecha_fin)
+        if psicologo_id:
+            qs = qs.filter(psicologo_id=psicologo_id)
+        if estado:
+            qs = qs.filter(estado=estado)
+
+        return qs
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -99,7 +123,11 @@ class CitaListCreateAPIView(generics.ListCreateAPIView):
         )
 
 
-class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+class CitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PUT/PATCH: Detalle y actualización de cita.
+    DELETE: Soft-cancel — cambia estado a CANCELADA (RF-07, CU13).
+    """
     serializer_class = CitaSerializer
     permission_classes = [
         IsAuthenticated,
@@ -124,95 +152,48 @@ class CitaRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
             accion=f"Actualizó cita (API): id={cita.pk}",
         )
 
-# ==============================================================================
-# T029/T030/T032: Motor de Citas y Control de Asistencia
-# ==============================================================================
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from django.core.mail import send_mail
-from django.conf import settings
-from .models import ListaEspera
-from .serializers import ListaEsperaSerializer
-
-class CitaViewSet(viewsets.ModelViewSet):
-    serializer_class = CitaSerializer
-    permission_classes = [IsAuthenticated, HasClinicaAsignada]
-
-    def get_queryset(self):
-        return Cita.objects.filter(paciente__clinica=self.request.user.clinica)
-
-    def perform_create(self, serializer):
-        cita = serializer.save()
+    def perform_destroy(self, instance):
+        """RF-07 / CU13: Soft-cancel — no eliminamos, cambiamos estado."""
+        instance.estado = "CANCELADA"
+        instance.save()
         LogAuditoria.objects.create(
             usuario=self.request.user,
-            accion=f"Programó cita (ViewSet): {cita.paciente} — {cita.fecha_hora}",
+            accion=f"Canceló cita (API): id={instance.pk} — Paciente: {instance.paciente.nombre}",
         )
-        
-        # Notificación por Email (Si la preferencia está activa)
-        if getattr(self.request.user, 'email_notif_citas', True):
-            mensaje = f"Se ha programado una nueva cita para {cita.paciente.nombre} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')} con el profesional {cita.psicologo.get_full_name()}."
-            send_mail(
-                subject='Nueva Cita Programada - PsicoSystem',
-                message=mensaje,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[self.request.user.email or 'admin@psicosystem.com'],
-                fail_silently=True,
-            )
 
-    @action(detail=True, methods=['post'])
-    def enviar_recordatorio(self, request, pk=None):
-        """CU26: Enviar recordatorio de cita al paciente."""
-        cita = self.get_object()
-        paciente = cita.paciente
-        
-        # Simulación de envío de recordatorio (Email/SMS)
-        mensaje = f"Recordatorio: Tienes una cita con el psicólogo {cita.psicologo.get_full_name()} el {cita.fecha_hora.strftime('%d/%m/%Y a las %H:%M')}."
-        
-        try:
-            # En entorno local esto imprimirá en la consola por la config de EMAIL_BACKEND
-            send_mail(
-                subject='Recordatorio de Cita - PsicoSystem',
-                message=mensaje,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email or 'paciente@ejemplo.com'],
-                fail_silently=False,
-            )
-            
-            LogAuditoria.objects.create(
-                usuario=request.user,
-                accion=f"Envió recordatorio de cita a {paciente.nombre}"
-            )
-            return Response({"status": "Recordatorio enviado correctamente."})
-        except Exception as e:
-            return Response({"error": f"No se pudo enviar el recordatorio: {str(e)}"}, status=500)
-
-    @action(detail=True, methods=['post'])
-    def cancelar(self, request, pk=None):
-        """CU15: Cancelar cita con notificación automática."""
-        cita = self.get_object()
-        cita.estado = 'CANCELADA'
-        cita.save()
-        
-        # Notificación automática (CU26) (Si la preferencia está activa)
-        if getattr(request.user, 'email_notif_citas', True):
-            mensaje = f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y')} ha sido CANCELADA."
-            send_mail(
-                subject='Notificación de Cancelación - PsicoSystem',
-                message=mensaje,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[request.user.email or 'paciente@ejemplo.com'],
-                fail_silently=True,
-            )
-
-        LogAuditoria.objects.create(
-            usuario=request.user,
-            accion=f"Canceló cita de {cita.paciente.nombre} (ID={cita.pk})"
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {"detail": "Cita cancelada exitosamente.", "estado": "CANCELADA"},
+            status=status.HTTP_200_OK,
         )
-        return Response({"status": "Cita cancelada y paciente notificado."})
 
+
+# ==============================================================================
+# API REST — LISTA DE ESPERA (T031)
+# ==============================================================================
 class ListaEsperaViewSet(viewsets.ModelViewSet):
+    """
+    T031: CRUD de Lista de Espera. Ordenado por prioridad + fecha de registro.
+    """
     serializer_class = ListaEsperaSerializer
-    permission_classes = [IsAuthenticated, HasClinicaAsignada]
+    permission_classes = [
+        IsAuthenticated,
+        EsPsicologoOAdministrador,
+        HasClinicaAsignada,
+    ]
 
     def get_queryset(self):
-        return ListaEspera.objects.filter(clinica=self.request.user.clinica)
+        return ListaEspera.objects.filter(
+            paciente__clinica=self.request.user.clinica,
+            activo=True,
+        ).select_related("paciente").order_by("prioridad", "fecha_registro")
+
+    def perform_create(self, serializer):
+        espera = serializer.save()
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Añadió a lista de espera: {espera.paciente.nombre} (Prioridad: {espera.prioridad})",
+        )
+
