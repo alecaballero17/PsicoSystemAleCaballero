@@ -65,6 +65,12 @@ class MobileCitasAPIView(APIView):
         if user.rol != 'PACIENTE':
             return Response({"detail": "Solo pacientes pueden crear citas móvil."}, status=status.HTTP_403_FORBIDDEN)
 
+        psicologo_username = request.data.get("psicologo_username")
+        try:
+            psicologo = Usuario.objects.get(username=psicologo_username, rol='PSICOLOGO')
+        except Usuario.DoesNotExist:
+            return Response({"detail": "Especialista no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
         # Buscar o crear Paciente si no existe
         paciente, created = Paciente.objects.get_or_create(
             ci=user.ci if user.ci else user.username,
@@ -72,20 +78,14 @@ class MobileCitasAPIView(APIView):
                 'nombre': f"{user.first_name} {user.last_name}".strip() or user.username,
                 'telefono': user.telefono,
                 'fecha_nacimiento': '2000-01-01',
-                'clinica_id': 1, # Default temporal, el paciente real no tiene por qué tener una clinica fija en la app
+                'clinica_id': psicologo.clinica_id,
                 'strikes_diarios': 0,
             }
         )
 
-        psicologo_username = request.data.get("psicologo_username")
         fecha_hora = request.data.get("fecha_hora")
         motivo = request.data.get("motivo", "")
         monto = request.data.get("monto", "120.00")
-
-        try:
-            psicologo = Usuario.objects.get(username=psicologo_username, rol='PSICOLOGO')
-        except Usuario.DoesNotExist:
-            return Response({"detail": "Especialista no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
         cita = Cita.objects.create(
             paciente=paciente,
@@ -116,12 +116,14 @@ class MobileCitasAPIView(APIView):
         )
 
         # Notificación a la clínica
-        if psicologo.clinica and psicologo.clinica.admin:
-            NotificacionPush.objects.create(
-                usuario=psicologo.clinica.admin,
-                titulo="Nueva Cita en Clínica",
-                mensaje=f"El paciente {user.first_name} {user.last_name} ha agendado una cita con {psicologo.first_name} para el {fecha_str}."
-            )
+        if psicologo.clinica:
+            admin_clinica = Usuario.objects.filter(clinica=psicologo.clinica, rol='ADMIN').first()
+            if admin_clinica:
+                NotificacionPush.objects.create(
+                    usuario=admin_clinica,
+                    titulo="Nueva Cita en Clínica",
+                    mensaje=f"El paciente {user.first_name} {user.last_name} ha agendado una cita con {psicologo.first_name} para el {fecha_str}."
+                )
 
         return Response({"id": cita.id, "mensaje": "Cita creada con éxito"}, status=status.HTTP_201_CREATED)
 
@@ -173,12 +175,14 @@ class MobileCitaCancelarAPIView(APIView):
             titulo="Cita Cancelada por Paciente",
             mensaje=f"El paciente {user.first_name} {user.last_name} canceló la cita del {fecha_str}."
         )
-        if clinica and clinica.admin:
-            NotificacionPush.objects.create(
-                usuario=clinica.admin,
-                titulo="Cita Cancelada en Clínica",
-                mensaje=f"El paciente {user.first_name} {user.last_name} canceló cita con {psicologo.first_name} el {fecha_str}."
-            )
+        if clinica:
+            admin_clinica = Usuario.objects.filter(clinica=clinica, rol='ADMIN').first()
+            if admin_clinica:
+                NotificacionPush.objects.create(
+                    usuario=admin_clinica,
+                    titulo="Cita Cancelada en Clínica",
+                    mensaje=f"El paciente {user.first_name} {user.last_name} canceló cita con {psicologo.first_name} el {fecha_str}."
+                )
 
         return Response({"detail": "Cita cancelada exitosamente."}, status=status.HTTP_200_OK)
 
@@ -272,12 +276,14 @@ class MobilePacientePagarAPIView(APIView):
         )
 
         # Notificación para la clínica
-        if cita.psicologo.clinica and cita.psicologo.clinica.admin:
-            NotificacionPush.objects.create(
-                usuario=cita.psicologo.clinica.admin,
-                titulo="Ingreso por Cita",
-                mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado ${cita.monto} por cita con {cita.psicologo.usuario.first_name}."
-            )
+        if cita.psicologo.clinica:
+            admin_clinica = Usuario.objects.filter(clinica=cita.psicologo.clinica, rol='ADMIN').first()
+            if admin_clinica:
+                NotificacionPush.objects.create(
+                    usuario=admin_clinica,
+                    titulo="Ingreso por Cita",
+                    mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado ${cita.monto} por cita con {cita.psicologo.first_name}."
+                )
 
         return Response({"detail": "Pago procesado exitosamente.", "cita_id": cita.id}, status=status.HTTP_201_CREATED)
 

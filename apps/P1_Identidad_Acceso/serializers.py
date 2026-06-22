@@ -66,8 +66,6 @@ class ClinicaSerializer(serializers.ModelSerializer):
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
-    ci = serializers.SerializerMethodField()
-
     class Meta:
         model = Usuario
         fields = [
@@ -75,8 +73,12 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "clinica", "rol", "especialidad", "telefono", "ci"
         ]
 
-    def get_ci(self, obj):
-        return obj.ci if obj.ci else obj.last_name
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Fallback de CI al last_name si está vacío (compatibilidad hacia atrás)
+        if not ret.get("ci") and ret.get("last_name"):
+            ret["ci"] = ret["last_name"]
+        return ret
 
 
 class UsuarioColegaCreateSerializer(serializers.ModelSerializer):
