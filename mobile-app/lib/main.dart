@@ -1,14 +1,17 @@
-// [SPRINT 0 - T002] Stack Tecnológico: Flutter como framework móvil.
-// [SPRINT 0 - T001] Arquitectura desacoplada: App móvil independiente del Backend.
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // [SPRINT 0 - T004] [RNF-03] Variables de entorno
-import 'screens/login_screen.dart'; // Importamos la primera pantalla
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'services/firebase_service.dart';
+import 'screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Cargamos el archivo de configuración (Trazabilidad RNF-03)
+  // Cargamos el archivo de configuración
   await dotenv.load(fileName: ".env");
+  
+  // 🔥 Inicializar Firebase para Notificaciones Push (RF-09)
+  await FirebaseService.initialize();
   
   runApp(const PsicoSystemApp());
 }
@@ -22,14 +25,15 @@ class PsicoSystemApp extends StatelessWidget {
       title: 'PsicoSystem Paciente',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF1a2233), 
-        scaffoldBackgroundColor: const Color(0xFFF0F4F8),
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          secondary: const Color(0xFF2563eb), 
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2563EB),
+          primary: const Color(0xFF2563EB),
+          secondary: const Color(0xFF0F172A),
         ),
-        fontFamily: 'Roboto',
+        textTheme: GoogleFonts.outfitTextTheme(),
       ),
-      home: const LoginScreen(), // Arrancamos directo en el Login
+      home: const LoginScreen(),
     );
   }
 }

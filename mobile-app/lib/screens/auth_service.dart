@@ -152,20 +152,4 @@ class AuthService {
       throw Exception('Error: $e');
     }
   }
-
-  // Enviar Token FCM al Backend
-  static Future<void> registrarFCMToken(String token, String fcmToken) async {
-    try {
-      await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/mobile/notificaciones/registrar-token/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({'fcm_token': fcmToken}),
-      );
-    } catch (e) {
-      // Ignoramos error en modo producción para no bloquear la app
-    }
-  }
 }

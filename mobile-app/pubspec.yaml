@@ -9,8 +9,17 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.1.0
-  flutter_dotenv: ^6.0.0 # <--- AGREGAR ESTA LÍNEA
-
+  flutter_dotenv: ^6.0.0
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  qr_flutter: ^4.1.0
+  intl: ^0.18.1
+  google_fonts: ^6.1.0
+  provider: ^6.1.2
+  record: ^6.2.1
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.3
+  open_filex: ^4.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomInput extends StatelessWidget {
+class CustomInput extends StatefulWidget {
   final String label;
   final IconData icon;
   final bool isPassword;
@@ -14,13 +14,36 @@ class CustomInput extends StatelessWidget {
   });
 
   @override
+  _CustomInputState createState() => _CustomInputState();
+}
+
+class _CustomInputState extends State<CustomInput> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.isPassword;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller,
-      obscureText: isPassword,
+      controller: widget.controller,
+      obscureText: _obscureText,
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
+        labelText: widget.label,
+        prefixIcon: Icon(widget.icon),
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              )
+            : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
