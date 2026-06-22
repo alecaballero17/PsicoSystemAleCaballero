@@ -1,7 +1,7 @@
 export const dashboardStyles = {
     layout: { 
         display: 'flex', 
-        height: '100vh', 
+        minHeight: '100vh', 
         backgroundColor: '#f1f5f9', 
         fontFamily: '"Inter", sans-serif' 
     },
@@ -11,7 +11,12 @@ export const dashboardStyles = {
         color: 'white', 
         display: 'flex', 
         flexDirection: 'column', 
-        padding: '24px' 
+        padding: '24px',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
+        flexShrink: 0,
     },
     brandContainer: { 
         display: 'flex', 

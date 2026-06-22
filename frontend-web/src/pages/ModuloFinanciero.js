@@ -91,7 +91,7 @@ const ModuloFinanciero = () => {
     return (
         <div style={styles.container}>
             <header style={styles.header}>
-                <h2 style={styles.title}>CONTROL DE PAGOS Y RECIBOS (CU11/12)</h2>
+                <h2 style={styles.title}>CONSULTA DE PAGOS</h2>
                 <button 
                     style={styles.btnPrimary}
                     onClick={() => setShowModal(true)}

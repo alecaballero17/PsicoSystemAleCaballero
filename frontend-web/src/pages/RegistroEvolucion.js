@@ -170,7 +170,7 @@ const RegistroEvolucion = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div style={fieldGroup}>
-                            <label style={labelStyle}>Fecha Inicio *</label>
+                            <label style={labelStyle}>Fecha de la Sesión *</label>
                             <input type="date" value={dxForm.fecha_inicio} onChange={e => setDxForm({...dxForm, fecha_inicio: e.target.value})} style={inputStyle} />
                         </div>
                         <div style={fieldGroup}>
@@ -184,7 +184,6 @@ const RegistroEvolucion = () => {
                     </div>
 
                     <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '16px', marginTop: '8px' }}>
-                        <p style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '12px' }}>Completar al finalizar el tratamiento:</p>
                         <div style={fieldGroup}>
                             <label style={labelStyle}>Diagnóstico Final</label>
                             <textarea
@@ -195,7 +194,7 @@ const RegistroEvolucion = () => {
                             />
                         </div>
                         <div style={fieldGroup}>
-                            <label style={labelStyle}>Fecha Fin</label>
+                            <label style={labelStyle}>Fecha Siguiente Sesión</label>
                             <input type="date" value={dxForm.fecha_fin} onChange={e => setDxForm({...dxForm, fecha_fin: e.target.value})} style={inputStyle} />
                         </div>
                     </div>
