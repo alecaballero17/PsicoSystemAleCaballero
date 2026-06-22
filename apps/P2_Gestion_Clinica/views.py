@@ -382,3 +382,57 @@ class AssociateClinicAPIView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class MiHistorialClinicoAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            paciente = Paciente.objects.get(ci=request.user.username)
+        except Paciente.DoesNotExist:
+            paciente = Paciente.objects.filter(ci=request.user.username).first()
+
+        if not paciente:
+            return Response({"detail": "Paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Diagnóstico global
+        try:
+            from .models import DiagnosticoPaciente
+            from .serializers import DiagnosticoPacienteSerializer
+            dx_global = DiagnosticoPaciente.objects.get(paciente=paciente)
+            dx_data = DiagnosticoPacienteSerializer(dx_global).data
+        except:
+            dx_data = None
+
+        # Evoluciones
+        try:
+            from .models import Evolucion
+            from .serializers import EvolucionSerializer
+            evoluciones = Evolucion.objects.filter(paciente=paciente).order_by('-fecha_sesion')
+            evo_data = EvolucionSerializer(evoluciones, many=True).data
+        except:
+            evo_data = []
+
+        # Citas
+        try:
+            from apps.P3_Logistica_Citas.models import Cita
+            from apps.P3_Logistica_Citas.serializers import CitaSerializer
+            citas = Cita.objects.filter(paciente=paciente).order_by('-fecha_hora')
+            citas_data = CitaSerializer(citas, many=True).data
+        except:
+            citas_data = []
+
+        return Response({
+            'paciente': {
+                'id': paciente.id,
+                'nombre': paciente.nombre,
+                'ci': paciente.ci,
+                'fecha_nacimiento': str(paciente.fecha_nacimiento),
+                'telefono': paciente.telefono,
+                'motivo_consulta': paciente.motivo_consulta,
+            },
+            'diagnostico_global': dx_data,
+            'evoluciones': evo_data,
+            'citas': citas_data,
+        })
+

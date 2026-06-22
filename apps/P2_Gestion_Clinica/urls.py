@@ -13,6 +13,7 @@ from .views import (
     AnaliticaClinicaAPIView,
     PacienteRegistroPublicoAPIView,
     AssociateClinicAPIView,
+    MiHistorialClinicoAPIView,
 )
 
 router = DefaultRouter()
@@ -38,6 +39,7 @@ urlpatterns = [
     # Endpoints Móviles Públicos
     path("api/pacientes/registro-publico/", PacienteRegistroPublicoAPIView.as_view(), name="api_pacientes_registro_publico"),
     path("api/pacientes/me/associate_clinic/", AssociateClinicAPIView.as_view(), name="api_paciente_associate_clinic"),
+    path("api/pacientes/me/historial/", MiHistorialClinicoAPIView.as_view(), name="api_mi_historial"),
 
     path("api/clinica/", include(router.urls)),
 ]
