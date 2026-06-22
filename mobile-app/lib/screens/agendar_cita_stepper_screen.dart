@@ -62,6 +62,9 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.user.ci != null && widget.user.ci!.isNotEmpty) {
+      _ciCtrl.text = widget.user.ci!;
+    }
     _loadPsicologos();
   }
 
@@ -387,11 +390,11 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
             _buildDataRow('Correo Electrónico', widget.user.email),
             const SizedBox(height: 16),
             
-            Text('Nro de Documento (CI) / Email *', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
+            Text('Nro de Documento (CI) *', style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TextField(
-              controller: _ciCtrl..text = (widget.user.ci != null && widget.user.ci!.isNotEmpty) ? widget.user.ci! : widget.user.email,
-              readOnly: true,
+              controller: _ciCtrl,
+              readOnly: (widget.user.ci != null && widget.user.ci!.isNotEmpty),
               decoration: InputDecoration(
                 hintText: 'Ej. 1234567',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

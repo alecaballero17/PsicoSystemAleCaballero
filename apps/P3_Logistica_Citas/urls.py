@@ -34,5 +34,5 @@ urlpatterns = [
     path("api/mobile/paciente/pagar/", MobilePacientePagarAPIView.as_view(), name="mobile_paciente_pagar"),
     path("api/mobile/citas/<int:cita_id>/pdf/", MobileCitaFichaPDFAPIView.as_view(), name="mobile_citas_pdf"),
     path("api/mobile/psicologos/", MobilePsicologosListAPIView.as_view(), name="mobile_psicologos"),
-    path("api/mobile/psicologos/<str:username>/disponibilidad/", MobileCitasDisponibilidadAPIView.as_view(), name="mobile_disponibilidad"),
+    path("api/mobile/citas/disponibilidad/", MobileCitasDisponibilidadAPIView.as_view(), name="mobile_disponibilidad"),
 ]
