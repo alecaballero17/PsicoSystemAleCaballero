@@ -13,8 +13,6 @@ class Paciente(models.Model):
     telefono = models.CharField(max_length=20)
     motivo_consulta = models.TextField(null=True, blank=True)
     fecha_registro = models.DateTimeField(auto_now_add=True, null=True)  # Requerido por ReportePersonalizadoAPIView
-    strikes_diarios = models.IntegerField(default=0)
-    ultimo_strike_fecha = models.DateField(null=True, blank=True)
 
     objects = models.Manager()
 

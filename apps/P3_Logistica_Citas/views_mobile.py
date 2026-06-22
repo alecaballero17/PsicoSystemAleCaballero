@@ -79,7 +79,6 @@ class MobileCitasAPIView(APIView):
                 'telefono': user.telefono,
                 'fecha_nacimiento': '2000-01-01',
                 'clinica_id': psicologo.clinica_id,
-                'strikes_diarios': 0,
             }
         )
 
