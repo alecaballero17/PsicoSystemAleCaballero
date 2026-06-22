@@ -11,6 +11,8 @@ from .views import (
     DiagnosticoPacienteViewSet,
     HistorialCompletoAPIView,
     AnaliticaClinicaAPIView,
+    PacienteRegistroPublicoAPIView,
+    AssociateClinicAPIView,
 )
 
 router = DefaultRouter()
