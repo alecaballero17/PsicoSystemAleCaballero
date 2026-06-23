@@ -22,19 +22,16 @@ class MobileCitasAPIView(APIView):
         if user.rol != 'PACIENTE':
             return Response({"detail": "Solo pacientes pueden ver su historial móvil."}, status=status.HTTP_403_FORBIDDEN)
         
-        try:
-            paciente = Paciente.objects.get(ci=user.ci) if user.ci else Paciente.objects.filter(nombre__icontains=user.username).first()
-            if not paciente:
-                return Response({"detail": "Perfil de paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-        except Paciente.DoesNotExist:
-            return Response({"detail": "Perfil de paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
         # Filtros
         estado_pago = request.query_params.get("estado_pago")
         estado = request.query_params.get("estado")
         clinica_id = request.query_params.get("clinica_id")
 
-        qs = Cita.objects.filter(paciente=paciente)
+        if user.ci:
+            qs = Cita.objects.filter(paciente__ci=user.ci)
+        else:
+            qs = Cita.objects.filter(paciente__nombre__icontains=user.username)
+
         if estado_pago:
             qs = qs.filter(estado_pago=estado_pago)
         if estado:
@@ -71,16 +68,21 @@ class MobileCitasAPIView(APIView):
         except Usuario.DoesNotExist:
             return Response({"detail": "Especialista no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Buscar o crear Paciente si no existe
+        # Buscar o crear Paciente en la clínica específica
         paciente, created = Paciente.objects.get_or_create(
             ci=user.ci if user.ci else user.username,
+            clinica_id=psicologo.clinica_id,
             defaults={
                 'nombre': f"{user.first_name} {user.last_name}".strip() or user.username,
                 'telefono': user.telefono,
                 'fecha_nacimiento': '2000-01-01',
-                'clinica_id': psicologo.clinica_id,
             }
         )
+        
+        # Si recién se crea el paciente, le creamos su Historia Clínica vacía
+        if created:
+            from apps.P2_Gestion_Clinica.models import HistoriaClinica
+            HistoriaClinica.objects.get_or_create(paciente=paciente)
 
         fecha_hora = request.data.get("fecha_hora")
         motivo = request.data.get("motivo", "")
