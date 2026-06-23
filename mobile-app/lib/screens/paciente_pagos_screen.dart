@@ -660,7 +660,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
       
       // Abrir Stripe Checkout en el navegador del celular
       final uri = Uri.parse(checkoutUrl);
-      if (await canLaunchUrl(uri)) {
+      try {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         // Mostrar snackbar indicando que regrese luego del pago
         if (mounted) {
@@ -688,8 +688,8 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
             ),
           );
         }
-      } else {
-        throw Exception('No se pudo abrir el navegador.');
+      } catch (e) {
+        throw Exception('No se pudo abrir el navegador. Revisa la URL o instala un navegador.');
       }
     } catch (e) {
       setState(() => _isLoading = false);
