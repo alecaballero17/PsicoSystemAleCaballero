@@ -36,7 +36,7 @@ const RegistroCita = () => {
         if (loading) return; // Prevención estricta de doble clic
         setLoading(true);
         try {
-            await apiClient.post('logistica/gestion/', formData);
+            await apiClient.post('citas/', formData);
             
             // Web Push Notification Nativa
             if ("Notification" in window) {
