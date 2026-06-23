@@ -518,7 +518,9 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
                       title: Text('Pago con Tarjeta', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-                      onTap: () => setModalState(() => metodoSeleccionado = 'TARJETA'                     ] else if (metodoSeleccionado == 'QR') ...[
+                      onTap: () => setModalState(() => metodoSeleccionado = 'TARJETA'),
+                    ),
+                  ] else if (metodoSeleccionado == 'QR') ...[
                     Row(
                       children: [
                         IconButton(
