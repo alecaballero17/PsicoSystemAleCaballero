@@ -35,7 +35,7 @@ const Dashboard = () => {
             const [listaPacientes, metricasData, listaCitas] = await Promise.all([
                 pacienteService.getPacientes(), 
                 dashboardService.getMetrics(),
-                authService.apiClient.get('logistica/gestion/')
+                authService.apiClient.get('citas/')
             ]);
             
             setPacientes(Array.isArray(listaPacientes) ? listaPacientes : []);
