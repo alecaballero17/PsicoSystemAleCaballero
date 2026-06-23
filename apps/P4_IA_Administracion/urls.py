@@ -16,7 +16,8 @@ from .views import (
     ChatbotClinicaAPIView,
     ChatbotCitaAPIView,
     TranscribeAudioMobileAPIView,
-    GenerarReporteMobileAPIView
+    GenerarReporteMobileAPIView,
+    AnaliticaClinicaAPIView
 )
 
 router = SimpleRouter()
@@ -24,6 +25,7 @@ router.register(r'transacciones', TransaccionViewSet, basename='transaccion')
 
 urlpatterns = [
     path("api/dashboard/", DashboardAPIView.as_view(), name="api_dashboard"),
+    path("api/analitica-clinica/", AnaliticaClinicaAPIView.as_view(), name="api_analitica_clinica"),
     path("api/admin/auditoria/", LogAuditoriaAPIView.as_view(), name="api_admin_auditoria"),
     path("api/ia/analizar/<int:evolucion_id>/", AnalisisIAView.as_view(), name="api_ia_analizar"),
     

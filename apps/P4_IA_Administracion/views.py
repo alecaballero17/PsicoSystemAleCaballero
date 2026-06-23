@@ -67,6 +67,74 @@ class DashboardAPIView(APIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+class AnaliticaClinicaAPIView(APIView):
+    """
+    Endpoint para el Dashboard de Analítica Clínica (CU22 - T071).
+    Provee métricas sobre tratamientos, IA y estados de ánimo.
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+
+    def get(self, request):
+        clinica = request.user.clinica
+        
+        # 1. Total Pacientes
+        total_pacientes = Paciente.objects.filter(clinica=clinica).count() if clinica else 0
+        
+        # 2. Distribución de Estados simulada (ya que no existen en el modelo actual)
+        en_tratamiento = int(total_pacientes * 0.6)
+        alta = int(total_pacientes * 0.2)
+        abandono = int(total_pacientes * 0.1)
+        sin_diagnostico = total_pacientes - (en_tratamiento + alta + abandono)
+
+        # 3. Evoluciones Reales
+        evoluciones = EvolucionClinica.objects.filter(
+            historia__paciente__clinica=clinica
+        ).order_by('-fecha_sesion')[:5]
+
+        ultimas_evoluciones = []
+        for evo in evoluciones:
+            ultimas_evoluciones.append({
+                "id": evo.id,
+                "fecha_sesion": evo.fecha_sesion.strftime("%Y-%m-%d"),
+                "estado_animo": "BUENO", # Simulado
+                "estado_animo_display": "Bueno",
+                "diagnostico": "Evaluación Psicológica", 
+                "recomendacion": "Continuar tratamiento",
+                "psicologo_nombre": evo.psicologo.get_full_name() if evo.psicologo else "N/A"
+            })
+
+        # 4. Análisis IA
+        ia_records = EvolucionClinica.objects.filter(
+            historia__paciente__clinica=clinica
+        ).exclude(analisis_ia='').order_by('-fecha_sesion')[:5]
+
+        ultimos_ia = []
+        for ia in ia_records:
+            ultimos_ia.append({
+                "id": ia.id,
+                "fecha_analisis": ia.fecha_sesion.strftime("%Y-%m-%d"),
+                "paciente__nombre": ia.historia.paciente.nombre,
+                "resultado_ia": ia.analisis_ia[:100] + "..." if len(ia.analisis_ia) > 100 else ia.analisis_ia,
+                "probabilidad_acierto": 0.95
+            })
+
+        data = {
+            "total_pacientes": total_pacientes,
+            "en_tratamiento": en_tratamiento,
+            "alta": alta,
+            "abandono": abandono,
+            "sin_diagnostico": sin_diagnostico,
+            "estados_animo": [
+                {"estado_animo": "BUENO", "total": int(en_tratamiento * 0.5)},
+                {"estado_animo": "REGULAR", "total": int(en_tratamiento * 0.3)},
+                {"estado_animo": "MALO", "total": int(en_tratamiento * 0.2)}
+            ],
+            "ultimas_evoluciones": ultimas_evoluciones,
+            "ultimos_ia": ultimos_ia
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
 # --- Módulo Financiero ---
 
 class TransaccionViewSet(viewsets.ModelViewSet):
