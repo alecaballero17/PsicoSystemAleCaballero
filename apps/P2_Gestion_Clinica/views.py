@@ -11,9 +11,11 @@ from .serializers import (
     PacienteSerializer, 
     HistoriaClinicaSerializer, 
     EvolucionClinicaSerializer,
-    PacienteRegistroPublicoSerializer
+    PacienteRegistroPublicoSerializer,
+    NotaClinicaSerializer,
+    ArchivoAdjuntoSerializer,
 )
-from .models import Paciente, HistoriaClinica, EvolucionClinica
+from .models import Paciente, HistoriaClinica, EvolucionClinica, NotaClinica, ArchivoAdjunto
 from apps.P4_IA_Administracion.models import LogAuditoria
 from apps.P1_Identidad_Acceso.permissions import (
     HasClinicaAsignada,
@@ -252,6 +254,50 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
         LogAuditoria.objects.create(
             usuario=self.request.user,
             accion=f"Añadió nota de evolución para: {evolucion.historia.paciente.nombre}",
+        )
+
+
+class NotaClinicaAPIView(generics.ListCreateAPIView):
+    """GET: listar notas del expediente. POST: crear nueva nota clínica (CU20)."""
+    serializer_class = NotaClinicaSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get_queryset(self):
+        expediente_id = self.request.query_params.get('expediente')
+        qs = NotaClinica.objects.filter(
+            expediente__paciente__clinica=self.request.user.clinica
+        )
+        if expediente_id:
+            qs = qs.filter(expediente_id=expediente_id)
+        return qs
+
+    def perform_create(self, serializer):
+        nota = serializer.save(psicologo=self.request.user)
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Registró nota clínica para: {nota.expediente.paciente.nombre}",
+        )
+
+
+class ArchivoAdjuntoAPIView(generics.ListCreateAPIView):
+    """GET: listar archivos del expediente. POST: subir nuevo archivo adjunto (CU20)."""
+    serializer_class = ArchivoAdjuntoSerializer
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get_queryset(self):
+        expediente_id = self.request.query_params.get('expediente')
+        qs = ArchivoAdjunto.objects.filter(
+            expediente__paciente__clinica=self.request.user.clinica
+        )
+        if expediente_id:
+            qs = qs.filter(expediente_id=expediente_id)
+        return qs
+
+    def perform_create(self, serializer):
+        archivo = serializer.save(subido_por=self.request.user)
+        LogAuditoria.objects.create(
+            usuario=self.request.user,
+            accion=f"Adjuntó archivo al expediente de: {archivo.expediente.paciente.nombre}",
         )
 
 class PacienteRegistroPublicoAPIView(generics.CreateAPIView):

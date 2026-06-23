@@ -6,7 +6,9 @@ from .views import (
     PacienteRegistroPublicoAPIView,
     HistoriaClinicaViewSet,
     EvolucionClinicaViewSet,
-    HistorialClinicoAPIView
+    HistorialClinicoAPIView,
+    NotaClinicaAPIView,
+    ArchivoAdjuntoAPIView,
 )
 
 router = SimpleRouter()
@@ -25,10 +27,11 @@ urlpatterns = [
         HistorialClinicoAPIView.as_view(),
         name="api_pacientes_historial",
     ),
-    path(
-        "api/pacientes/registro-publico/",
+    path("api/pacientes/registro-publico/",
         PacienteRegistroPublicoAPIView.as_view(),
         name="api_pacientes_registro_publico",
     ),
+    path("api/clinica/notas-clinicas/", NotaClinicaAPIView.as_view(), name="api_notas_clinicas"),
+    path("api/clinica/archivos-adjuntos/", ArchivoAdjuntoAPIView.as_view(), name="api_archivos_adjuntos"),
     path("api/", include(router.urls)),
 ]

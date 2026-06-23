@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Paciente, HistoriaClinica, EvolucionClinica
+from .models import Paciente, HistoriaClinica, EvolucionClinica, NotaClinica, ArchivoAdjunto
 from apps.P1_Identidad_Acceso.models import Usuario, Clinica
 
 class EvolucionClinicaSerializer(serializers.ModelSerializer):
@@ -13,14 +13,36 @@ class EvolucionClinicaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["psicologo", "fecha_sesion"]
 
+class NotaClinicaSerializer(serializers.ModelSerializer):
+    psicologo_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotaClinica
+        fields = ["id", "expediente", "psicologo", "psicologo_nombre", "contenido", "fecha"]
+        read_only_fields = ["psicologo", "fecha"]
+
+    def get_psicologo_nombre(self, obj):
+        if obj.psicologo:
+            return f"{obj.psicologo.first_name} {obj.psicologo.last_name}".strip() or obj.psicologo.username
+        return 'Especialista'
+
+class ArchivoAdjuntoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArchivoAdjunto
+        fields = ["id", "expediente", "archivo", "descripcion", "fecha_subida", "subido_por"]
+        read_only_fields = ["fecha_subida", "subido_por"]
+
 class HistoriaClinicaSerializer(serializers.ModelSerializer):
     evoluciones = EvolucionClinicaSerializer(many=True, read_only=True)
+    notas = NotaClinicaSerializer(many=True, read_only=True)
+    archivos = ArchivoAdjuntoSerializer(many=True, read_only=True)
 
     class Meta:
         model = HistoriaClinica
         fields = [
             "id", "paciente", "fecha_creacion", "antecedentes_familiares", 
-            "antecedentes_personales", "diagnostico_preliminar", "evoluciones"
+            "antecedentes_personales", "diagnostico_preliminar", "evoluciones",
+            "notas", "archivos"
         ]
 
 class PacienteSerializer(serializers.ModelSerializer):

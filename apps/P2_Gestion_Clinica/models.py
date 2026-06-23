@@ -35,6 +35,33 @@ class HistoriaClinica(models.Model):
     def __str__(self):
         return f"Expediente: {self.paciente.nombre}"
 
+class NotaClinica(models.Model):
+    """Notas clínicas vinculadas al expediente del paciente (CU20)."""
+    expediente = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE, related_name='notas')
+    psicologo = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
+    contenido = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"Nota de {self.expediente.paciente.nombre} ({self.fecha})"
+
+class ArchivoAdjunto(models.Model):
+    """Archivos adjuntos al expediente clínico del paciente (CU20)."""
+    expediente = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE, related_name='archivos')
+    archivo = models.FileField(upload_to='expedientes/adjuntos/')
+    descripcion = models.CharField(max_length=255, blank=True, default='')
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    subido_por = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fecha_subida']
+
+    def __str__(self):
+        return f"Archivo de {self.expediente.paciente.nombre} ({self.fecha_subida})"
+
 class EvolucionClinica(models.Model):
     historia = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE, related_name='evoluciones')
     psicologo = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True)
