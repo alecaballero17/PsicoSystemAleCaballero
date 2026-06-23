@@ -25,13 +25,21 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
 
 class PacienteSerializer(serializers.ModelSerializer):
     expediente_id = serializers.ReadOnlyField(source='expediente.id')
+    origen = serializers.SerializerMethodField()
 
     class Meta:
         model = Paciente
         fields = [
             "id", "nombre", "ci", "fecha_nacimiento", 
-            "telefono", "motivo_consulta", "expediente_id"
+            "telefono", "motivo_consulta", "expediente_id", "origen"
         ]
+
+    def get_origen(self, obj):
+        # Si existe un Usuario con el mismo CI y rol PACIENTE, asumimos que viene de la App Móvil
+        from apps.P1_Identidad_Acceso.models import Usuario
+        if Usuario.objects.filter(ci=obj.ci, rol='PACIENTE').exists():
+            return 'MOVIL'
+        return 'WEB'
 
 class PacienteRegistroPublicoSerializer(serializers.Serializer):
     """Serializer para el registro atómico de Paciente + Usuario desde la App Móvil."""
