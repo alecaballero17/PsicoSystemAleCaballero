@@ -170,6 +170,74 @@ class CitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
+class CitaEnviarRecordatorioAPIView(generics.GenericAPIView):
+    """
+    POST: Envía un recordatorio (Push Notificación) al paciente sobre su cita.
+    """
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+    queryset = Cita.objects.all()
+
+    def post(self, request, pk):
+        cita = self.get_object()
+        if cita.paciente.clinica != request.user.clinica:
+            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+            
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        if cita.paciente.usuario:
+            NotificacionPush.objects.create(
+                usuario=cita.paciente.usuario,
+                titulo="Recordatorio de Cita",
+                mensaje=f"Estimado {cita.paciente.nombre}, le recordamos su cita para el {cita.fecha_hora.strftime('%d/%m/%Y %H:%M')}."
+            )
+            
+            # Simulador Push (FCM real iría aquí)
+            from apps.P1_Identidad_Acceso.models import DispositivoMovil
+            dispositivos = DispositivoMovil.objects.filter(usuario=cita.paciente.usuario)
+            for d in dispositivos:
+                print(f"\n[FIREBASE PUSH SIMULATOR] Enviando Recordatorio al token: {d.fcm_token}")
+                print(f"[FIREBASE PUSH SIMULATOR] Titulo: Recordatorio de Cita")
+                print(f"[FIREBASE PUSH SIMULATOR] Cuerpo: Estimado {cita.paciente.nombre}, le recordamos su cita para el {cita.fecha_hora.strftime('%d/%m/%Y %H:%M')}.\n")
+
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Envió recordatorio de cita al paciente {cita.paciente.nombre} (Cita: {cita.fecha_hora})."
+        )
+        return Response({"mensaje": "Recordatorio enviado correctamente."}, status=status.HTTP_200_OK)
+
+
+class CitaCancelarWebAPIView(generics.GenericAPIView):
+    """
+    POST: Soft-cancel de cita desde la Web.
+    """
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+    queryset = Cita.objects.all()
+
+    def post(self, request, pk):
+        cita = self.get_object()
+        if cita.paciente.clinica != request.user.clinica:
+            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+            
+        if cita.estado == "CANCELADA":
+            return Response({"error": "La cita ya estaba cancelada."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        cita.estado = "CANCELADA"
+        cita.save()
+        
+        from apps.P1_Identidad_Acceso.models import NotificacionPush
+        if cita.paciente.usuario:
+            NotificacionPush.objects.create(
+                usuario=cita.paciente.usuario,
+                titulo="Cita Cancelada",
+                mensaje=f"Su cita programada para el {cita.fecha_hora.strftime('%d/%m/%Y %H:%M')} ha sido cancelada por la clínica."
+            )
+
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion=f"Canceló la cita del paciente {cita.paciente.nombre}."
+        )
+        return Response({"mensaje": "Cita cancelada correctamente."}, status=status.HTTP_200_OK)
+
+
 # ==============================================================================
 # API REST — LISTA DE ESPERA (T031)
 # ==============================================================================

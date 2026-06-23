@@ -47,3 +47,20 @@ class EvolucionClinica(models.Model):
 
     def __str__(self):
         return f"Sesión {self.fecha_sesion} - {self.historia.paciente.nombre}"
+
+class Recomendacion(models.Model):
+    ESTADOS = [
+        ('PENDIENTE', 'Pendiente'),
+        ('EN_PROGRESO', 'En Progreso'),
+        ('COMPLETADO', 'Completado'),
+    ]
+    evolucion = models.ForeignKey(EvolucionClinica, on_delete=models.CASCADE, related_name='recomendaciones')
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='recomendaciones')
+    psicologo = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    
+    texto = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Recomendación para {self.paciente.nombre} ({self.estado})"

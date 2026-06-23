@@ -231,9 +231,27 @@ class CitaPagoService {
     throw Exception(_extractError(response));
   }
 
+  /// Descargar el comprobante PDF en Base64
+  static Future<String> descargarFichaPdf(String token, int citaId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/mobile/citas/$citaId/pdf/'),
+      headers: _headers(token),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      if (data['pdf_base64'] != null) {
+        return data['pdf_base64'];
+      } else {
+        throw Exception('El servidor no devolvió el PDF.');
+      }
+    }
+    throw Exception(_extractError(response));
+  }
+
   /// URL del comprobante PDF de una cita pagada (se abre con el token en header)
   static String comprobantePdfUrl(int citaId) =>
-      '${ApiConfig.baseUrl}/mobile/citas/$citaId/comprobante/pdf/';
+      '${ApiConfig.baseUrl}/mobile/citas/$citaId/pdf/';
 
   static String get reportePdfUrl => '${ApiConfig.baseUrl}/mobile/citas/reporte/pdf/';
 

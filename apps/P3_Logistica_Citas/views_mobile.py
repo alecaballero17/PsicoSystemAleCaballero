@@ -229,6 +229,12 @@ class MobileCitaFichaPDFAPIView(APIView):
 
         return Response({"pdf_base64": pdf_base64, "mensaje": "Ficha generada correctamente"})
 
+import decimal
+import stripe
+from django.conf import settings
+
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_123')
+
 class MobilePacientePagarAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -236,6 +242,7 @@ class MobilePacientePagarAPIView(APIView):
         user = request.user
         cita_id = request.data.get("cita_id")
         metodo_pago = request.data.get("metodo_pago", "STRIPE_MOCK")
+        numero_tarjeta = request.data.get("numero_tarjeta", "4242424242424242")
 
         try:
             cita = Cita.objects.get(id=cita_id)
@@ -245,46 +252,74 @@ class MobilePacientePagarAPIView(APIView):
         if cita.estado_pago == 'PAGADO':
             return Response({"detail": "Esta cita ya está pagada."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Simulamos éxito de Stripe
-        cita.estado_pago = 'PAGADO'
-        cita.save()
+        # Integración Real con Stripe (Backend Flow)
+        if metodo_pago == "TARJETA":
+            try:
+                # Para evitar PCI compliance real en la app móvil, si envían la tarjeta de prueba de Stripe
+                # asignamos directamente un token de prueba oficial de Stripe ("tok_visa" o "tok_mastercard")
+                source_token = "tok_visa" if str(numero_tarjeta).startswith("4") else "tok_mastercard"
+                
+                # Stripe maneja montos en centavos
+                monto_centavos = int(cita.monto * 100)
+                
+                charge = stripe.Charge.create(
+                    amount=monto_centavos,
+                    currency="bob",
+                    source=source_token,
+                    description=f"Pago de Cita #{cita.id} - Paciente: {user.username} - PsicoSystem"
+                )
+                
+                if charge.status != "succeeded":
+                    return Response({"detail": "El pago fue rechazado por el banco."}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            except stripe.error.StripeError as e:
+                return Response({"detail": f"Error en la pasarela de pagos: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"detail": f"Error interno procesando pago: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Generar Transacción en la Clínica
-        if cita.psicologo.clinica:
-            cita.psicologo.clinica.saldo += decimal.Decimal(str(cita.monto))
-            cita.psicologo.clinica.save()
-            TransaccionClinica.objects.create(
-                clinica=cita.psicologo.clinica,
-                tipo='INGRESO_PACIENTE',
-                monto=cita.monto,
-                descripcion=f"Pago de cita #{cita.id} - Paciente: {user.username}",
-                metodo_pago=metodo_pago
+        # Si el pago con tarjeta fue exitoso o es pago QR (simulado), actualizamos la DB
+        try:
+            cita.estado_pago = 'PAGADO'
+            cita.save()
+
+            # Generar Transacción en la Clínica
+            if cita.psicologo.clinica:
+                saldo_actual = cita.psicologo.clinica.saldo or decimal.Decimal('0.00')
+                cita.psicologo.clinica.saldo = saldo_actual + decimal.Decimal(str(cita.monto))
+                cita.psicologo.clinica.save()
+                TransaccionClinica.objects.create(
+                    clinica=cita.psicologo.clinica,
+                    tipo='INGRESO_PACIENTE',
+                    monto=cita.monto,
+                    descripcion=f"Pago de cita #{cita.id} - Paciente: {user.username}",
+                    metodo_pago=metodo_pago
+                )
+
+            # Notificación para el paciente
+            NotificacionPush.objects.create(
+                usuario=user,
+                titulo="Pago Exitoso",
+                mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.first_name} {cita.psicologo.last_name} ha sido procesado."
             )
 
-        # Notificación para el paciente
-        from apps.P1_Identidad_Acceso.models import NotificacionPush
-        NotificacionPush.objects.create(
-            usuario=user,
-            titulo="Pago Exitoso",
-            mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.usuario.first_name} {cita.psicologo.usuario.last_name} ha sido procesado."
-        )
+            # Notificación para el psicólogo
+            NotificacionPush.objects.create(
+                usuario=cita.psicologo,
+                titulo="Pago Recibido",
+                mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado la cita (${cita.monto})."
+            )
 
-        # Notificación para el psicólogo
-        NotificacionPush.objects.create(
-            usuario=cita.psicologo.usuario,
-            titulo="Pago Recibido",
-            mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado la cita (${cita.monto})."
-        )
-
-        # Notificación para la clínica
-        if cita.psicologo.clinica:
-            admin_clinica = Usuario.objects.filter(clinica=cita.psicologo.clinica, rol='ADMIN').first()
-            if admin_clinica:
-                NotificacionPush.objects.create(
-                    usuario=admin_clinica,
-                    titulo="Ingreso por Cita",
-                    mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado ${cita.monto} por cita con {cita.psicologo.first_name}."
-                )
+            # Notificación para la clínica
+            if cita.psicologo.clinica:
+                admin_clinica = Usuario.objects.filter(clinica=cita.psicologo.clinica, rol='ADMIN').first()
+                if admin_clinica:
+                    NotificacionPush.objects.create(
+                        usuario=admin_clinica,
+                        titulo="Ingreso por Cita",
+                        mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado ${cita.monto} por cita con {cita.psicologo.first_name}."
+                    )
+        except Exception as e:
+            return Response({"detail": f"Error guardando transaccion: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"detail": "Pago procesado exitosamente.", "cita_id": cita.id}, status=status.HTTP_201_CREATED)
 
@@ -339,3 +374,46 @@ class MobilePsicologosListAPIView(APIView):
                 "clinica": p.clinica.nombre if p.clinica else "Sin Clínica Asignada"
             })
         return Response(data, status=status.HTTP_200_OK)
+
+
+class MobileRecomendacionesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.rol != 'PACIENTE':
+            return Response({"detail": "Solo pacientes pueden ver sus recomendaciones."}, status=status.HTTP_403_FORBIDDEN)
+        
+        from apps.P2_Gestion_Clinica.models import Recomendacion
+        qs = Recomendacion.objects.filter(paciente__ci=user.ci).order_by('-fecha_creacion')
+        
+        data = []
+        for r in qs:
+            data.append({
+                "id": r.id,
+                "texto": r.texto,
+                "estado": r.estado,
+                "fecha_creacion": r.fecha_creacion.isoformat(),
+                "fecha_sesion": r.evolucion.fecha_sesion.isoformat() if r.evolucion.fecha_sesion else None,
+                "psicologo_nombre": f"{r.psicologo.first_name} {r.psicologo.last_name}".strip() or r.psicologo.username,
+                "clinica_nombre": r.psicologo.clinica.nombre if getattr(r.psicologo, 'clinica', None) else "Clínica General"
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        user = request.user
+        if user.rol != 'PACIENTE':
+            return Response({"detail": "Solo pacientes pueden actualizar sus recomendaciones."}, status=status.HTTP_403_FORBIDDEN)
+        
+        from apps.P2_Gestion_Clinica.models import Recomendacion
+        try:
+            recomendacion = Recomendacion.objects.get(pk=pk, paciente__ci=user.ci)
+        except Recomendacion.DoesNotExist:
+            return Response({"detail": "Recomendación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+        nuevo_estado = request.data.get('estado')
+        if nuevo_estado in ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADO']:
+            recomendacion.estado = nuevo_estado
+            recomendacion.save()
+            return Response({"detail": "Estado actualizado correctamente.", "estado": recomendacion.estado}, status=status.HTTP_200_OK)
+        return Response({"detail": "Estado no válido."}, status=status.HTTP_400_BAD_REQUEST)

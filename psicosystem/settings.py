@@ -252,3 +252,10 @@ DEFAULT_FROM_EMAIL = config(
     "DEFAULT_FROM_EMAIL",
     default=EMAIL_HOST_USER or "noreply@psicosystem.local",
 )
+
+# ==============================================================================
+# STRIPE INTEGRATION (PAGOS)
+# ==============================================================================
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='sk_test_123')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='pk_test_123')
+

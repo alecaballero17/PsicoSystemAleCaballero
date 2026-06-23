@@ -3,9 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:io';
+import 'dart:convert' as dart_convert;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_filex/open_filex.dart';
 import '../models/user_model.dart';
 import '../services/cita_pago_service.dart';
 
@@ -687,13 +689,25 @@ class _AgendarCitaStepperScreenState extends State<AgendarCitaStepperScreen> {
         ),
         const SizedBox(height: 32),
         
-        // Botones Finales
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 20),
             style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () {},
+            onPressed: () async {
+              if (_createdCitaId == null) return;
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generando comprobante PDF...')));
+                final base64Str = await CitaPagoService.descargarFichaPdf(widget.token, _createdCitaId!);
+                final bytes = dart_convert.base64.decode(base64Str);
+                final dir = await getApplicationDocumentsDirectory();
+                final file = File('${dir.path}/ficha_cita_$_createdCitaId.pdf');
+                await file.writeAsBytes(bytes);
+                await OpenFilex.open(file.path);
+              } catch (e) {
+                _showError('Error al descargar PDF: $e');
+              }
+            },
             label: Text('Descargar Comprobante PDF', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),

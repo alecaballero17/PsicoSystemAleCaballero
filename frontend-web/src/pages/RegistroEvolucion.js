@@ -33,21 +33,36 @@ const RegistroEvolucion = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Cargar datos del paciente y diagnóstico
-                const [pacRes, dxRes] = await Promise.all([
+                // Cargar datos del paciente y su historia clínica
+                const [pacRes, histRes] = await Promise.all([
                     apiClient.get(`pacientes/${pacienteId}/`),
-                    apiClient.get(`clinica/diagnosticos/?paciente=${pacienteId}`),
+                    apiClient.get(`historias/?paciente=${pacienteId}`), // P2: HistoriaClinicaViewSet
                 ]);
                 setPaciente(pacRes.data);
-                if (dxRes.data.length > 0) {
-                    const dx = dxRes.data[0];
-                    setDxExistente(dx);
+                
+                // Encontrar la historia clínica del paciente
+                const historiasData = histRes.data.results || histRes.data;
+                const historia = Array.isArray(historiasData) ? historiasData.find(h => h.paciente === parseInt(pacienteId)) : null;
+                
+                if (historia) {
+                    setDxExistente(historia);
+                    // Parsear si hemos guardado JSON en diagnostico_preliminar antes
+                    let dxInicial = historia.diagnostico_preliminar || '';
+                    let estado = 'EN_TRATAMIENTO';
+                    try {
+                        if (dxInicial.startsWith('{')) {
+                            const parsed = JSON.parse(dxInicial);
+                            dxInicial = parsed.diagnostico_inicial || '';
+                            estado = parsed.estado || 'EN_TRATAMIENTO';
+                        }
+                    } catch (e) {}
+
                     setDxForm({
-                        diagnostico_inicial: dx.diagnostico_inicial,
-                        fecha_inicio: dx.fecha_inicio,
-                        diagnostico_final: dx.diagnostico_final || '',
-                        fecha_fin: dx.fecha_fin || '',
-                        estado: dx.estado,
+                        diagnostico_inicial: dxInicial,
+                        fecha_inicio: new Date(historia.fecha_creacion).toISOString().split('T')[0],
+                        diagnostico_final: '',
+                        fecha_fin: '',
+                        estado: estado,
                     });
                 }
             } catch (err) {
@@ -62,17 +77,17 @@ const RegistroEvolucion = () => {
     const handleSaveDiagnostico = async () => {
         setGuardando(true);
         try {
+            // Guardamos el diagnóstico complejo como JSON en diagnostico_preliminar
             const payload = {
                 paciente: parseInt(pacienteId),
-                ...dxForm,
-                fecha_fin: dxForm.fecha_fin || null,
+                diagnostico_preliminar: JSON.stringify(dxForm)
             };
 
             if (dxExistente) {
-                await apiClient.put(`clinica/diagnosticos/${dxExistente.id}/`, payload);
-                alert('✅ Diagnóstico actualizado exitosamente.');
+                await apiClient.put(`historias/${dxExistente.id}/`, payload);
+                alert('✅ Diagnóstico (Historia Clínica) actualizado exitosamente.');
             } else {
-                const res = await apiClient.post('clinica/diagnosticos/', payload);
+                const res = await apiClient.post('historias/', payload);
                 setDxExistente(res.data);
                 alert('✅ Diagnóstico registrado exitosamente.');
             }
@@ -86,15 +101,23 @@ const RegistroEvolucion = () => {
 
     const handleSaveEvolucion = async (e) => {
         e.preventDefault();
+        if (!dxExistente) {
+            alert('Debe guardar el Diagnóstico inicial (Historia Clínica) primero.');
+            return;
+        }
         if (!evoForm.diagnostico.trim()) {
             alert('El campo de diagnóstico de la sesión es obligatorio.');
             return;
         }
         setGuardando(true);
         try {
-            await apiClient.post('clinica/evoluciones/', {
-                paciente: parseInt(pacienteId),
-                ...evoForm,
+            // Formatear los datos como un bloque de texto para notas_sesion
+            const notasConsolidadas = `[Estado: ${evoForm.estado_animo}] Diagnóstico de Sesión: ${evoForm.diagnostico}\n\nObservaciones: ${evoForm.observaciones}`;
+            
+            await apiClient.post('evoluciones/', {
+                historia: dxExistente.id,
+                notas_sesion: notasConsolidadas,
+                recomendacion: evoForm.recomendacion, // Se envía por separado para CU27
             });
             alert('✅ Evolución registrada exitosamente.');
             setEvoForm({

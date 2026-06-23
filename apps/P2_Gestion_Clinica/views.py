@@ -143,6 +143,38 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         evolucion = serializer.save(psicologo=self.request.user)
+        
+        recomendacion_texto = self.request.data.get('recomendacion', '').strip()
+        if recomendacion_texto:
+            from .models import Recomendacion
+            from apps.P1_Identidad_Acceso.models import NotificacionPush, Usuario
+            
+            Recomendacion.objects.create(
+                evolucion=evolucion,
+                paciente=evolucion.historia.paciente,
+                psicologo=self.request.user,
+                texto=recomendacion_texto,
+                estado='PENDIENTE'
+            )
+            
+            # Notificar al paciente móvil (que coincida el CI)
+            usuario_paciente = Usuario.objects.filter(ci=evolucion.historia.paciente.ci, rol='PACIENTE').first()
+            if usuario_paciente:
+                fecha_str = getattr(evolucion, 'fecha_sesion', None)
+                if fecha_str:
+                    fecha_str = fecha_str.strftime('%d/%m/%Y %H:%M')
+                else:
+                    from django.utils import timezone
+                    fecha_str = timezone.now().strftime('%d/%m/%Y %H:%M')
+                    
+                clinica_nombre = self.request.user.clinica.nombre if getattr(self.request.user, 'clinica', None) else 'la Clínica'
+                
+                NotificacionPush.objects.create(
+                    usuario=usuario_paciente,
+                    titulo="Nueva Recomendación",
+                    mensaje=f"El psicólogo {self.request.user.first_name} {self.request.user.last_name} de {clinica_nombre} te ha enviado una recomendación para la sesión del {fecha_str}."
+                )
+
         LogAuditoria.objects.create(
             usuario=self.request.user,
             accion=f"Añadió nota de evolución para: {evolucion.historia.paciente.nombre}",

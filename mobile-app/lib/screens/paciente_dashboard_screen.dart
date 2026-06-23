@@ -12,6 +12,7 @@ import 'paciente_pagos_screen.dart';
 import 'notificaciones_screen.dart';
 import 'consultar_citas_screen.dart';
 import 'historial_medico_screen.dart';
+import 'recomendaciones_screen.dart';
 import 'chatbot_screen.dart';
 import '../services/chatbot_service.dart';
 
@@ -31,8 +32,7 @@ class PacienteDashboard extends StatefulWidget {
   _PacienteDashboardState createState() => _PacienteDashboardState();
 }
 
-// Implementar WidgetsBindingObserver para el Idle Timeout
-class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindingObserver {
+class _PacienteDashboardState extends State<PacienteDashboard> {
   bool _isLoading = true;
   User? _user;
   List<dynamic> _clinicas = [];
@@ -40,10 +40,6 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
   final Color primaryBlue = const Color(0xFF2563EB);
   final Color darkBlue = const Color(0xFF0F172A);
 
-  // --- Lógica de Timeout ---
-  DateTime? _lastInteractionTime;
-  final int _timeoutMinutes = 2; // 2 minutos de inactividad
-  
   // Buscador
   String _searchQuery = '';
   List<dynamic> get _filteredClinicas {
@@ -57,47 +53,12 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _lastInteractionTime = DateTime.now();
     _loadInitialData();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      // Guardar tiempo al minimizar la app
-      _lastInteractionTime = DateTime.now();
-    } else if (state == AppLifecycleState.resumed) {
-      // Al volver, comprobar si pasaron 2 minutos
-      if (_lastInteractionTime != null) {
-        final difference = DateTime.now().difference(_lastInteractionTime!);
-        if (difference.inMinutes >= _timeoutMinutes) {
-          _forceLogoutDueToInactivity();
-        } else {
-          _lastInteractionTime = DateTime.now();
-        }
-      }
-    }
-  }
-
-  void _userInteracted() {
-    _lastInteractionTime = DateTime.now();
-  }
-
-  void _forceLogoutDueToInactivity() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tu sesión ha expirado por inactividad.'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    _handleLogout(context, force: true);
   }
   // --------------------------
 
@@ -159,8 +120,6 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
   Widget build(BuildContext context) {
     // Usamos GestureDetector para resetear el timer de inactividad mientras usa la app
     return GestureDetector(
-      onTap: _userInteracted,
-      onPanDown: (_) => _userInteracted,
       // PopScope intercepta el botón atrás físico del celular
       child: PopScope(
         canPop: false,
@@ -194,7 +153,6 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
               PopupMenuButton<String>(
                 icon: Icon(Icons.account_circle_outlined, color: darkBlue, size: 28),
                 onSelected: (value) async {
-                  _userInteracted();
                   if (value == 'logout') {
                     _handleLogout(context);
                   } else if (value == 'perfil') {
@@ -214,6 +172,8 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
                     Navigator.push(context, MaterialPageRoute(builder: (context) => HistorialMedicoScreen(token: widget.token)));
                   } else if (value == 'pagos') {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => PacientePagosScreen(token: widget.token)));
+                  } else if (value == 'recomendaciones') {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => RecomendacionesScreen(token: widget.token)));
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -233,6 +193,10 @@ class _PacienteDashboardState extends State<PacienteDashboard> with WidgetsBindi
                   PopupMenuItem<String>(
                     value: 'pagos',
                     child: Row(children: [Icon(Icons.payment, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Mis Pagos', style: GoogleFonts.outfit())]),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'recomendaciones',
+                    child: Row(children: [Icon(Icons.lightbulb_outline, color: primaryBlue, size: 20), const SizedBox(width: 10), Text('Recomendaciones', style: GoogleFonts.outfit())]),
                   ),
                   PopupMenuItem<String>(
                     value: 'password',
