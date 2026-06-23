@@ -17,7 +17,6 @@ from .views_mobile import (
     MobileStripeWebhookAPIView,
     MobileCitasDisponibilidadAPIView,
     MobilePsicologosListAPIView,
-    MobileHorariosDisponiblesAPIView,
     MobileRecomendacionesAPIView,
 )
 
@@ -45,7 +44,6 @@ urlpatterns = [
     path("api/mobile/citas/<int:cita_id>/pdf/", MobileCitaFichaPDFAPIView.as_view(), name="mobile_citas_pdf"),
     path("api/mobile/psicologos/", MobilePsicologosListAPIView.as_view(), name="mobile_psicologos"),
     path("api/mobile/citas/disponibilidad/", MobileCitasDisponibilidadAPIView.as_view(), name="mobile_disponibilidad"),
-    path("api/mobile/horarios/", MobileHorariosDisponiblesAPIView.as_view(), name="mobile_horarios_disponibles"),
     path("api/mobile/recomendaciones/", MobileRecomendacionesAPIView.as_view(), name="mobile_recomendaciones_list"),
     path("api/mobile/recomendaciones/<int:pk>/", MobileRecomendacionesAPIView.as_view(), name="mobile_recomendaciones_update"),
 ]
