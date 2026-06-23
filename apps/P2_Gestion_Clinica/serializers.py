@@ -24,14 +24,14 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
         ]
 
 class PacienteSerializer(serializers.ModelSerializer):
-    expediente_id = serializers.ReadOnlyField(source='expediente.id')
+    expediente = HistoriaClinicaSerializer(read_only=True)
     origen = serializers.SerializerMethodField()
 
     class Meta:
         model = Paciente
         fields = [
             "id", "nombre", "ci", "fecha_nacimiento", 
-            "telefono", "motivo_consulta", "expediente_id", "origen"
+            "telefono", "motivo_consulta", "expediente", "origen"
         ]
 
     def get_origen(self, obj):

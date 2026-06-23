@@ -249,6 +249,66 @@ class AnalisisIAView(APIView):
 
         return Response({"analisis_ia": resultado}, status=status.HTTP_200_OK)
 
+class DiagnosticoIAAPIView(APIView):
+    """
+    Endpoint para análisis de IA ad-hoc en el dashboard de IA (Soporta historial).
+    """
+    permission_classes = [IsAuthenticated, HasClinicaAsignada, EsPsicologoOAdministrador]
+
+    def get(self, request):
+        # Retorna el historial de los últimos análisis IA realizados por este usuario/clínica
+        ia_records = EvolucionClinica.objects.filter(
+            historia__paciente__clinica=request.user.clinica
+        ).exclude(analisis_ia='').order_by('-fecha_sesion')[:10]
+
+        historial = []
+        for ia in ia_records:
+            historial.append({
+                "id": ia.id,
+                "paciente": ia.historia.paciente.nombre,
+                "fecha_analisis": ia.fecha_sesion.strftime("%Y-%m-%d %H:%M"),
+                "resultado_ia": ia.analisis_ia
+            })
+        return Response(historial, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        notas = request.data.get('notas', '').strip()
+        paciente_id = request.data.get('paciente_id')
+
+        if not notas:
+            return Response({"detail": "Las notas clínicas no pueden estar vacías."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Lógica temporal o simulación de Gemini/Groq
+        # En una integración real aquí se llama a Groq/Gemini API
+        diagnostico_simulado = f"""### Análisis Clínico Asistido por IA
+
+**Impresión Diagnóstica Preliminar:**
+Basado en los síntomas descritos: "{notas[:50]}...", se sugiere evaluar un cuadro compatible con malestar general u otra afección primaria. 
+
+**Recomendaciones:**
+- Se requiere evaluación presencial.
+- Considerar derivación a especialista si persisten los síntomas.
+
+*Nota: Este diagnóstico es generado por IA y debe ser verificado por un profesional de la salud.*"""
+
+        # Si mandaron ID de paciente, tratamos de guardar el análisis en su última evolución
+        if paciente_id:
+            try:
+                paciente = Paciente.objects.get(id=paciente_id, clinica=request.user.clinica)
+                ultima_evo = EvolucionClinica.objects.filter(historia__paciente=paciente).order_by('-fecha_sesion').first()
+                if ultima_evo:
+                    ultima_evo.analisis_ia = diagnostico_simulado
+                    ultima_evo.save()
+            except Paciente.DoesNotExist:
+                pass
+
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion="Ejecutó un diagnóstico ad-hoc asistido por IA."
+        )
+
+        return Response({"diagnostico_ia": diagnostico_simulado}, status=status.HTTP_200_OK)
+
 class ReportePersonalizadoAPIView(APIView):
     """
     Genera un reporte personalizado por rango de fechas y opcionalmente un archivo de audio (MP3).

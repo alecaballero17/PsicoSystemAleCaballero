@@ -4,6 +4,7 @@ from .views import (
     DashboardAPIView, 
     LogAuditoriaAPIView, 
     AnalisisIAView,
+    DiagnosticoIAAPIView,
     TransaccionViewSet,
     SaldoPacienteView,
     GenerarComprobantePDFView,
@@ -28,6 +29,7 @@ urlpatterns = [
     path("api/analitica-clinica/", AnaliticaClinicaAPIView.as_view(), name="api_analitica_clinica"),
     path("api/admin/auditoria/", LogAuditoriaAPIView.as_view(), name="api_admin_auditoria"),
     path("api/ia/analizar/<int:evolucion_id>/", AnalisisIAView.as_view(), name="api_ia_analizar"),
+    path("api/ia/diagnostico/", DiagnosticoIAAPIView.as_view(), name="api_ia_diagnostico"),
     
     # Finanzas
     path("api/finanzas/", include(router.urls)),
