@@ -385,7 +385,9 @@ class MobileRecomendacionesAPIView(APIView):
             return Response({"detail": "Solo pacientes pueden ver sus recomendaciones."}, status=status.HTTP_403_FORBIDDEN)
         
         from apps.P2_Gestion_Clinica.models import Recomendacion
-        qs = Recomendacion.objects.filter(paciente__ci=user.ci).order_by('-fecha_creacion')
+        
+        ci_a_buscar = user.ci if user.ci else user.username
+        qs = Recomendacion.objects.filter(paciente__ci=ci_a_buscar).order_by('-fecha_creacion')
         
         data = []
         for r in qs:
@@ -407,7 +409,8 @@ class MobileRecomendacionesAPIView(APIView):
         
         from apps.P2_Gestion_Clinica.models import Recomendacion
         try:
-            recomendacion = Recomendacion.objects.get(pk=pk, paciente__ci=user.ci)
+            ci_a_buscar = user.ci if user.ci else user.username
+            recomendacion = Recomendacion.objects.get(pk=pk, paciente__ci=ci_a_buscar)
         except Recomendacion.DoesNotExist:
             return Response({"detail": "Recomendación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
         

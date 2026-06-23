@@ -1,0 +1,81 @@
+﻿from django.urls import path
+from django.contrib.auth import views as auth_views
+from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
+
+from .views import (
+    registrar_usuario_view,
+    CustomTokenObtainPairView,
+    UsuarioPerfilAPIView,
+    ChangePasswordAPIView,
+    RegistroPsicologoAPIView,
+    MiClinicaRetrieveUpdateAPIView,
+    ClinicaCreateAPIView,
+    ClinicaPublicListAPIView,
+    UsuarioColaboradorListCreateAPIView,
+    UsuarioAdminRetrieveUpdateDestroyAPIView,
+    PsicologoListCreateAPIView,
+    PsicologoRetrieveUpdateDestroyAPIView,
+    PlanesListAPIView,
+    OnboardingSaaSAPIView,
+    SuscripcionInfoAPIView,
+    TransaccionClinicaListAPIView,
+    CargarSaldoAPIView,
+    NotificacionesMobileAPIView,
+)
+
+urlpatterns = [
+    # Password reset (API-compatible, redirige por email)
+    path("password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"),
+    path("password_reset/done/", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),
+    path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    # JWT endpoints ÔÇö login usa la vista custom con throttle + bloqueo
+    path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
+    path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/auth/logout/", TokenBlacklistView.as_view(), name="api_logout_blacklist"),
+    # T009: Verificaci├│n de sesi├│n JWT (Anti-hu├®rfano)
+    path("api/auth/me/", UsuarioPerfilAPIView.as_view(), name="api_auth_me"),
+    path("api/auth/change_password/", ChangePasswordAPIView.as_view(), name="api_change_password"),
+    path(
+        "api/auth/registro/psicologo/",
+        RegistroPsicologoAPIView.as_view(),
+        name="api_registro_psicologo",
+    ),
+    path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
+    path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
+    
+    # ÔöÇÔöÇ Cl├¡nicas ÔöÇÔöÇ
+    path("api/clinicas/mi/", MiClinicaRetrieveUpdateAPIView.as_view(), name="api_mi_clinica"),
+    path("api/clinica/me/", MiClinicaRetrieveUpdateAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
+    path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
+    path("api/clinicas/publicas/", ClinicaPublicListAPIView.as_view(), name="api_clinicas_publicas"),
+    path("api/clinicas/<int:pk>/suscripcion/", SuscripcionInfoAPIView.as_view(), name="api_suscripcion_info"),
+    path("api/clinicas/transacciones/", TransaccionClinicaListAPIView.as_view(), name="api_transacciones_clinica"),
+    path("api/clinicas/cargar-saldo/", CargarSaldoAPIView.as_view(), name="api_cargar_saldo"),
+    
+    # ÔöÇÔöÇ Notificaciones (M├│vil y Web) ÔöÇÔöÇ
+    path("api/mobile/notificaciones/", NotificacionesMobileAPIView.as_view(), name="api_mobile_notificaciones"),
+    path("api/notificaciones/", NotificacionesMobileAPIView.as_view(), name="api_web_notificaciones"),
+
+    path(
+        "api/usuarios/",
+        UsuarioColaboradorListCreateAPIView.as_view(),
+        name="api_usuarios",
+    ),
+    path(
+        "api/usuarios/<int:pk>/",
+        UsuarioAdminRetrieveUpdateDestroyAPIView.as_view(),
+        name="api_usuario_detail",
+    ),
+    # ÔöÇÔöÇ Psic├│logos (T017) ÔöÇÔöÇ
+    path(
+        "api/psicologos/",
+        PsicologoListCreateAPIView.as_view(),
+        name="api_psicologos",
+    ),
+    path(
+        "api/psicologos/<int:pk>/",
+        PsicologoRetrieveUpdateDestroyAPIView.as_view(),
+        name="api_psicologo_detail",
+    ),
+]

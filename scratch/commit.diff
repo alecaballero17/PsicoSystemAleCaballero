@@ -1,0 +1,251 @@
+commit b409409a6d2885060fa05ea1547dc6db334c0e1a
+Author: brayanjoelrv <ramosvargabrayan@gmail.com>
+Date:   Sun Jun 21 20:16:44 2026 -0400
+
+    feat: Unificar rama de defensa con endpoints móviles públicos y configuración de env móvil
+
+diff --git a/apps/P1_Identidad_Acceso/urls.py b/apps/P1_Identidad_Acceso/urls.py
+index cbce7a6..d4c6295 100644
+--- a/apps/P1_Identidad_Acceso/urls.py
++++ b/apps/P1_Identidad_Acceso/urls.py
+@@ -15,6 +15,7 @@ from .views import (
+     PsicologoRetrieveUpdateDestroyAPIView,
+     PlanesListAPIView,
+     OnboardingSaaSAPIView,
++    ClinicaPublicListAPIView,
+     SuscripcionClinicaAPIView,
+ )
+ 
+@@ -39,6 +40,7 @@ urlpatterns = [
+     ),
+     path("api/planes/", PlanesListAPIView.as_view(), name="api_planes_list"),
+     path("api/onboarding/", OnboardingSaaSAPIView.as_view(), name="api_onboarding_saas"),
++    path("api/clinicas/publicas/", ClinicaPublicListAPIView.as_view(), name="api_clinicas_publicas"),
+     path("api/clinicas/mi/", MiClinicaRetrieveAPIView.as_view(), name="api_mi_clinica"),
+     path("api/clinica/me/", MiClinicaRetrieveAPIView.as_view(), name="api_clinica_me"),  # Alias para frontend
+     path("api/clinicas/", ClinicaCreateAPIView.as_view(), name="api_registrar_clinica"),
+diff --git a/apps/P1_Identidad_Acceso/views.py b/apps/P1_Identidad_Acceso/views.py
+index 2fd741b..5e254fb 100644
+--- a/apps/P1_Identidad_Acceso/views.py
++++ b/apps/P1_Identidad_Acceso/views.py
+@@ -426,3 +426,43 @@ class SuscripcionClinicaAPIView(APIView):
+             "message": f"Suscripción actualizada exitosamente al plan {nuevo_plan}.",
+             "plan_suscripcion": nuevo_plan
+         }, status=status.HTTP_200_OK)
++
++
++from rest_framework.permissions import AllowAny
++
++class ClinicaPublicListAPIView(APIView):
++    permission_classes = [AllowAny]
++
++    def get(self, request):
++        clinicas = Clinica.objects.all().values("id", "nombre", "direccion", "plan_suscripcion")
++        resultado = []
++        for c in clinicas:
++            especialidades = "Psicología General"
++            if c["plan_suscripcion"] == "Premium":
++                especialidades = "Psicología General, Psiquiatría, Terapia Familiar"
++            elif c["plan_suscripcion"] == "Profesional":
++                especialidades = "Psicología General, Terapia de Pareja"
++                
++            psicologos_count = Usuario.objects.filter(clinica_id=c["id"], rol="PSICOLOGO").count()
++            
++            plan_beneficios = "Gestión básica de citas y pacientes."
++            horario = "Lunes a Viernes, 09:00 - 18:00"
++            if c["plan_suscripcion"] == "Profesional":
++                plan_beneficios = "Soporte Prioritario, múltiples agendas, Análisis Básico."
++                horario = "Lunes a Sábado, 08:00 - 20:00"
++            elif c["plan_suscripcion"] == "Premium":
++                plan_beneficios = "Análisis IA Avanzado, Reportes Predictivos, Soporte VIP."
++                horario = "Atención 24/7 (Citas de Emergencia Disponibles)"
++            
++            resultado.append({
++                "id": c["id"],
++                "nombre": c["nombre"],
++                "direccion": c["direccion"] if c["direccion"] else "Dirección no registrada",
++                "especialidades": especialidades,
++                "plan_suscripcion": c["plan_suscripcion"],
++                "psicologos_count": psicologos_count,
++                "plan_beneficios": plan_beneficios,
++                "horario": horario
++            })
++            
++        return Response(resultado, status=status.HTTP_200_OK)
+diff --git a/apps/P2_Gestion_Clinica/serializers.py b/apps/P2_Gestion_Clinica/serializers.py
+index 04d8c06..e4d64e9 100644
+--- a/apps/P2_Gestion_Clinica/serializers.py
++++ b/apps/P2_Gestion_Clinica/serializers.py
+@@ -73,3 +73,85 @@ class PacienteDetalleSerializer(serializers.ModelSerializer):
+     class Meta:
+         model = Paciente
+         fields = '__all__'
++
++
++from apps.P1_Identidad_Acceso.models import Usuario, Clinica
++from django.contrib.auth.hashers import make_password
++from django.utils import timezone
++try:
++    from apps.P6_ReportesComunicaciones.models import NotificacionPush
++except ImportError:
++    pass
++
++class PacienteRegistroPublicoSerializer(serializers.Serializer):
++    clinica_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
++    nombre = serializers.CharField(max_length=100)
++    ci = serializers.CharField(max_length=20)
++    email = serializers.EmailField()
++    password = serializers.CharField(write_only=True)
++    telefono = serializers.CharField(max_length=20, required=False, allow_blank=True)
++
++    def validate_clinica_id(self, value):
++        if value is None:
++            return None
++        try:
++            return Clinica.objects.get(pk=value)
++        except Clinica.DoesNotExist:
++            raise serializers.ValidationError("La clínica seleccionada no existe.")
++
++    def validate_email(self, value):
++        if Usuario.objects.filter(email=value).exists() or Usuario.objects.filter(username=value).exists():
++            raise serializers.ValidationError("Este correo ya está registrado.")
++        return value
++
++    def validate_ci(self, value):
++        if Paciente.objects.filter(ci=value).exists():
++            raise serializers.ValidationError("Esta Cédula de Identidad ya está registrada.")
++        return value
++
++    def create(self, validated_data):
++        clinica = validated_data.pop('clinica_id', None)
++        nombre = validated_data['nombre']
++        ci = validated_data['ci']
++        email = validated_data['email']
++        raw_password = validated_data['password']
++        telefono = validated_data.get('telefono', '00000000')
++
++        # Crear Usuario
++        usuario = Usuario.objects.create(
++            username=email,
++            email=email,
++            password=make_password(raw_password),
++            rol='PACIENTE',
++            clinica=clinica,
++            ci=ci,
++            first_name=nombre
++        )
++
++        # Crear Paciente
++        paciente = Paciente.objects.create(
++            nombre=nombre,
++            ci=ci,
++            clinica=clinica,
++            fecha_nacimiento="1900-01-01",
++            telefono=telefono,
++            motivo_consulta="Registro Móvil"
++        )
++        
++        try:
++            hora_actual = timezone.localtime(timezone.now()).strftime("%H:%M")
++            titulo_notif = "¡Bienvenido a PsicoSystem!"
++            mensaje_notif = f"Hola {usuario.username}, tu cuenta ha sido creada exitosamente a las {hora_actual}. ¡Nos alegra tenerte aquí!"
++            NotificacionPush.objects.create(
++                usuario=usuario,
++                titulo=titulo_notif,
++                mensaje=mensaje_notif
++            )
++        except Exception:
++            pass
++
++        return {
++            "nombre": paciente.nombre,
++            "ci": paciente.ci,
++            "email": usuario.email,
++        }
+diff --git a/apps/P2_Gestion_Clinica/urls.py b/apps/P2_Gestion_Clinica/urls.py
+index cbbfdde..3e0af04 100644
+--- a/apps/P2_Gestion_Clinica/urls.py
++++ b/apps/P2_Gestion_Clinica/urls.py
+@@ -11,6 +11,8 @@ from .views import (
+     DiagnosticoPacienteViewSet,
+     HistorialCompletoAPIView,
+     AnaliticaClinicaAPIView,
++    PacienteRegistroPublicoAPIView,
++    AssociateClinicAPIView,
+ )
+ 
+ router = DefaultRouter()
+@@ -32,5 +34,8 @@ urlpatterns = [
+     # Sprint 4: Historial completo y Analítica Clínica
+     path("api/pacientes/<int:paciente_id>/historial/", HistorialCompletoAPIView.as_view(), name="api_historial_completo"),
+     path("api/analitica-clinica/", AnaliticaClinicaAPIView.as_view(), name="api_analitica_clinica"),
++    path("api/pacientes/registro-publico/", PacienteRegistroPublicoAPIView.as_view(), name="api_pacientes_registro_publico"),
++    path("api/pacientes/me/associate_clinic/", AssociateClinicAPIView.as_view(), name="api_paciente_associate_clinic"),
++
+     path("api/clinica/", include(router.urls)),
+ ]
+diff --git a/apps/P2_Gestion_Clinica/views.py b/apps/P2_Gestion_Clinica/views.py
+index 9f7aaf7..caaa258 100644
+--- a/apps/P2_Gestion_Clinica/views.py
++++ b/apps/P2_Gestion_Clinica/views.py
+@@ -322,3 +322,60 @@ class AnaliticaClinicaAPIView(APIView):
+             'ultimas_evoluciones': ultimas_evoluciones,
+         })
+ 
++
++
++from rest_framework.views import APIView
++from rest_framework.permissions import AllowAny, IsAuthenticated
++from .serializers import PacienteRegistroPublicoSerializer
++import logging
++
++logger = logging.getLogger(__name__)
++
++class PacienteRegistroPublicoAPIView(APIView):
++    permission_classes = [AllowAny]
++
++    def post(self, request):
++        serializer = PacienteRegistroPublicoSerializer(data=request.data)
++        if serializer.is_valid():
++            result = serializer.save()
++            logger.info("NUEVO PACIENTE AUTO-REGISTRADO: %s", result["email"])
++            return Response(
++                {"message": "Registro completado con éxito.", "data": result},
++                status=status.HTTP_201_CREATED
++            )
++        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
++
++class AssociateClinicAPIView(APIView):
++    permission_classes = [IsAuthenticated]
++
++    def patch(self, request):
++        clinica_id = request.data.get('clinica_id')
++        if not clinica_id:
++            return Response({"detail": "Se requiere clinica_id."}, status=status.HTTP_400_BAD_REQUEST)
++
++        try:
++            clinica = Clinica.objects.get(id=clinica_id)
++            user = request.user
++            
++            user.clinica = clinica
++            user.save()
++
++            try:
++                paciente = Paciente.objects.get(ci=user.username)
++            except Paciente.DoesNotExist:
++                paciente = Paciente.objects.filter(ci=user.username).first()
++
++            if paciente:
++                paciente.clinica = clinica
++                paciente.save()
++
++            return Response({
++                "message": f"Vínculo exitoso con {clinica.nombre}",
++                "clinica_id": clinica.id,
++                "clinica_nombre": clinica.nombre
++            }, status=status.HTTP_200_OK)
++
++        except Clinica.DoesNotExist:
++            return Response({"detail": "La clínica no existe."}, status=status.HTTP_404_NOT_FOUND)
++        except Exception as e:
++            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

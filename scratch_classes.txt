@@ -1,0 +1,110 @@
+--- PacienteRegistroPublicoAPIView ---
+class PacienteRegistroPublicoAPIView(APIView):
+    """
+    [SPRINT 1 - T015] [CU-02] Endpoint p├║blico para la autogesti├│n y registro
+    de credenciales por parte del propio paciente desde la app m├│vil.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PacienteRegistroPublicoSerializer(data=request.data)
+        if serializer.is_valid():
+            result = serializer.save()
+            logger.info("NUEVO PACIENTE AUTO-REGISTRADO: %s", result["email"])
+            return Response(
+                {"message": "Registro completado con ├®xito.", "data": result},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+--- AssociateClinicAPIView ---
+class AssociateClinicAPIView(APIView):
+    """
+    [RF-29] Vinculaci├│n post-login para usuarios hu├®rfanos en Flutter.
+    Asocia una cl├¡nica al usuario y al objeto Paciente correspondiente.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        clinica_id = request.data.get('clinica_id')
+        if not clinica_id:
+            return Response({"detail": "Se requiere clinica_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            clinica = Clinica.objects.get(id=clinica_id)
+            user = request.user
+            
+            # 1. Actualizar el usuario
+            user.clinica = clinica
+            user.save()
+
+            # 2. Intentar actualizar el objeto Paciente si existe (basado en el email)
+            try:
+                paciente = Paciente.objects.get(ci=user.username)
+            except Paciente.DoesNotExist:
+                # Fallback
+                paciente = Paciente.objects.filter(ci=user.username).first()
+
+            if paciente:
+                paciente.clinica = clinica
+                paciente.save()
+
+            return Response({
+                "message": f"V├¡nculo exitoso con {clinica.nombre}",
+                "clinica_id": clinica.id,
+                "clinica_nombre": clinica.nombre
+            }, status=status.HTTP_200_OK)
+
+        except Clinica.DoesNotExist:
+            return Response({"detail": "La cl├¡nica no existe."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+--- ClinicaPublicListAPIView ---
+class ClinicaPublicListAPIView(APIView):
+    """GET p├║blico: devuelve lista b├ísica de cl├¡nicas para el onboarding m├│vil."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        clinicas = Clinica.objects.all().values("id", "nombre", "direccion", "plan_suscripcion")
+        resultado = []
+        for c in clinicas:
+            # Simular especialidades base si es Premium
+            especialidades = "Psicolog├¡a General"
+            if c["plan_suscripcion"] == "Premium":
+                especialidades = "Psicolog├¡a General, Psiquiatr├¡a, Terapia Familiar"
+            elif c["plan_suscripcion"] == "Profesional":
+                especialidades = "Psicolog├¡a General, Terapia de Pareja"
+                
+            # Contar psic├│logos
+            psicologos_count = Usuario.objects.filter(clinica_id=c["id"], rol="PSICOLOGO").count()
+            
+            # Beneficios por plan para mostrar en m├│vil
+            plan_beneficios = "Gesti├│n b├ísica de citas y pacientes."
+            horario = "Lunes a Viernes, 09:00 - 18:00"
+            if c["plan_suscripcion"] == "Profesional":
+                plan_beneficios = "Soporte Prioritario, m├║ltiples agendas, An├ílisis B├ísico."
+                horario = "Lunes a S├íbado, 08:00 - 20:00"
+            elif c["plan_suscripcion"] == "Premium":
+                plan_beneficios = "An├ílisis IA Avanzado, Reportes Predictivos, Soporte VIP."
+                horario = "Atenci├│n 24/7 (Citas de Emergencia Disponibles)"
+            
+            resultado.append({
+                "id": c["id"],
+                "nombre": c["nombre"],
+                "direccion": c["direccion"] if c["direccion"] else "Direcci├│n no registrada",
+                "especialidades": especialidades,
+                "plan_suscripcion": c["plan_suscripcion"],
+                "psicologos_count": psicologos_count,
+                "plan_beneficios": plan_beneficios,
+                "horario": horario
+            })
+            
+        return Response(resultado, status=status.HTTP_200_OK)
+
+
+
+

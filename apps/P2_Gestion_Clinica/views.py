@@ -126,6 +126,80 @@ class PacienteRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         )
 
 # --- Vistas para Historia Clínica y Evolución ---
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import re
+
+class HistorialClinicoAPIView(APIView):
+    permission_classes = [IsAuthenticated, EsPsicologoOAdministrador, HasClinicaAsignada]
+
+    def get(self, request, pk):
+        try:
+            paciente = Paciente.objects.get(pk=pk, clinica=request.user.clinica)
+        except Paciente.DoesNotExist:
+            return Response({"detail": "No se encontró información del paciente."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            historia = HistoriaClinica.objects.get(paciente=paciente)
+        except HistoriaClinica.DoesNotExist:
+            historia = HistoriaClinica.objects.create(paciente=paciente)
+
+        # Diagnóstico Global: Mapeo de Historia Clínica y Última Evolución
+        evoluciones_qs = historia.evoluciones.all().order_by('-fecha_sesion')
+        
+        diagnostico_global = None
+        if historia.diagnostico_preliminar or evoluciones_qs.exists():
+            diagnostico_global = {
+                "diagnostico_inicial": historia.diagnostico_preliminar or "Sin diagnóstico preliminar",
+                "fecha_inicio": historia.fecha_creacion.strftime('%Y-%m-%d'),
+                "estado": "EN_TRATAMIENTO",
+                "estado_display": "En Tratamiento",
+                "diagnostico_final": "",
+                "fecha_fin": ""
+            }
+
+        evoluciones_data = []
+        for evo in evoluciones_qs:
+            # Extraer campos parseando notas_sesion
+            # Formato: [Estado: BUENO] Diagnóstico de Sesión: XYZ \n\nObservaciones: ABC
+            estado_animo = "REGULAR"
+            diagnostico = "Sin diagnóstico"
+            observaciones = evo.notas_sesion
+
+            m = re.match(r'^\[Estado: ([^\]]+)\] Diagnóstico de Sesión: (.*?)(?:\n\nObservaciones: (.*))?$', evo.notas_sesion, flags=re.DOTALL)
+            if m:
+                estado_animo = m.group(1).strip()
+                diagnostico = m.group(2).strip()
+                observaciones = m.group(3).strip() if m.group(3) else ""
+
+            # Extraer recomendacion
+            recomendacion = evo.recomendaciones.first()
+
+            evoluciones_data.append({
+                "id": evo.id,
+                "fecha_sesion": evo.fecha_sesion.strftime('%Y-%m-%d %H:%M'),
+                "estado_animo": estado_animo,
+                "estado_animo_display": estado_animo.capitalize(),
+                "psicologo_nombre": f"{evo.psicologo.first_name} {evo.psicologo.last_name}".strip() if evo.psicologo else "N/A",
+                "diagnostico": diagnostico,
+                "observaciones": observaciones,
+                "recomendacion": recomendacion.texto if recomendacion else ""
+            })
+
+        data = {
+            "paciente": {
+                "nombre": paciente.nombre,
+                "ci": paciente.ci,
+                "fecha_nacimiento": paciente.fecha_nacimiento.strftime('%Y-%m-%d') if paciente.fecha_nacimiento else "",
+                "telefono": paciente.telefono,
+                "motivo_consulta": paciente.motivo_consulta
+            },
+            "diagnostico_global": diagnostico_global,
+            "evoluciones": evoluciones_data
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 class HistoriaClinicaViewSet(viewsets.ModelViewSet):
     serializer_class = HistoriaClinicaSerializer
