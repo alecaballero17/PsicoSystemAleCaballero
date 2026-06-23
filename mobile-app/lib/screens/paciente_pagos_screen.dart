@@ -8,6 +8,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/cita_pago_service.dart';
 
 class PacientePagosScreen extends StatefulWidget {
@@ -517,9 +518,7 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
                       title: Text('Pago con Tarjeta', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-                      onTap: () => setModalState(() => metodoSeleccionado = 'TARJETA'),
-                    ),
-                  ] else if (metodoSeleccionado == 'QR') ...[
+                      onTap: () => setModalState(() => metodoSeleccionado = 'TARJETA'                     ] else if (metodoSeleccionado == 'QR') ...[
                     Row(
                       children: [
                         IconButton(
@@ -529,19 +528,26 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
                         Text('Pago con QR', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Escanea este código QR para confirmar el pago y luego presiona el botón.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
+                    ),
                     const SizedBox(height: 16),
                     QrImageView(
-                      data: "PAGO_CITA_${citaData['id']}_${citaData['monto'] ?? '120'}",
+                      data: "PSICOSYSTEM|CITA:${citaData['id']}|MONTO:${citaData['monto'] ?? '120'}|PACIENTE:${citaData['clinica_nombre'] ?? ''}",
                       version: QrVersions.auto,
-                      size: 180.0,
+                      size: 200.0,
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
                         style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, padding: const EdgeInsets.symmetric(vertical: 16)),
-                        onPressed: () => _procesarPago(ctx, citaData['id'], 'QR'),
-                        child: Text('Confirmar Pago', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                        onPressed: () => _procesarPagoQR(ctx, citaData),
+                        label: Text('Ya escanée — Confirmar Pago', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ] else if (metodoSeleccionado == 'TARJETA') ...[
@@ -551,47 +557,64 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
                           icon: const Icon(Icons.arrow_back),
                           onPressed: () => setModalState(() => metodoSeleccionado = ''),
                         ),
-                        Text('Datos de Tarjeta', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+                        Text('Pagar con Stripe', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Número de Tarjeta',
-                        prefixIcon: const Icon(Icons.credit_card),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [const Color(0xFF635BFF), const Color(0xFF0A2540)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) => _tarjetaNumero = v,
+                      child: Column(
+                        children: [
+                          const Icon(Icons.lock, color: Colors.white, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Pago Seguro con Stripe',
+                            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Serás redirigido a la página segura de Stripe para ingresar los datos de tu tarjeta.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Total a pagar: \$${citaData['monto'] ?? "120.00"}',
+                            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: TextFormField(
-                          decoration: InputDecoration(labelText: 'MM/YY', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                          onChanged: (v) => _tarjetaFecha = v,
-                        )),
-                        const SizedBox(width: 12),
-                        Expanded(child: TextFormField(
-                          decoration: InputDecoration(labelText: 'CVC', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                          onChanged: (v) => _tarjetaCvc = v,
-                        )),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: darkBlue, padding: const EdgeInsets.symmetric(vertical: 16)),
-                        onPressed: () {
-                          if (_tarjetaNumero.length < 15 || _tarjetaFecha.isEmpty || _tarjetaCvc.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Por favor llena los datos de la tarjeta correctamente')));
-                            return;
-                          }
-                          _procesarPago(ctx, citaData['id'], 'TARJETA');
-                        },
-                        child: Text('Confirmar Pago', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.open_in_browser, color: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF635BFF),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => _pagarConStripe(ctx, citaData),
+                        label: Text('Ir a Stripe Checkout →', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.security, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text('Pago protegido con cifrado SSL', style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
+                      ],
                     ),
                   ],
                 ],
@@ -601,6 +624,137 @@ class _PacientePagosScreenState extends State<PacientePagosScreen> {
           },
         );
       },
+    );
+  }
+
+  Future<void> _procesarPagoQR(BuildContext ctx, dynamic citaData) async {
+    Navigator.of(ctx).pop();
+    setState(() => _isLoading = true);
+    try {
+      await CitaPagoService.pagarCita(
+        token: widget.token,
+        citaId: citaData['id'],
+        metodoPago: 'QR',
+      );
+      _mostrarPagoExitoso(citaData, 'QR');
+      _loadData();
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al procesar el pago: $e', style: GoogleFonts.outfit()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _pagarConStripe(BuildContext ctx, dynamic citaData) async {
+    Navigator.of(ctx).pop();
+    setState(() => _isLoading = true);
+    try {
+      final checkoutUrl = await CitaPagoService.stripeCheckout(
+        token: widget.token,
+        citaId: citaData['id'],
+      );
+      setState(() => _isLoading = false);
+      
+      // Abrir Stripe Checkout en el navegador del celular
+      final uri = Uri.parse(checkoutUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Mostrar snackbar indicando que regrese luego del pago
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(seconds: 8),
+              backgroundColor: const Color(0xFF635BFF),
+              content: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Completa tu pago en el navegador y vuelve aquí.',
+                      style: GoogleFonts.outfit(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              action: SnackBarAction(
+                label: 'Actualizar',
+                textColor: Colors.white,
+                onPressed: () => _loadData(),
+              ),
+            ),
+          );
+        }
+      } else {
+        throw Exception('No se pudo abrir el navegador.');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error Stripe: $e', style: GoogleFonts.outfit()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _mostrarPagoExitoso(dynamic citaData, String metodo) {
+    setState(() => _isLoading = false);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 72),
+            const SizedBox(height: 16),
+            Text('¡Pago Exitoso!', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.green)),
+            const SizedBox(height: 8),
+            Text(
+              'Tu pago de \$${citaData['monto']} fue procesado correctamente.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                children: [
+                  _detalleRow('📋 Motivo', citaData['motivo'] ?? 'Consulta'),
+                  _detalleRow('👨‍⚕️ Psicólogo', citaData['psicologo_nombre'] ?? ''),
+                  _detalleRow('🏥 Clínica', citaData['clinica_nombre'] ?? ''),
+                  _detalleRow('💳 Método', metodo),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('Se enviaron notificaciones al psicólogo y a la clínica. 🔔', textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: Text('Perfecto ✓', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detalleRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text('$label: ', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value, style: GoogleFonts.outfit(fontSize: 12), overflow: TextOverflow.ellipsis)),
+        ],
+      ),
     );
   }
 

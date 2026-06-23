@@ -231,18 +231,91 @@ class MobileCitaFichaPDFAPIView(APIView):
 
 import decimal
 import stripe
+import json
 from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
-stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_123')
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+
+def _registrar_pago_exitoso(cita, user, metodo_pago):
+    """Función compartida: marca la cita como PAGADA, crea transaccion y notificaciones."""
+    cita.estado_pago = 'PAGADO'
+    cita.save()
+
+    psicologo = cita.psicologo
+    monto = decimal.Decimal(str(cita.monto))
+    fecha_str = cita.fecha_hora.strftime('%d/%m/%Y %H:%M')
+    psicologo_nombre = f"{psicologo.first_name} {psicologo.last_name}".strip() or psicologo.username
+    paciente_nombre = f"{user.first_name} {user.last_name}".strip() or user.username
+    clinica_nombre = psicologo.clinica.nombre if psicologo.clinica else "la clínica"
+    metodo_str = "QR" if metodo_pago == "QR" else "Tarjeta (Stripe)"
+
+    # Actualizar saldo de la clínica
+    if psicologo.clinica:
+        try:
+            saldo_actual = psicologo.clinica.saldo or decimal.Decimal('0.00')
+            psicologo.clinica.saldo = saldo_actual + monto
+            psicologo.clinica.save()
+            TransaccionClinica.objects.create(
+                clinica=psicologo.clinica,
+                tipo='INGRESO_PACIENTE',
+                monto=monto,
+                descripcion=f"Pago cita #{cita.id} | Paciente: {paciente_nombre} | Método: {metodo_str}",
+                metodo_pago=metodo_pago
+            )
+        except Exception:
+            pass  # No bloquear el pago si hay error en la transacción interna
+
+    # Notificación para el PACIENTE (estilo WhatsApp 🔔)
+    NotificacionPush.objects.create(
+        usuario=user,
+        titulo=f"✅ Pago Exitoso — {metodo_str}",
+        mensaje=(
+            f"Tu pago de ${cita.monto} fue procesado con éxito.\n"
+            f"📋 Motivo: {cita.motivo}\n"
+            f"👨‍⚕️ Psicólogo: {psicologo_nombre}\n"
+            f"🏥 Clínica: {clinica_nombre}\n"
+            f"📅 Cita: {fecha_str}"
+        )
+    )
+
+    # Notificación para el PSICÓLOGO
+    NotificacionPush.objects.create(
+        usuario=psicologo,
+        titulo=f"💰 Pago Recibido — {metodo_str}",
+        mensaje=(
+            f"El paciente {paciente_nombre} pagó la cita de ${cita.monto}.\n"
+            f"📋 Motivo: {cita.motivo}\n"
+            f"📅 Fecha: {fecha_str}"
+        )
+    )
+
+    # Notificación para el ADMIN de la clínica
+    if psicologo.clinica:
+        admin_clinica = Usuario.objects.filter(clinica=psicologo.clinica, rol='ADMIN').first()
+        if admin_clinica:
+            NotificacionPush.objects.create(
+                usuario=admin_clinica,
+                titulo=f"🏦 Ingreso Registrado — {metodo_str}",
+                mensaje=(
+                    f"Pago de ${cita.monto} recibido.\n"
+                    f"👤 Paciente: {paciente_nombre}\n"
+                    f"👨‍⚕️ Psicólogo: {psicologo_nombre}\n"
+                    f"📋 Motivo: {cita.motivo}\n"
+                    f"📅 Cita: {fecha_str}"
+                )
+            )
+
 
 class MobilePacientePagarAPIView(APIView):
+    """Endpoint para pago QR (simulado/confirmado por botón en app)."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
         cita_id = request.data.get("cita_id")
-        metodo_pago = request.data.get("metodo_pago", "STRIPE_MOCK")
-        numero_tarjeta = request.data.get("numero_tarjeta", "4242424242424242")
 
         try:
             cita = Cita.objects.get(id=cita_id)
@@ -252,76 +325,115 @@ class MobilePacientePagarAPIView(APIView):
         if cita.estado_pago == 'PAGADO':
             return Response({"detail": "Esta cita ya está pagada."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Integración Real con Stripe (Backend Flow)
-        if metodo_pago == "TARJETA":
-            try:
-                # Para evitar PCI compliance real en la app móvil, si envían la tarjeta de prueba de Stripe
-                # asignamos directamente un token de prueba oficial de Stripe ("tok_visa" o "tok_mastercard")
-                source_token = "tok_visa" if str(numero_tarjeta).startswith("4") else "tok_mastercard"
-                
-                # Stripe maneja montos en centavos
-                monto_centavos = int(cita.monto * 100)
-                
-                charge = stripe.Charge.create(
-                    amount=monto_centavos,
-                    currency="bob",
-                    source=source_token,
-                    description=f"Pago de Cita #{cita.id} - Paciente: {user.username} - PsicoSystem"
-                )
-                
-                if charge.status != "succeeded":
-                    return Response({"detail": "El pago fue rechazado por el banco."}, status=status.HTTP_400_BAD_REQUEST)
-                    
-            except stripe.error.StripeError as e:
-                return Response({"detail": f"Error en la pasarela de pagos: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                return Response({"detail": f"Error interno procesando pago: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Si el pago con tarjeta fue exitoso o es pago QR (simulado), actualizamos la DB
         try:
-            cita.estado_pago = 'PAGADO'
-            cita.save()
-
-            # Generar Transacción en la Clínica
-            if cita.psicologo.clinica:
-                saldo_actual = cita.psicologo.clinica.saldo or decimal.Decimal('0.00')
-                cita.psicologo.clinica.saldo = saldo_actual + decimal.Decimal(str(cita.monto))
-                cita.psicologo.clinica.save()
-                TransaccionClinica.objects.create(
-                    clinica=cita.psicologo.clinica,
-                    tipo='INGRESO_PACIENTE',
-                    monto=cita.monto,
-                    descripcion=f"Pago de cita #{cita.id} - Paciente: {user.username}",
-                    metodo_pago=metodo_pago
-                )
-
-            # Notificación para el paciente
-            NotificacionPush.objects.create(
-                usuario=user,
-                titulo="Pago Exitoso",
-                mensaje=f"Tu pago de ${cita.monto} para la cita con {cita.psicologo.first_name} {cita.psicologo.last_name} ha sido procesado."
-            )
-
-            # Notificación para el psicólogo
-            NotificacionPush.objects.create(
-                usuario=cita.psicologo,
-                titulo="Pago Recibido",
-                mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado la cita (${cita.monto})."
-            )
-
-            # Notificación para la clínica
-            if cita.psicologo.clinica:
-                admin_clinica = Usuario.objects.filter(clinica=cita.psicologo.clinica, rol='ADMIN').first()
-                if admin_clinica:
-                    NotificacionPush.objects.create(
-                        usuario=admin_clinica,
-                        titulo="Ingreso por Cita",
-                        mensaje=f"El paciente {user.first_name} {user.last_name} ha pagado ${cita.monto} por cita con {cita.psicologo.first_name}."
-                    )
+            _registrar_pago_exitoso(cita, user, "QR")
         except Exception as e:
-            return Response({"detail": f"Error guardando transaccion: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": f"Error al registrar pago: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"detail": "Pago procesado exitosamente.", "cita_id": cita.id}, status=status.HTTP_201_CREATED)
+        return Response({
+            "detail": "Pago QR procesado exitosamente.",
+            "cita_id": cita.id,
+            "estado_pago": "PAGADO"
+        }, status=status.HTTP_201_CREATED)
+
+
+class MobileStripeCheckoutAPIView(APIView):
+    """Crea una Stripe Checkout Session y devuelve la URL de pago."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        cita_id = request.data.get("cita_id")
+
+        try:
+            cita = Cita.objects.get(id=cita_id)
+        except Cita.DoesNotExist:
+            return Response({"detail": "Cita no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+
+        if cita.estado_pago == 'PAGADO':
+            return Response({"detail": "Esta cita ya está pagada."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not stripe.api_key or stripe.api_key == '':
+            return Response({"detail": "Stripe no está configurado."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            psicologo_nombre = f"{cita.psicologo.first_name} {cita.psicologo.last_name}".strip() or cita.psicologo.username
+            clinica_nombre = cita.psicologo.clinica.nombre if cita.psicologo.clinica else "PsicoSystem"
+            monto_centavos = int(decimal.Decimal(str(cita.monto)) * 100)
+            
+            # URL de retorno - la app manejará el deep link
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'https://psicosystem-frontend-21h1.onrender.com')
+            
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': f'Consulta Psicológica — {cita.motivo or "Cita"}',
+                            'description': f'Psicólogo: {psicologo_nombre} | Clínica: {clinica_nombre}',
+                        },
+                        'unit_amount': monto_centavos,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=f'{frontend_url}/pago-exitoso/?cita_id={cita.id}&session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{frontend_url}/pago-cancelado/?cita_id={cita.id}',
+                metadata={
+                    'cita_id': str(cita.id),
+                    'user_id': str(user.id),
+                    'metodo_pago': 'TARJETA_STRIPE',
+                }
+            )
+            
+            return Response({
+                "checkout_url": session.url,
+                "session_id": session.id,
+                "cita_id": cita.id
+            }, status=status.HTTP_200_OK)
+            
+        except stripe.error.StripeError as e:
+            return Response({"detail": f"Error de Stripe: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MobileStripeWebhookAPIView(APIView):
+    """Webhook de Stripe para confirmar pago y marcar cita como PAGADA."""
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+        webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+
+        try:
+            if webhook_secret:
+                event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+            else:
+                event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
+        except (ValueError, stripe.error.SignatureVerificationError) as e:
+            return HttpResponse(status=400)
+
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            cita_id = session.get('metadata', {}).get('cita_id')
+            user_id = session.get('metadata', {}).get('user_id')
+
+            if cita_id and user_id:
+                try:
+                    cita = Cita.objects.get(id=int(cita_id), estado_pago='PENDIENTE')
+                    user = Usuario.objects.get(id=int(user_id))
+                    _registrar_pago_exitoso(cita, user, "TARJETA_STRIPE")
+                except (Cita.DoesNotExist, Usuario.DoesNotExist):
+                    pass
+
+        return HttpResponse(status=200)
+
+
 
 class MobileCitasDisponibilidadAPIView(APIView):
     permission_classes = [IsAuthenticated]

@@ -77,20 +77,36 @@ class CitaPagoService {
     required String token,
     required int citaId,
     required String metodoPago,
-    String numeroTarjeta = '4242424242424242',
   }) async {
+    // Solo para QR - la tarjeta usa stripeCheckout
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/mobile/paciente/pagar/'),
       headers: _headers(token),
       body: json.encode({
         'cita_id': citaId,
         'metodo_pago': metodoPago,
-        'numero_tarjeta': numeroTarjeta,
       }),
     );
 
     if (response.statusCode == 201) {
       return json.decode(utf8.decode(response.bodyBytes));
+    }
+    throw Exception(_extractError(response));
+  }
+
+  static Future<String> stripeCheckout({
+    required String token,
+    required int citaId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/mobile/paciente/stripe-checkout/'),
+      headers: _headers(token),
+      body: json.encode({'cita_id': citaId}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      return data['checkout_url'] as String;
     }
     throw Exception(_extractError(response));
   }
